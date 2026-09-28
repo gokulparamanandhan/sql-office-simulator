@@ -1,6 +1,7 @@
 import { validateSqlSecurity } from "./security-guard";
 import { sandboxPool, SandboxExecutionResult } from "@/lib/db/sandbox-db";
 import { generateEcomL1Sql } from "@/lib/datasets/ecom-l1-generator";
+import { generateDomainSql } from "@/lib/datasets/multi-domain-generators";
 import { PGlite } from "@electric-sql/pglite";
 
 /**
@@ -8,11 +9,12 @@ import { PGlite } from "@electric-sql/pglite";
  * Dual-backend:
  * - Uses external PostgreSQL Container (port 5433) when active
  * - Gracefully falls back to embedded in-process PostgreSQL 16 (PGlite WASM)
- *   with preloaded ecom_l1 and ecom_l1_val schemas.
+ *   with preloaded ecom_l1 and ecom_l1_val schemas and on-demand multi-domain schemas.
  */
 
 let embeddedPgInstance: PGlite | null = null;
 let embeddedPgInitializing: Promise<PGlite> | null = null;
+const seededSchemas = new Set<string>(["ecom_l1", "ecom_l1_val"]);
 
 async function getEmbeddedPg(): Promise<PGlite> {
   if (embeddedPgInstance) return embeddedPgInstance;
@@ -32,6 +34,21 @@ async function getEmbeddedPg(): Promise<PGlite> {
   })();
 
   return embeddedPgInitializing;
+}
+
+async function ensureSchemaSeeded(pg: PGlite, schema: string): Promise<void> {
+  if (seededSchemas.has(schema)) return;
+  const isVal = schema.endsWith("_val");
+  const rawDomain = schema.replace(/_l\d+(_val)?$/, "").replace(/^ecom$/, "ecommerce");
+  try {
+    const sql = generateDomainSql(rawDomain, isVal ? "validation" : "main");
+    if (sql) {
+      await pg.exec(sql);
+      seededSchemas.add(schema);
+    }
+  } catch (err) {
+    console.warn(`Could not auto-seed schema ${schema}:`, err);
+  }
 }
 
 export async function runSandboxQuery(
@@ -101,6 +118,7 @@ export async function runSandboxQuery(
     // Otherwise fallback to embedded PostgreSQL 16
     try {
       const pg = await getEmbeddedPg();
+      await ensureSchemaSeeded(pg, schema);
       // Set schema search path
       await pg.exec(`SET search_path = "${schema}";`);
       const res = await pg.query(queryToRun);

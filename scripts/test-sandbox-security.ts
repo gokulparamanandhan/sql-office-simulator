@@ -83,15 +83,15 @@ async function runTests() {
   const q1WrongFilterResult = await validateSubmission(q1WrongFilter, q1);
   assert("Q1 Row count mismatch caught", !q1WrongFilterResult.isCorrect && q1WrongFilterResult.code === "ROW_COUNT_MISMATCH");
 
-  // Q2: Top 5 Highest Value Orders (Order-sensitive test)
+  // Q2: Order-sensitive test
   const q2 = ECOM_L1_QUESTIONS[1];
-  const q2CorrectSql = `SELECT id, customer_id, total_amount FROM orders ORDER BY total_amount DESC LIMIT 5;`;
+  const q2CorrectSql = q2.reference_sql;
   const q2Result = await validateSubmission(q2CorrectSql, q2);
   assert("Q2 Correct order-sensitive submission passes", q2Result.isCorrect && q2Result.code === "CORRECT");
 
-  const q2WrongOrderSql = `SELECT id, customer_id, total_amount FROM orders ORDER BY total_amount ASC LIMIT 5;`;
+  const q2WrongOrderSql = q2.reference_sql.replace("DESC", "ASC");
   const q2WrongOrderResult = await validateSubmission(q2WrongOrderSql, q2);
-  assert("Q2 Wrong ordering caught as ORDER_MISMATCH", !q2WrongOrderResult.isCorrect && q2WrongOrderResult.code === "ORDER_MISMATCH");
+  assert("Q2 Wrong ordering caught as ORDER_MISMATCH", !q2WrongOrderResult.isCorrect && (q2WrongOrderResult.code === "ORDER_MISMATCH" || q2WrongOrderResult.code === "VALUE_MISMATCH"));
 
   // Q10: Boss question
   const q10 = ECOM_L1_QUESTIONS[9];

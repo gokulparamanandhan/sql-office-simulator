@@ -8,6 +8,8 @@ export interface QuestionDefinition {
   stakeholder: {
     name: string;
     role: string;
+    avatar?: string;
+    department?: string;
   };
   request: string;
   context_notes: string;

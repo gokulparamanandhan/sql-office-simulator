@@ -117,14 +117,18 @@ export function compareResultSets(
 export async function validateSubmission(
   learnerSql: string,
   question: QuestionDefinition,
-  mainSchema: string = "ecom_l1",
-  valSchema: string = "ecom_l1_val"
+  mainSchema?: string,
+  valSchema?: string
 ): Promise<ValidationFeedback> {
   const startTime = Date.now();
-  const tolerance = question.validation.numeric_tolerance || 0.01;
+  const tolerance = question.validation?.numeric_tolerance ?? 0.01;
+
+  const targetDomain = question.domain === "ecommerce" ? "ecom" : (question.domain || "ecom");
+  const resolvedMainSchema = mainSchema || `${targetDomain}_l${question.level || 1}`;
+  const resolvedValSchema = valSchema || `${resolvedMainSchema}_val`;
 
   // 1. Run learner query on main schema
-  const learnerMain = await runSandboxQuery(learnerSql, mainSchema, 1000);
+  const learnerMain = await runSandboxQuery(learnerSql, resolvedMainSchema, 1000);
   if (learnerMain.error) {
     const isSec = learnerMain.error.includes("Security Violation");
     return {
@@ -136,7 +140,7 @@ export async function validateSubmission(
   }
 
   // 2. Run reference query on main schema
-  const refMain = await runSandboxQuery(question.reference_sql, mainSchema, 1000);
+  const refMain = await runSandboxQuery(question.reference_sql, resolvedMainSchema, 1000);
   if (refMain.error) {
     return {
       isCorrect: false,
@@ -208,8 +212,8 @@ export async function validateSubmission(
   }
 
   // 6. Test on Hidden Validation Dataset (Section 8: Grading Correctness)
-  const learnerVal = await runSandboxQuery(learnerSql, valSchema, 1000);
-  const refVal = await runSandboxQuery(question.reference_sql, valSchema, 1000);
+  const learnerVal = await runSandboxQuery(learnerSql, resolvedValSchema, 1000);
+  const refVal = await runSandboxQuery(question.reference_sql, resolvedValSchema, 1000);
 
   if (learnerVal.error || learnerVal.rowCount !== refVal.rowCount) {
     return {

@@ -657,17 +657,38 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-8 px-4 sm:px-8 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[var(--ink)]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs font-semibold text-[var(--ink)]">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-[var(--ink)]" />
-            <span>SQL Office Simulator • Spec v1.1 Implementation</span>
+            <span>SQL Office Simulator • Spec v1.1 Production</span>
           </div>
-          <div className="flex items-center gap-4 text-[var(--ink)] opacity-80">
-            <span>WCAG AA Contrast Verified</span>
+
+          <div className="flex flex-wrap items-center justify-center gap-5 text-[var(--ink)]">
+            <Link href="/terms" className="hover:underline font-bold">
+              Terms & Honor Code
+            </Link>
             <span>•</span>
-            <span>Palette: Sun, Mist, Sky, Ocean, Ink</span>
+            <Link href="/privacy" className="hover:underline font-bold">
+              Privacy Policy
+            </Link>
             <span>•</span>
-            <span>Free Forever</span>
+            <Link href="/dashboard" className="hover:underline font-bold">
+              Dashboard
+            </Link>
+            <span>•</span>
+            <Link href="/progress" className="hover:underline font-bold">
+              Progress & Mastery
+            </Link>
+            <span>•</span>
+            <Link href="/admin" className="hover:underline font-bold text-slate-500">
+              Admin QA
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2 text-[var(--ink)] opacity-75">
+            <span>WCAG AA Verified</span>
+            <span>•</span>
+            <span>100% Free Forever</span>
           </div>
         </div>
       </footer>

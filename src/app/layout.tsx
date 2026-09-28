@@ -17,6 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#FAFAF9",
 };
 
 export const metadata: Metadata = {
@@ -32,6 +33,18 @@ export const metadata: Metadata = {
     "interactive SQL",
   ],
   authors: [{ name: "SQL Office Simulator" }],
+  openGraph: {
+    title: "SQL Office Simulator | Learn SQL by Working in a Real Company",
+    description:
+      "Practice SQL on real business questions from colleagues, managers, and executives. 100% free forever.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SQL Office Simulator",
+    description: "Learn SQL by working in simulated companies across 7 industry domains.",
+  },
 };
 
 export default function RootLayout({

@@ -26,8 +26,8 @@ import {
   PartyPopper,
   ExternalLink,
 } from "lucide-react";
-import { ECOM_L1_QUESTIONS, QuestionDefinition } from "@/lib/content/ecom-l1-questions";
-import { ECOM_L1_OFFICE_METADATA } from "@/lib/office/office-metadata";
+import { getQuestionsForDomainAndLevel, getQuestionById } from "@/lib/content/content-registry";
+import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -46,16 +46,18 @@ export default function QuestionWorkspacePage({
 }) {
   const router = useRouter();
   const { domain, level, id } = use(params);
-  const cleanLevel = (level || "1").replace(/^level-/, "");
+  const cleanLevel = (!level || level === "level-undefined" || level === "undefined") ? "1" : level.replace(/^level-/, "");
   const levelRoute = `level-${cleanLevel}`;
+  const office = getDomainOfficeMetadata(domain);
+  const domainQuestions = getQuestionsForDomainAndLevel(domain, parseInt(cleanLevel, 10));
 
   const question =
-    ECOM_L1_QUESTIONS.find((q) => q.id === id) || ECOM_L1_QUESTIONS[0];
-  const questionIndex = ECOM_L1_QUESTIONS.findIndex((q) => q.id === question.id);
-  const prevQuestion = questionIndex > 0 ? ECOM_L1_QUESTIONS[questionIndex - 1] : null;
+    getQuestionById(id) || domainQuestions.find((q) => q.id === id) || domainQuestions[0];
+  const questionIndex = domainQuestions.findIndex((q) => q.id === question.id);
+  const prevQuestion = questionIndex > 0 ? domainQuestions[questionIndex - 1] : null;
   const nextQuestion =
-    questionIndex < ECOM_L1_QUESTIONS.length - 1
-      ? ECOM_L1_QUESTIONS[questionIndex + 1]
+    questionIndex < domainQuestions.length - 1
+      ? domainQuestions[questionIndex + 1]
       : null;
 
   // Editor and execution state
@@ -156,7 +158,10 @@ export default function QuestionWorkspacePage({
       const res = await fetch(`/api/questions/${id}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sql }),
+        body: JSON.stringify({
+          sql,
+          schema: `${domain === "ecommerce" ? "ecom" : domain}_l${cleanLevel}`,
+        }),
       });
       const data = await res.json();
       setRunResult(data);
@@ -332,7 +337,7 @@ export default function QuestionWorkspacePage({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="px-2 text-xs font-mono font-bold text-[var(--ink)]">
-              {question.order} / {ECOM_L1_QUESTIONS.length}
+              {question.order} / {domainQuestions.length}
             </span>
             <button
               disabled={!nextQuestion}
@@ -572,9 +577,9 @@ export default function QuestionWorkspacePage({
             {activeLeftTab === "schema" && (
               <div className="space-y-4">
                 <p className="text-xs font-semibold text-[var(--ink)] opacity-80">
-                  Quick schema lookup for E-Commerce Level 1 tables:
+                  Quick schema lookup for {office.company.name} tables:
                 </p>
-                {ECOM_L1_OFFICE_METADATA.schema.map((tbl) => (
+                {office.schema.map((tbl) => (
                   <div
                     key={tbl.name}
                     className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-3 space-y-2 text-xs"

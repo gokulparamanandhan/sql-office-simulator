@@ -20,8 +20,8 @@ import {
   HelpCircle,
   ExternalLink,
 } from "lucide-react";
-import { ECOM_L1_OFFICE_METADATA } from "@/lib/office/office-metadata";
-import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
+import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
+import { getQuestionsForDomainAndLevel } from "@/lib/content/content-registry";
 
 export default function OfficeLevelPage({
   params,
@@ -30,10 +30,13 @@ export default function OfficeLevelPage({
 }) {
   const router = useRouter();
   const { domain, level } = use(params);
-  const cleanLevel = (level || "1").replace(/^level-/, "");
+  const cleanLevel = (!level || level === "level-undefined" || level === "undefined") ? "1" : level.replace(/^level-/, "");
   const levelRoute = `level-${cleanLevel}`;
+  const office = getDomainOfficeMetadata(domain);
+  const questions = getQuestionsForDomainAndLevel(domain, parseInt(cleanLevel, 10));
+
   const [activeTab, setActiveTab] = useState<"inbox" | "team" | "schema">("inbox");
-  const [selectedTable, setSelectedTable] = useState<string>("customers");
+  const [selectedTable, setSelectedTable] = useState<string>(office.schema[0]?.name || "customers");
 
   // In local browser state, track which questions are solved
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
@@ -67,10 +70,10 @@ export default function OfficeLevelPage({
   };
 
   const solvedCount = Object.values(solvedMap).filter(Boolean).length;
-  const totalQuestions = ECOM_L1_QUESTIONS.length;
-  const company = ECOM_L1_OFFICE_METADATA.company;
-  const team = ECOM_L1_OFFICE_METADATA.team;
-  const schema = ECOM_L1_OFFICE_METADATA.schema;
+  const totalQuestions = questions.length;
+  const company = office.company;
+  const team = office.team;
+  const schema = office.schema;
 
   const currentTableDef = schema.find((t) => t.name === selectedTable) || schema[0];
 
@@ -126,7 +129,7 @@ export default function OfficeLevelPage({
             </div>
 
             <Link
-              href={`/office/${domain}/${levelRoute}/question/${ECOM_L1_QUESTIONS[0].id}`}
+              href={`/office/${domain}/${levelRoute}/question/${questions[0]?.id || "ecom-L1-001"}`}
               className="btn-primary text-xs py-2 px-3.5"
             >
               <span>Open First Request</span>
@@ -205,7 +208,7 @@ export default function OfficeLevelPage({
             </div>
 
             <div className="divide-y divide-[var(--sky)]">
-              {ECOM_L1_QUESTIONS.map((q) => {
+              {questions.map((q) => {
                 const isSolved = Boolean(solvedMap[q.id]);
                 return (
                   <Link

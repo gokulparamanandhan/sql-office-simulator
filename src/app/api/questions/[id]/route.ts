@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
+import { getQuestionById } from "@/lib/content/content-registry";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const question = ECOM_L1_QUESTIONS.find((q) => q.id === id);
+  const question = getQuestionById(id);
 
   if (!question) {
     return NextResponse.json({ error: "Question not found." }, { status: 404 });

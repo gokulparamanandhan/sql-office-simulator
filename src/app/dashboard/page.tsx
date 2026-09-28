@@ -323,6 +323,18 @@ export default function DashboardPage() {
         <div className="bg-[var(--mist)] border border-[var(--sky)] rounded-xl p-4 text-center text-xs font-bold text-[var(--ink)]">
           &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo; — The SQL Office Simulator Team
         </div>
+
+        <footer className="pt-4 pb-6 text-center text-xs text-[var(--ink)] opacity-75 flex flex-wrap items-center justify-center gap-4">
+          <Link href="/terms" className="hover:underline font-bold">
+            Terms & Honor Code
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:underline font-bold">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <span>© 2026 SQL Office Simulator • 100% Free Forever</span>
+        </footer>
       </main>
     </div>
   );

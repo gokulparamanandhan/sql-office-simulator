@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSubmission } from "@/lib/sandbox/validation-engine";
-import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
+import { getQuestionById } from "@/lib/content/content-registry";
 import { getCurrentUser } from "@/lib/auth/auth-service";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { getAppConfig } from "@/lib/config/app-config";
@@ -41,7 +41,7 @@ export async function POST(
       );
     }
 
-    const question = ECOM_L1_QUESTIONS.find((q) => q.id === id);
+    const question = getQuestionById(id);
     if (!question) {
       return NextResponse.json(
         { error: `Question with ID '${id}' not found.` },

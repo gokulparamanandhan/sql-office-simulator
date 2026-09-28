@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
+import { getQuestionsForDomainAndLevel } from "@/lib/content/content-registry";
 import { isQuestionActive } from "@/lib/reports/report-service";
 
 export async function GET(
@@ -7,9 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const domain = req.nextUrl.searchParams.get("domain") || "ecommerce";
+  const levelNum = parseInt(id.replace(/\D/g, "") || "1", 10);
+
+  const rawQuestions = getQuestionsForDomainAndLevel(domain, levelNum);
 
   // Filter out any question that has been auto-hidden or deactivated
-  const activeQuestions = ECOM_L1_QUESTIONS.filter((q) => isQuestionActive(q.id));
+  const activeQuestions = rawQuestions.filter((q) => isQuestionActive(q.id));
 
   const safeQuestions = activeQuestions.map((q) => ({
     id: q.id,
@@ -24,6 +28,7 @@ export async function GET(
 
   return NextResponse.json({
     levelId: id,
+    domain,
     questions: safeQuestions,
   });
 }
