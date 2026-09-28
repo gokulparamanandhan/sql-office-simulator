@@ -1,69 +1,671 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Building2,
+  Database,
+  ShieldCheck,
+  Terminal,
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  Server,
+  Layers,
+  Users,
+  Briefcase,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Award,
+  Zap,
+} from "lucide-react";
+
+interface DatabaseHealth {
+  status: "connected" | "disconnected";
+  latencyMs?: number;
+  version?: string;
+  error?: string;
+}
 
 export default function Home() {
+  const [dbHealth, setDbHealth] = useState<{
+    appDb: DatabaseHealth;
+    sandboxDb: DatabaseHealth;
+    loading: boolean;
+  }>({
+    appDb: { status: "disconnected" },
+    sandboxDb: { status: "disconnected" },
+    loading: true,
+  });
+
+  const [activeDomainTab, setActiveDomainTab] = useState<string>("ecommerce");
+
+  useEffect(() => {
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data) => {
+        setDbHealth({
+          appDb: data.databases?.appDb || { status: "disconnected" },
+          sandboxDb: data.databases?.sandboxDb || { status: "disconnected" },
+          loading: false,
+        });
+      })
+      .catch((err) => {
+        setDbHealth({
+          appDb: { status: "disconnected", error: String(err) },
+          sandboxDb: { status: "disconnected", error: String(err) },
+          loading: false,
+        });
+      });
+  }, []);
+
+  const domains = [
+    {
+      id: "ecommerce",
+      name: "E-Commerce",
+      tagline: "OmniCart Retail Group",
+      desc: "Analyze customer repeat rates, warehouse returns, basket sizes, and regional marketing attribution.",
+      tables: ["customers", "orders", "order_items", "products", "shipments", "returns"],
+      sampleStakeholder: "Maya Lin, Head of Growth",
+      sampleRequest: "Which regions have the highest share of customers who ordered more than once in 2025?",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "healthcare",
+      name: "Healthcare",
+      tagline: "St. Jude Clinical Network",
+      desc: "Query patient treatment histories, emergency room admission wait times, and insurance claim loss ratios.",
+      tables: ["patients", "appointments", "doctors", "diagnoses", "prescriptions", "billing"],
+      sampleStakeholder: "Dr. Robert Vance, Chief Medical Officer",
+      sampleRequest: "Identify the top 5 medication interaction alerts that were overridden in Q3.",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "finance",
+      name: "Finance & Banking",
+      tagline: "Apex Capital Bank",
+      desc: "Audit high-frequency debit card fraud spikes, cross-border remittance fees, and loan default indicators.",
+      tables: ["accounts", "customers", "transactions", "loans", "cards", "fraud_alerts"],
+      sampleStakeholder: "Elena Rostova, VP Risk Management",
+      sampleRequest: "Flag all merchant categories showing a >40% surge in chargeback disputes this month.",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "hr",
+      name: "Human Resources",
+      tagline: "Vanguard Global HR",
+      desc: "Calculate engineering attrition cohorts, compensation equity ratios, and hiring funnel velocity.",
+      tables: ["employees", "departments", "salaries", "attendance", "performance_reviews"],
+      sampleStakeholder: "Marcus Chen, Chief People Officer",
+      sampleRequest: "Calculate median tenure by department for managers vs individual contributors.",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "logistics",
+      name: "Logistics & Supply",
+      tagline: "Atlas Freight Solutions",
+      desc: "Track carrier route delays, container dwell time, fleet telematics, and warehouse dock utilization.",
+      tables: ["shipments", "vehicles", "drivers", "routes", "warehouses", "delivery_events"],
+      sampleStakeholder: "David O'Connor, Dispatch Director",
+      sampleRequest: "Rank the top 3 bottlenecks in our Midwest fulfillment hub by average dwell hours.",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "restaurants",
+      name: "Restaurants & Hospitality",
+      tagline: "Palate Group Dining",
+      desc: "Audit peak-hour table turn times, food waste margins, supplier contract variances, and tips.",
+      tables: ["restaurants", "menu_items", "orders", "staff", "shifts", "reservations"],
+      sampleStakeholder: "Chef Julian Rossi, Culinary Director",
+      sampleRequest: "Which signature entrees had the lowest margin-to-labor ratio during dinner rushes?",
+      xp: "500 Questions • 5 Levels",
+    },
+    {
+      id: "saas",
+      name: "Software (B2B SaaS)",
+      tagline: "CloudScale Platform",
+      desc: "Analyze annual recurring revenue (ARR), seat expansions, monthly churn cohorts, and feature adoption.",
+      tables: ["users", "accounts", "subscriptions", "feature_usage", "incidents", "invoices"],
+      sampleStakeholder: "Alicia Torres, VP Product",
+      sampleRequest: "Find organizations whose active seats dropped by >25% in the 30 days before renewal.",
+      xp: "500 Questions • 5 Levels",
+    },
+  ];
+
+  const levels = [
+    {
+      num: 1,
+      name: "The Startup",
+      scale: "5–20 employees",
+      rows: "1K–10K rows",
+      role: "Solo Data Generalist",
+      desc: "You are the first data hire. Answer leadership's daily questions covering every department.",
+      concepts: "SELECT, WHERE, GROUP BY, HAVING, basic INNER/LEFT JOIN, aggregates",
+    },
+    {
+      num: 2,
+      name: "Growing Company",
+      scale: "50–100 employees",
+      rows: "~100K rows",
+      role: "Junior Data Analyst",
+      desc: "Dedicated functional teams, expanding database schemas, and multi-table business reconciliations.",
+      concepts: "Multi-table JOINs, subqueries, CTEs, CASE WHEN, date/string functions, UNION",
+    },
+    {
+      num: 3,
+      name: "Scale-Up",
+      scale: "200–500 employees",
+      rows: "~1M rows",
+      role: "Senior Data Analyst",
+      desc: "Multiple international regions and high-velocity transactional databases. Analytical depth required.",
+      concepts: "Window functions (ROW_NUMBER, RANK, LAG/LEAD), conditional aggregation, cohorts",
+    },
+    {
+      num: 4,
+      name: "Enterprise",
+      scale: "1,000+ employees",
+      rows: "~5M rows",
+      role: "Lead Analytics Engineer",
+      desc: "Messy, fragmented data across merged business units. Performance-aware and investigative queries.",
+      concepts: "Recursive CTEs, complex window frames, gaps & islands, deduplication, EXPLAIN",
+    },
+    {
+      num: 5,
+      name: "Global Corporation",
+      scale: "5,000+ employees",
+      rows: "10M+ rows",
+      role: "Head of Data / Principal",
+      desc: "Multinational conglomerate, billions in revenue, slowly changing dimensions, and C-suite asks.",
+      concepts: "Query optimization, percentiles, moving averages, YoY/MoM, SCD, cross-system audits",
+    },
+  ];
+
+  const selectedDomain = domains.find((d) => d.id === activeDomainTab) || domains[0];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
+      {/* Top Office Header */}
+      <header className="sticky top-0 z-50 bg-[var(--white)] border-b-2 border-[var(--sky)] px-4 sm:px-8 py-3.5 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[var(--ocean)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
+              <Building2 className="w-5 h-5 text-[var(--ink)]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-lg tracking-tight text-[var(--ink)]">
+                  SQL OFFICE SIMULATOR
+                </span>
+                <span className="bg-[var(--sun)] text-[var(--ink)] border border-[var(--ink)] text-xs font-bold px-2 py-0.5 rounded-full">
+                  FREE
+                </span>
+              </div>
+              <p className="text-xs text-[var(--ink)] opacity-75 font-medium">
+                Phase 0 Foundation • Real SQL Workplace
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Honor Pledge Badge */}
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-semibold text-[var(--ink)]">
+              <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
+              <span>Honor Code: Human SQL Only</span>
+            </div>
+
+            {/* Live DB Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--white)] border border-[var(--sky)] text-xs font-medium">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  dbHealth.sandboxDb.status === "connected"
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-amber-400"
+                }`}
+              />
+              <span className="text-[var(--ink)]">
+                {dbHealth.loading
+                  ? "Pinging DBs..."
+                  : dbHealth.sandboxDb.status === "connected"
+                  ? "PostgreSQL Ready"
+                  : "PostgreSQL Local"}
+              </span>
+            </div>
+
+            <button
+              onClick={() => alert("Google OAuth will be connected in Phase 1 (Auth & Data Model).")}
+              className="btn-primary text-xs py-2 px-3.5"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Sign In with Google
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-12">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden rounded-2xl bg-[var(--white)] border-2 border-[var(--sky)] p-6 sm:p-10 shadow-[4px_4px_0px_var(--ocean)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-xs font-extrabold text-[var(--ink)] shadow-[1px_1px_0px_var(--ink)]">
+                <Sparkles className="w-3.5 h-3.5 text-[var(--ink)]" />
+                <span>3,500 Real-World Business Challenges</span>
+              </div>
+
+              <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-[var(--ink)]">
+                Learn SQL by working inside a simulated company.
+              </h1>
+
+              <p className="text-base sm:text-lg text-[var(--ink)] opacity-90 leading-relaxed">
+                Forget artificial textbook puzzles. Inside the SQL Office Simulator, you are the company’s data analyst.
+                Executives, VPs, and managers send you urgent requests—you inspect real schemas, write SQL queries, and deliver answers.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <a
+                  href="#domains"
+                  className="btn-primary"
+                >
+                  <Briefcase className="w-4 h-4 text-[var(--ink)]" />
+                  <span>Choose Your Industry Domain</span>
+                  <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
+                </a>
+
+                <a
+                  href="#career"
+                  className="btn-secondary"
+                >
+                  <span>Explore 5 Career Levels</span>
+                </a>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--sky)]">
+                <div>
+                  <div className="text-2xl font-black text-[var(--ink)]">7</div>
+                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
+                    Industry Domains
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-[var(--ink)]">5 Levels</div>
+                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
+                    Startup to Global Corp
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-[var(--ink)]">100% Free</div>
+                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
+                    No Paywalls or Subscriptions
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Simulated Slack/Inbox Card */}
+            <div className="lg:col-span-5">
+              <div className="bg-[var(--surface)] border-2 border-[var(--ink)] rounded-xl p-5 shadow-[4px_4px_0px_var(--ink)] space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--sky)] pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-rose-400 border border-[var(--ink)]" />
+                    <span className="w-3 h-3 rounded-full bg-amber-400 border border-[var(--ink)]" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400 border border-[var(--ink)]" />
+                    <span className="text-xs font-bold text-[var(--ink)] ml-2">
+                      INBOX • PRIORITY REQUEST
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
+                    Level 1 • Startup
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[var(--ocean)] border-2 border-[var(--ink)] flex items-center justify-center font-bold text-sm text-[var(--ink)] shrink-0">
+                      ML
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-[var(--ink)]">Maya Lin</span>
+                        <span className="text-xs text-[var(--ink)] opacity-75">
+                          Head of Growth
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--ink)] opacity-70">Today at 10:14 AM</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--white)] border border-[var(--sky)] rounded-lg p-3 text-xs text-[var(--ink)] leading-relaxed space-y-2">
+                    <p className="font-bold text-[var(--ink)]">
+                      Subject: Repeat buyers by region for Q3 loyalty push
+                    </p>
+                    <p>
+                      &quot;We&apos;re planning next month&apos;s loyalty campaign. Which regions have the highest share of customers who ordered more than once in 2025? Exclude cancelled orders.&quot;
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {["JOIN", "GROUP BY", "HAVING", "subquery"].map((concept) => (
+                      <span
+                        key={concept}
+                        className="text-[11px] font-bold bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)] px-2 py-0.5 rounded"
+                      >
+                        {concept}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between text-xs font-semibold text-[var(--ink)]">
+                    <span className="flex items-center gap-1 text-[var(--ink)]">
+                      <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> +20 XP on completion
+                    </span>
+                    <span className="text-[var(--ink)] opacity-70">Est. 8 mins</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 7 Domains Section */}
+        <section id="domains" className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[var(--ink)] opacity-75">
+                Practice in Your Target Field
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[var(--ink)] tracking-tight">
+                7 Industry Domains Available at Launch
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-[var(--ink)] opacity-80 max-w-md">
+              Each domain features 5 progressive company stages, 500 questions, and isolated PostgreSQL schemas.
+            </p>
+          </div>
+
+          {/* Domain Tabs */}
+          <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none">
+            {domains.map((dom) => (
+              <button
+                key={dom.id}
+                onClick={() => setActiveDomainTab(dom.id)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border-2 ${
+                  activeDomainTab === dom.id
+                    ? "bg-[var(--ocean)] text-[var(--ink)] border-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
+                    : "bg-[var(--white)] text-[var(--ink)] border-[var(--sky)] hover:bg-[var(--mist)]"
+                }`}
+              >
+                {dom.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Active Domain Spotlight Card */}
+          <div className="card-office bg-[var(--white)] border-2 border-[var(--ink)] shadow-[4px_4px_0px_var(--ocean)] p-6 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--sky)] pb-5">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-wide text-[var(--ocean-hover)]">
+                  Simulated Organization
+                </span>
+                <h3 className="text-2xl font-black text-[var(--ink)]">{selectedDomain.name}</h3>
+                <p className="text-sm font-semibold text-[var(--ink)] opacity-75">
+                  {selectedDomain.tagline}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
+                  {selectedDomain.xp}
+                </span>
+                <button
+                  onClick={() =>
+                    alert(`Starting ${selectedDomain.name} Level 1! Workspace UI will be active in Phase 2 & 3.`)
+                  }
+                  className="btn-primary text-xs py-2 px-4"
+                >
+                  Start Level 1
+                </button>
+              </div>
+            </div>
+
+            <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed">
+              {selectedDomain.desc}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-4 space-y-2">
+                <div className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-[var(--ink)]" />
+                  Primary Tables in Practice Sandbox
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {selectedDomain.tables.map((t) => (
+                    <span
+                      key={t}
+                      className="px-2.5 py-1 bg-[var(--white)] border border-[var(--sky)] rounded text-xs font-mono font-bold text-[var(--ink)]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-4 space-y-2">
+                <div className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-[var(--ink)]" />
+                  Sample Level 1 Stakeholder Request
+                </div>
+                <div className="text-xs font-bold text-[var(--ink)]">
+                  From: {selectedDomain.sampleStakeholder}
+                </div>
+                <p className="text-xs italic text-[var(--ink)] opacity-90">
+                  &quot;{selectedDomain.sampleRequest}&quot;
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5 Career Levels Progression */}
+        <section id="career" className="space-y-6">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-[var(--ink)] opacity-75">
+              Realistic Career Progression
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-[var(--ink)] tracking-tight">
+              5 Company Stages: From Tiny Startup to Global Corp
+            </h2>
+            <p className="text-sm text-[var(--ink)] opacity-80 mt-1">
+              Unlock rule: ≥ 70 of 100 correct, including ≥ 5 of the 10 boss questions.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {levels.map((lvl) => (
+              <div
+                key={lvl.num}
+                className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-4 flex flex-col justify-between space-y-3 hover:border-[var(--ocean)] transition-all"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="w-7 h-7 rounded-md bg-[var(--sun)] border border-[var(--ink)] flex items-center justify-center font-black text-xs text-[var(--ink)]">
+                      L{lvl.num}
+                    </span>
+                    <span className="text-[10px] font-bold text-[var(--ink)] opacity-70">
+                      100 Qs
+                    </span>
+                  </div>
+
+                  <h4 className="font-extrabold text-sm text-[var(--ink)]">{lvl.name}</h4>
+                  <div className="text-xs font-bold text-[var(--ocean-hover)]">{lvl.role}</div>
+                  <div className="text-[11px] font-semibold text-[var(--ink)] opacity-75">
+                    {lvl.scale} • {lvl.rows}
+                  </div>
+
+                  <p className="text-xs text-[var(--ink)] opacity-85 leading-snug">
+                    {lvl.desc}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--sky)] text-[11px] font-mono text-[var(--ink)] opacity-90 leading-tight">
+                  <span className="font-bold font-sans block text-[10px] text-[var(--ink)] opacity-60 uppercase">
+                    Core Focus
+                  </span>
+                  {lvl.concepts}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* System Architecture & Health Monitor (Phase 0 Acceptance Criteria) */}
+        <section className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--sky)] pb-4">
+            <div>
+              <div className="text-xs font-extrabold uppercase tracking-wide text-[var(--ink)] opacity-75">
+                Phase 0 Foundation Checklist
+              </div>
+              <h3 className="text-xl font-black text-[var(--ink)]">
+                Dual PostgreSQL Database Orchestration
+              </h3>
+            </div>
+            <button
+              onClick={() => {
+                setDbHealth((prev) => ({ ...prev, loading: true }));
+                fetch("/api/health")
+                  .then((res) => res.json())
+                  .then((data) => {
+                    setDbHealth({
+                      appDb: data.databases?.appDb || { status: "disconnected" },
+                      sandboxDb: data.databases?.sandboxDb || { status: "disconnected" },
+                      loading: false,
+                    });
+                  });
+              }}
+              className="btn-secondary text-xs py-2 px-3 self-start sm:self-auto"
             >
-              Learning
-            </a>{" "}
-            center.
+              <Server className="w-3.5 h-3.5 text-[var(--ink)]" />
+              <span>Refresh Connection Status</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* App Database Card */}
+            <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5 text-[var(--ink)]" />
+                  <span className="font-extrabold text-sm text-[var(--ink)]">
+                    Application DB (Port 5432)
+                  </span>
+                </div>
+                <span
+                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    dbHealth.appDb.status === "connected"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                      : "bg-amber-100 text-amber-800 border-amber-300"
+                  }`}
+                >
+                  {dbHealth.loading
+                    ? "Testing..."
+                    : dbHealth.appDb.status === "connected"
+                    ? `Connected (${dbHealth.appDb.latencyMs}ms)`
+                    : "Standby / Local"}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--ink)] opacity-80">
+                Manages users, Google OAuth identities, progress metrics, attempts log, streak tracking, and content metadata via Prisma ORM.
+              </p>
+              <div className="text-[11px] font-mono bg-[var(--white)] p-2 rounded border border-[var(--sky)] text-[var(--ink)]">
+                URL: postgresql://postgres:***@localhost:5432/sql_office_app
+              </div>
+            </div>
+
+            {/* Sandbox Database Card */}
+            <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-[var(--ink)]" />
+                  <span className="font-extrabold text-sm text-[var(--ink)]">
+                    Practice Sandbox DB (Port 5433)
+                  </span>
+                </div>
+                <span
+                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    dbHealth.sandboxDb.status === "connected"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                      : "bg-amber-100 text-amber-800 border-amber-300"
+                  }`}
+                >
+                  {dbHealth.loading
+                    ? "Testing..."
+                    : dbHealth.sandboxDb.status === "connected"
+                    ? `Connected (${dbHealth.sandboxDb.latencyMs}ms)`
+                    : "Standby / Local"}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--ink)] opacity-80">
+                Strict read-only role (`sandbox_readonly`), 5-second execution timeout, automatic transaction rollbacks, and isolated schemas per domain-level.
+              </p>
+              <div className="text-[11px] font-mono bg-[var(--white)] p-2 rounded border border-[var(--sky)] text-[var(--ink)]">
+                URL: postgresql://sandbox_readonly:***@localhost:5433/sql_office_sandbox
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[var(--mist)] rounded-xl p-4 border border-[var(--sky)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--white)] border border-[var(--ink)] flex items-center justify-center font-bold text-xs text-[var(--ink)]">
+                🐳
+              </div>
+              <div>
+                <div className="text-xs font-bold text-[var(--ink)]">
+                  Docker Compose Local Orchestration
+                </div>
+                <div className="text-xs text-[var(--ink)] opacity-75">
+                  Run <code className="bg-[var(--white)] px-1 rounded font-mono">docker compose up -d</code> to activate both local containers.
+                </div>
+              </div>
+            </div>
+            <div className="text-xs font-bold text-[var(--ink)]">
+              Phase 0 Acceptance: Foundation & Design Tokens Configured
+            </div>
+          </div>
+        </section>
+
+        {/* Honor Policy Section */}
+        <section className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--sun)] space-y-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-6 h-6 text-[var(--ink)]" />
+            <h3 className="text-xl font-black text-[var(--ink)]">
+              Our Honor Policy (No Proctoring, Just Real Honesty)
+            </h3>
+          </div>
+          <p className="text-sm text-[var(--ink)] leading-relaxed">
+            &ldquo;This simulator works only if you do the work yourself. Please don&apos;t use AI tools or copy solutions.
+            You&apos;re here to build real skills, and the only person you&apos;d be fooling is you. Be honest, and enjoy the learning.&rdquo;
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <div className="text-xs text-[var(--ink)] opacity-75 font-semibold">
+            We don&apos;t block copy/paste, track tab switching, or spy on your keystrokes. We treat you as a professional.
+          </div>
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-8 px-4 sm:px-8 mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[var(--ink)]">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-[var(--ink)]" />
+            <span>SQL Office Simulator • Spec v1.1 Implementation</span>
+          </div>
+          <div className="flex items-center gap-4 text-[var(--ink)] opacity-80">
+            <span>WCAG AA Contrast Verified</span>
+            <span>•</span>
+            <span>Palette: Sun, Mist, Sky, Ocean, Ink</span>
+            <span>•</span>
+            <span>Free Forever</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

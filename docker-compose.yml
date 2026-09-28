@@ -1,0 +1,41 @@
+services:
+  app-db:
+    image: postgres:16-alpine
+    container_name: sql_office_app_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: sql_office_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sql_office_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  sandbox-db:
+    image: postgres:16-alpine
+    container_name: sql_office_sandbox_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sandboxtopsecret
+      POSTGRES_DB: sql_office_sandbox
+    ports:
+      - "5433:5432"
+    volumes:
+      - sandbox_db_data:/var/lib/postgresql/data
+      - ./docker/init-sandbox.sql:/docker-entrypoint-initdb.d/init-sandbox.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sql_office_sandbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  app_db_data:
+  sandbox_db_data:

@@ -1,0 +1,215 @@
+// SQL Office Simulator - Prisma Schema (Section 10.4)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("APP_DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  passwordHash            String?   @map("password_hash")
+  name                    String
+  avatar                  String?
+  role                    String    @default("learner") // learner | admin
+  honorPledgeAcceptedAt   DateTime? @map("honor_pledge_accepted_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  domainProgress          UserDomainProgress[]
+  levelProgress           UserLevelProgress[]
+  attempts                Attempt[]
+  questionStates          QuestionState[]
+  userBadges              UserBadge[]
+  streak                  Streak?
+  questionReports         QuestionReport[]
+
+  @@map("users")
+}
+
+model Domain {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String
+  icon        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  levels      Level[]
+  userProgress UserDomainProgress[]
+
+  @@map("domains")
+}
+
+model Level {
+  id                 String   @id @default(uuid())
+  domainId           String   @map("domain_id")
+  number             Int      // 1 to 5
+  name               String   // e.g. "Easy: The Startup"
+  companyProfileJson Json     @map("company_profile_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  domain             Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  questions          Question[]
+  userProgress       UserLevelProgress[]
+
+  @@unique([domainId, number])
+  @@map("levels")
+}
+
+model Question {
+  id               String   @id // e.g. "ecom-L1-001"
+  levelId          String   @map("level_id")
+  order            Int
+  difficulty       String   // warm-up | core | challenging | boss
+  title            String
+  stakeholderJson  Json     @map("stakeholder_json")
+  request          String   @db.Text
+  contextNotes     String?  @map("context_notes") @db.Text
+  concepts         String[] // array of SQL concepts
+  expectedColumns  String[] @map("expected_columns")
+  referenceSql     String   @map("reference_sql") @db.Text
+  validationJson   Json     @map("validation_json")
+  hints            String[]
+  solutionMd       String   @map("solution_md") @db.Text
+  xp               Int      @default(10)
+  status           String   @default("active") // active | hidden | pending_regeneration
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  level            Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  attempts         Attempt[]
+  questionStates   QuestionState[]
+  reports          QuestionReport[]
+
+  @@unique([levelId, order])
+  @@map("questions")
+}
+
+model QuestionReport {
+  id         String   @id @default(uuid())
+  questionId String   @map("question_id")
+  userId     String   @map("user_id")
+  category   String   // wrong_answer | unclear_wording | data_issue | other
+  message    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_reports")
+}
+
+model UserDomainProgress {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  domainId     String   @map("domain_id")
+  currentLevel Int      @default(1) @map("current_level")
+  totalXp      Int      @default(0) @map("total_xp")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain       Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, domainId])
+  @@map("user_domain_progress")
+}
+
+model UserLevelProgress {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  levelId         String    @map("level_id")
+  solvedCount     Int       @default(0) @map("solved_count")
+  bossSolvedCount Int       @default(0) @map("boss_solved_count")
+  unlocked        Boolean   @default(false)
+  completedAt     DateTime? @map("completed_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level           Level     @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, levelId])
+  @@map("user_level_progress")
+}
+
+model Attempt {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  questionId   String   @map("question_id")
+  submittedSql String   @map("submitted_sql") @db.Text
+  isCorrect    Boolean  @map("is_correct")
+  feedbackCode String   @map("feedback_code") // e.g. success, row_count_mismatch, column_mismatch
+  durationMs   Int      @map("duration_ms")
+  hintsUsed    Int      @default(0) @map("hints_used")
+  submittedAt  DateTime @default(now()) @map("submitted_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("attempts")
+}
+
+model QuestionState {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  questionId     String    @map("question_id")
+  status         String    @default("unattempted") // unattempted | attempted | solved
+  bestXp         Int       @default(0) @map("best_xp")
+  firstSolvedAt  DateTime? @map("first_solved_at")
+  hintsUsed      Int       @default(0) @map("hints_used")
+  solutionViewed Boolean   @default(false) @map("solution_viewed")
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@map("question_state")
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  slug        String      @unique
+  name        String
+  description String
+  icon        String?
+
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  badgeId   String   @map("badge_id")
+  earnedAt  DateTime @default(now()) @map("earned_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model Streak {
+  id             String    @id @default(uuid())
+  userId         String    @unique @map("user_id")
+  currentStreak  Int       @default(0) @map("current_streak")
+  longestStreak  Int       @default(0) @map("longest_streak")
+  lastActiveDate DateTime? @map("last_active_date")
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+model AppConfig {
+  key       String   @id
+  valueJson Json     @map("value_json")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
+}
