@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Building2,
   Database,
@@ -231,12 +232,18 @@ export default function Home() {
               </span>
             </div>
 
-            <button
-              onClick={() => alert("Google OAuth will be connected in Phase 1 (Auth & Data Model).")}
+            <Link
+              href="/auth/login"
+              className="btn-secondary text-xs py-2 px-3.5"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/auth/signup"
               className="btn-primary text-xs py-2 px-3.5"
             >
-              Sign In with Google
-            </button>
+              Sign Up
+            </Link>
           </div>
         </div>
       </header>
