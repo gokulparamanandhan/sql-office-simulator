@@ -128,3 +128,19 @@ export async function runSandboxQuery(
     }
   }
 }
+
+export async function executeInSandbox(
+  sql: string,
+  schema: string = "ecom_l1",
+  maxRows: number = 100
+) {
+  const result = await runSandboxQuery(sql, schema, maxRows);
+  return {
+    success: !result.error,
+    columns: result.columns,
+    rows: result.rows,
+    rowCount: result.rowCount,
+    durationMs: result.durationMs,
+    error: result.error,
+  };
+}

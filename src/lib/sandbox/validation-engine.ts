@@ -74,6 +74,46 @@ function stringifyRowCanonical(row: Record<string, unknown>, tolerance: number):
   return JSON.stringify(values);
 }
 
+export function compareResultSets(
+  actualRows: Record<string, unknown>[],
+  expectedRows: Record<string, unknown>[],
+  orderSensitive: boolean = false,
+  tolerance: number = 0.01
+): { match: boolean; reason?: string } {
+  if (actualRows.length !== expectedRows.length) {
+    return {
+      match: false,
+      reason: `Row count mismatch: got ${actualRows.length}, expected ${expectedRows.length}`,
+    };
+  }
+
+  if (orderSensitive) {
+    for (let i = 0; i < actualRows.length; i++) {
+      if (!compareRow(actualRows[i], expectedRows[i], tolerance)) {
+        return { match: false, reason: `Value/order mismatch at row ${i + 1}` };
+      }
+    }
+    return { match: true };
+  }
+
+  const expectedBag = new Map<string, number>();
+  for (const r of expectedRows) {
+    const key = stringifyRowCanonical(r, tolerance);
+    expectedBag.set(key, (expectedBag.get(key) || 0) + 1);
+  }
+
+  for (let i = 0; i < actualRows.length; i++) {
+    const key = stringifyRowCanonical(actualRows[i], tolerance);
+    const count = expectedBag.get(key) || 0;
+    if (count <= 0) {
+      return { match: false, reason: `Unexpected row values at index ${i + 1}` };
+    }
+    expectedBag.set(key, count - 1);
+  }
+
+  return { match: true };
+}
+
 export async function validateSubmission(
   learnerSql: string,
   question: QuestionDefinition,

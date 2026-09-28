@@ -1,33 +1,4 @@
-export interface QuestionDefinition {
-  id: string;
-  domain: string;
-  level: number;
-  order: number;
-  difficulty: "warm-up" | "core" | "challenging" | "boss";
-  title: string;
-  stakeholder: {
-    name: string;
-    role: string;
-  };
-  request: string;
-  context_notes: string;
-  concepts: string[];
-  expected_columns: string[];
-  reference_sql: string;
-  validation: {
-    order_sensitive: boolean;
-    column_names_sensitive: boolean;
-    numeric_tolerance: number;
-  };
-  hints: string[];
-  solution_explanation: string;
-  xp: number;
-  estimated_minutes: number;
-}
-
-// 100 Automated-Gate Validated Questions for E-Commerce Level 1
-// Generated via Content Pipeline (Spec Section 7.3)
-export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
+[
   {
     "id": "ecom-L1-001",
     "domain": "ecommerce",
@@ -3950,4 +3921,4 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "xp": 60,
     "estimated_minutes": 15
   }
-];
+]
