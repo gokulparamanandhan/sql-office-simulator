@@ -46,6 +46,8 @@ export default function QuestionWorkspacePage({
 }) {
   const router = useRouter();
   const { domain, level, id } = use(params);
+  const cleanLevel = (level || "1").replace(/^level-/, "");
+  const levelRoute = `level-${cleanLevel}`;
 
   const question =
     ECOM_L1_QUESTIONS.find((q) => q.id === id) || ECOM_L1_QUESTIONS[0];
@@ -251,7 +253,7 @@ export default function QuestionWorkspacePage({
       <header className="bg-[var(--white)] border-b-2 border-[var(--sky)] px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <Link
-            href={`/office/${domain}/level-${level}`}
+            href={`/office/${domain}/${levelRoute}`}
             className="p-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-[var(--ink)] transition-colors flex items-center gap-1.5 text-xs font-bold"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -289,7 +291,7 @@ export default function QuestionWorkspacePage({
               onClick={() =>
                 prevQuestion &&
                 router.push(
-                  `/office/${domain}/level-${level}/question/${prevQuestion.id}`
+                  `/office/${domain}/${levelRoute}/question/${prevQuestion.id}`
                 )
               }
               className="p-1.5 text-[var(--ink)] hover:bg-[var(--mist)] disabled:opacity-40 transition-colors"
@@ -305,7 +307,7 @@ export default function QuestionWorkspacePage({
               onClick={() =>
                 nextQuestion &&
                 router.push(
-                  `/office/${domain}/level-${level}/question/${nextQuestion.id}`
+                  `/office/${domain}/${levelRoute}/question/${nextQuestion.id}`
                 )
               }
               className="p-1.5 text-[var(--ink)] hover:bg-[var(--mist)] disabled:opacity-40 transition-colors"
@@ -681,7 +683,7 @@ export default function QuestionWorkspacePage({
                     <button
                       onClick={() =>
                         router.push(
-                          `/office/${domain}/level-${level}/question/${nextQuestion.id}`
+                          `/office/${domain}/${levelRoute}/question/${nextQuestion.id}`
                         )
                       }
                       className="btn-primary text-xs py-1 px-2.5"

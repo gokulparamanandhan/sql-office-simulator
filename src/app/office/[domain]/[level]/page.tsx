@@ -30,6 +30,8 @@ export default function OfficeLevelPage({
 }) {
   const router = useRouter();
   const { domain, level } = use(params);
+  const cleanLevel = (level || "1").replace(/^level-/, "");
+  const levelRoute = `level-${cleanLevel}`;
   const [activeTab, setActiveTab] = useState<"inbox" | "team" | "schema">("inbox");
   const [selectedTable, setSelectedTable] = useState<string>("customers");
 
@@ -39,14 +41,14 @@ export default function OfficeLevelPage({
   useEffect(() => {
     // Load solved states from localStorage
     try {
-      const stored = localStorage.getItem(`sql_office_${domain}_l${level}_solved`);
+      const stored = localStorage.getItem(`sql_office_${domain}_l${cleanLevel}_solved`);
       if (stored) {
         setSolvedMap(JSON.parse(stored));
       }
     } catch {
       // Ignore
     }
-  }, [domain, level]);
+  }, [domain, cleanLevel]);
 
   const solvedCount = Object.values(solvedMap).filter(Boolean).length;
   const totalQuestions = ECOM_L1_QUESTIONS.length;
@@ -99,7 +101,7 @@ export default function OfficeLevelPage({
             </div>
 
             <Link
-              href={`/office/${domain}/level-${level}/question/${ECOM_L1_QUESTIONS[0].id}`}
+              href={`/office/${domain}/${levelRoute}/question/${ECOM_L1_QUESTIONS[0].id}`}
               className="btn-primary text-xs py-2 px-3.5"
             >
               <span>Open First Request</span>
@@ -183,7 +185,7 @@ export default function OfficeLevelPage({
                 return (
                   <Link
                     key={q.id}
-                    href={`/office/${domain}/level-${level}/question/${q.id}`}
+                    href={`/office/${domain}/${levelRoute}/question/${q.id}`}
                     className={`block p-4 sm:p-5 transition-all hover:bg-[var(--surface)] ${
                       isSolved ? "bg-emerald-50/40" : ""
                     }`}
