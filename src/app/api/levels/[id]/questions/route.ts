@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
+import { isQuestionActive } from "@/lib/reports/report-service";
 
 export async function GET(
   req: NextRequest,
@@ -7,8 +8,10 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  // For Phase 2 vertical slice, returns E-Commerce Level 1 questions
-  const safeQuestions = ECOM_L1_QUESTIONS.map((q) => ({
+  // Filter out any question that has been auto-hidden or deactivated
+  const activeQuestions = ECOM_L1_QUESTIONS.filter((q) => isQuestionActive(q.id));
+
+  const safeQuestions = activeQuestions.map((q) => ({
     id: q.id,
     order: q.order,
     difficulty: q.difficulty,

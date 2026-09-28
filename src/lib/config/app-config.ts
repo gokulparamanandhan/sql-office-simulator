@@ -15,6 +15,7 @@ export interface UnlockRuleConfig {
   hintPenaltyPct: number;
   maxAttemptsBeforeSolution: number;
   rateLimitSeconds: number;
+  reportAutoHideThreshold: number;
 }
 
 const DEFAULT_CONFIG: UnlockRuleConfig = {
@@ -23,6 +24,7 @@ const DEFAULT_CONFIG: UnlockRuleConfig = {
   hintPenaltyPct: 0.25,
   maxAttemptsBeforeSolution: 3,
   rateLimitSeconds: 5,
+  reportAutoHideThreshold: 3,
 };
 
 // In-memory / cache fallback for fast evaluation
@@ -42,6 +44,8 @@ export async function getAppConfig(): Promise<UnlockRuleConfig> {
         maxAttemptsBeforeSolution:
           json.max_attempts_before_solution ?? DEFAULT_CONFIG.maxAttemptsBeforeSolution,
         rateLimitSeconds: json.rate_limit_seconds ?? DEFAULT_CONFIG.rateLimitSeconds,
+        reportAutoHideThreshold:
+          json.report_auto_hide_threshold ?? DEFAULT_CONFIG.reportAutoHideThreshold,
       };
     }
   } catch {
@@ -68,6 +72,7 @@ export async function updateAppConfig(
           hint_penalty_pct: cachedConfig.hintPenaltyPct,
           max_attempts_before_solution: cachedConfig.maxAttemptsBeforeSolution,
           rate_limit_seconds: cachedConfig.rateLimitSeconds,
+          report_auto_hide_threshold: cachedConfig.reportAutoHideThreshold,
         },
       },
       create: {
@@ -78,6 +83,7 @@ export async function updateAppConfig(
           hint_penalty_pct: cachedConfig.hintPenaltyPct,
           max_attempts_before_solution: cachedConfig.maxAttemptsBeforeSolution,
           rate_limit_seconds: cachedConfig.rateLimitSeconds,
+          report_auto_hide_threshold: cachedConfig.reportAutoHideThreshold,
         },
       },
     });

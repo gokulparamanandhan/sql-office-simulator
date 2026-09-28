@@ -114,10 +114,19 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Honor Pledge Badge */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-bold text-[var(--ink)]">
-              <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
-              <span>Honor Pledged</span>
+            {/* Honor Pledge Badge & Admin QA */}
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-bold text-[var(--ink)]">
+                <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
+                <span>Honor Pledged</span>
+              </div>
+              <Link
+                href="/admin"
+                className="px-2.5 py-1 rounded-full border border-[var(--sky)] bg-[var(--surface)] hover:bg-[var(--mist)] text-[11px] font-bold text-[var(--ink)] transition-colors"
+                title="QA Reports & Platform Thresholds"
+              >
+                Admin QA
+              </Link>
             </div>
 
             {/* Streak & XP */}

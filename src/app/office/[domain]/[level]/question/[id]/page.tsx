@@ -100,6 +100,9 @@ export default function QuestionWorkspacePage({
   const [reportCategory, setReportCategory] = useState<string>("unclear_wording");
   const [reportMessage, setReportMessage] = useState<string>("");
   const [reportSubmitted, setReportSubmitted] = useState<boolean>(false);
+  const [reportLoading, setReportLoading] = useState<boolean>(false);
+  const [reportError, setReportError] = useState<string>("");
+  const [reportMessageText, setReportMessageText] = useState<string>("");
 
   // Celebration state
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
@@ -238,13 +241,42 @@ export default function QuestionWorkspacePage({
   };
 
   // Submit Question Report
-  const handleSendReport = () => {
-    setReportSubmitted(true);
-    setTimeout(() => {
-      setReportModalOpen(false);
-      setReportSubmitted(false);
-      setReportMessage("");
-    }, 1500);
+  const handleSendReport = async () => {
+    if (!reportMessage.trim()) {
+      setReportError("Please enter a brief note describing the issue.");
+      return;
+    }
+    setReportLoading(true);
+    setReportError("");
+    try {
+      const res = await fetch(`/api/questions/${question.id}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: reportCategory,
+          message: reportMessage,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setReportError(data.error || "Failed to submit report.");
+      } else {
+        setReportSubmitted(true);
+        setReportMessageText(
+          data.message || "Thank you! Your report has been submitted to the QA queue."
+        );
+        setTimeout(() => {
+          setReportModalOpen(false);
+          setReportSubmitted(false);
+          setReportMessage("");
+          setReportError("");
+        }, 2200);
+      }
+    } catch {
+      setReportError("Network error while submitting report.");
+    } finally {
+      setReportLoading(false);
+    }
   };
 
   return (
@@ -763,6 +795,32 @@ export default function QuestionWorkspacePage({
         </div>
       </div>
 
+      {/* WORKSPACE FOOTER - HONOR POLICY REMINDER (SPEC SECTION 8) */}
+      <footer className="bg-[var(--white)] border-t border-[var(--sky)] px-4 py-2 flex flex-wrap items-center justify-between text-xs text-[var(--ink)] shrink-0 gap-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-bold text-[11px] opacity-80">Sandbox: PostgreSQL 16 (Read-Only)</span>
+        </div>
+
+        <div className="flex items-center gap-2 text-[var(--ink)] font-medium text-xs">
+          <span>🛡️</span>
+          <span className="italic font-semibold text-[var(--ink)]">
+            "Solve it yourself. That's where the learning happens."
+          </span>
+          <span className="opacity-50 text-[10px] hidden md:inline">— SQL Office Honor Policy</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setReportModalOpen(true)}
+            className="text-xs font-bold text-[var(--ink)] opacity-75 hover:opacity-100 hover:text-[var(--ocean-hover)] flex items-center gap-1.5 transition-colors"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            Report Issue
+          </button>
+        </div>
+      </footer>
+
       {/* REPORT ISSUE MODAL */}
       {reportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -781,11 +839,22 @@ export default function QuestionWorkspacePage({
             </div>
 
             {reportSubmitted ? (
-              <div className="text-center py-6 text-emerald-700 font-bold text-xs">
-                ✅ Thank you! Your report has been submitted to the QA queue.
+              <div className="text-center py-6 space-y-2">
+                <div className="text-emerald-700 font-bold text-sm">
+                  ✅ {reportMessageText || "Report Submitted"}
+                </div>
+                <p className="text-xs text-[var(--ink)] opacity-70">
+                  Our quality assurance pipeline monitors reported questions to maintain standard coverage.
+                </p>
               </div>
             ) : (
               <div className="space-y-3 text-xs">
+                {reportError && (
+                  <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                    {reportError}
+                  </div>
+                )}
+
                 <div>
                   <label className="block font-bold text-[var(--ink)] mb-1">
                     Issue Category
@@ -793,7 +862,7 @@ export default function QuestionWorkspacePage({
                   <select
                     value={reportCategory}
                     onChange={(e) => setReportCategory(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-[var(--sky)] rounded-lg text-xs font-semibold text-[var(--ink)]"
+                    className="w-full px-3 py-2 border-2 border-[var(--sky)] rounded-lg text-xs font-semibold text-[var(--ink)] bg-[var(--white)]"
                   >
                     <option value="unclear_wording">Unclear or ambiguous wording</option>
                     <option value="wrong_answer">Result set or reference query incorrect</option>
@@ -809,9 +878,9 @@ export default function QuestionWorkspacePage({
                   <textarea
                     value={reportMessage}
                     onChange={(e) => setReportMessage(e.target.value)}
-                    placeholder="Describe the discrepancy you encountered..."
+                    placeholder="Describe what went wrong or why the query/result seems incorrect..."
                     rows={3}
-                    className="w-full px-3 py-2 border-2 border-[var(--sky)] rounded-lg text-xs font-medium text-[var(--ink)]"
+                    className="w-full px-3 py-2 border-2 border-[var(--sky)] rounded-lg text-xs font-medium text-[var(--ink)] focus:outline-none focus:border-[var(--ocean)]"
                   />
                 </div>
 
@@ -819,14 +888,16 @@ export default function QuestionWorkspacePage({
                   <button
                     onClick={() => setReportModalOpen(false)}
                     className="btn-secondary text-xs py-1.5 px-3"
+                    disabled={reportLoading}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSendReport}
-                    className="btn-primary text-xs py-1.5 px-4"
+                    className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5"
+                    disabled={reportLoading}
                   >
-                    Submit Report
+                    {reportLoading ? "Submitting..." : "Submit Report"}
                   </button>
                 </div>
               </div>

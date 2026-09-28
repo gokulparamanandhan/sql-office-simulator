@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSubmission } from "@/lib/sandbox/validation-engine";
 import { ECOM_L1_QUESTIONS } from "@/lib/content/ecom-l1-questions";
 import { getCurrentUser } from "@/lib/auth/auth-service";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { getAppConfig } from "@/lib/config/app-config";
 
 export async function POST(
   req: NextRequest,
@@ -9,6 +11,26 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    const user = await getCurrentUser();
+    const userId = user?.id || "guest_learner";
+
+    const config = await getAppConfig();
+    const rateLimitResult = checkRateLimit(
+      `submit:${userId}`,
+      config.rateLimitSeconds,
+      1
+    );
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: rateLimitResult.reason,
+          waitSeconds: rateLimitResult.waitSeconds,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { sql, hintsUsed = 0 } = body;
 

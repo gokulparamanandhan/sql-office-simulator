@@ -37,6 +37,7 @@ export default function OfficeLevelPage({
 
   // In local browser state, track which questions are solved
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
+  const [pledgeModalOpen, setPledgeModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     // Load solved states from localStorage
@@ -45,10 +46,25 @@ export default function OfficeLevelPage({
       if (stored) {
         setSolvedMap(JSON.parse(stored));
       }
+
+      // Check if learner has acknowledged level honor pledge
+      const ack = localStorage.getItem(`sql_office_level_pledge_ack_${domain}_${cleanLevel}`);
+      if (!ack) {
+        setPledgeModalOpen(true);
+      }
     } catch {
       // Ignore
     }
   }, [domain, cleanLevel]);
+
+  const handleAcknowledgePledge = () => {
+    try {
+      localStorage.setItem(`sql_office_level_pledge_ack_${domain}_${cleanLevel}`, "true");
+    } catch {
+      // Ignore
+    }
+    setPledgeModalOpen(false);
+  };
 
   const solvedCount = Object.values(solvedMap).filter(Boolean).length;
   const totalQuestions = ECOM_L1_QUESTIONS.length;
@@ -93,10 +109,19 @@ export default function OfficeLevelPage({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--sky)] px-3 py-1 rounded-full text-xs font-bold text-[var(--ink)]">
+            <button
+              onClick={() => setPledgeModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--surface)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] transition-colors"
+              title="Read the workplace honor pledge"
+            >
+              <span>🛡️</span>
+              <span className="hidden sm:inline">Honor Policy</span>
+            </button>
+
+            <div className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--sky)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--ink)]">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>
-                {solvedCount} / {totalQuestions} Requests Completed
+                {solvedCount} / {totalQuestions} Solved
               </span>
             </div>
 
@@ -370,6 +395,67 @@ export default function OfficeLevelPage({
       <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-6 px-4 sm:px-8 mt-12 text-center text-xs font-semibold text-[var(--ink)]">
         &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo; — SQL Office Simulator
       </footer>
+
+      {/* LEVEL HONOR PLEDGE REMINDER MODAL (SPEC SECTION 8 & PHASE 5) */}
+      {pledgeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--white)] border-3 border-[var(--ink)] rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-[6px_6px_0px_var(--ocean)]">
+            <div className="flex items-center gap-3 border-b-2 border-[var(--sky)] pb-4">
+              <div className="w-12 h-12 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center text-2xl shadow-[2px_2px_0px_var(--ink)] shrink-0">
+                🛡️
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--ocean-hover)]">
+                  Level Onboarding Reminder
+                </span>
+                <h2 className="text-lg font-black text-[var(--ink)]">
+                  The Workplace Honor Pledge
+                </h2>
+              </div>
+            </div>
+
+            <div className="bg-[var(--surface)] border-2 border-[var(--sky)] rounded-xl p-4 space-y-2">
+              <p className="text-xs sm:text-sm font-semibold text-[var(--ink)] leading-relaxed italic">
+                &ldquo;This simulator works only if you do the work yourself. Please don&apos;t use AI tools or copy solutions. You&apos;re here to build real skills, and the only person you&apos;d be fooling is you. Be honest, and enjoy the learning.&rdquo;
+              </p>
+              <div className="text-[11px] text-[var(--ink)] opacity-70 text-right font-bold">
+                — SQL Office Simulator Core Policy
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs text-[var(--ink)]">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="font-medium">
+                  <strong>Realistic business practice:</strong> You will query real tables with {company.employeeCount} coworkers counting on your answers.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="font-medium">
+                  <strong>Stuck? Use the hints:</strong> Progressive guidance and schema explorers are available directly in your workspace.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="font-medium">
+                  <strong>Authentic career progression:</strong> Earn genuine XP, streaks, and unlock senior levels by solving requests yourself.
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={handleAcknowledgePledge}
+                className="btn-primary w-full py-3 text-sm font-black flex items-center justify-center gap-2 shadow-[3px_3px_0px_var(--ink)]"
+              >
+                <span>I Understand — Let&apos;s Build Real Skills</span>
+                <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
