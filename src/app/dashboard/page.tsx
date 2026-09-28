@@ -291,17 +291,13 @@ export default function DashboardPage() {
                     </div>
 
                     {lvl.unlocked ? (
-                      <button
-                        onClick={() =>
-                          alert(
-                            `Opening ${currentDomain.name} Level ${lvl.number} Office! Workspace UI will be active in Phase 2 & 3.`
-                          )
-                        }
+                      <Link
+                        href={`/office/${currentDomain.slug}/level-${lvl.number}`}
                         className="w-full btn-primary text-xs py-2"
                       >
                         Enter Office
                         <ArrowRight className="w-3.5 h-3.5 text-[var(--ink)]" />
-                      </button>
+                      </Link>
                     ) : (
                       <div className="text-[10px] text-center font-semibold text-slate-600 bg-slate-100 p-2 rounded border border-slate-300">
                         Unlocks at ≥ 70 solved &amp; 5 boss questions in Level {lvl.number - 1}

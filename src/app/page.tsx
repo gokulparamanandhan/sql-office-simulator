@@ -423,14 +423,12 @@ export default function Home() {
                 <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
                   {selectedDomain.xp}
                 </span>
-                <button
-                  onClick={() =>
-                    alert(`Starting ${selectedDomain.name} Level 1! Workspace UI will be active in Phase 2 & 3.`)
-                  }
+                <Link
+                  href={`/office/${selectedDomain.id}/level-1`}
                   className="btn-primary text-xs py-2 px-4"
                 >
                   Start Level 1
-                </button>
+                </Link>
               </div>
             </div>
 

@@ -27,13 +27,13 @@ async function runTests() {
   console.log("1. Running AST & Security Rejection Tests:");
 
   const dropTest = validateSqlSecurity("DROP TABLE customers;");
-  assert("DROP TABLE is rejected", !dropTest.allowed && dropTest.reason?.includes("DROP"));
+  assert("DROP TABLE is rejected", !dropTest.allowed && Boolean(dropTest.reason?.includes("DROP")));
 
   const multiStmtTest = validateSqlSecurity("SELECT * FROM customers; DROP TABLE orders;");
   assert("Multi-statement query is rejected", !multiStmtTest.allowed && dropTest.reason !== undefined);
 
   const readFileTest = validateSqlSecurity("SELECT pg_read_file('/etc/passwd');");
-  assert("pg_read_file() is rejected", !readFileTest.allowed && readFileTest.reason?.includes("pg_read_file"));
+  assert("pg_read_file() is rejected", !readFileTest.allowed && Boolean(readFileTest.reason?.includes("pg_read_file")));
 
   const insertTest = validateSqlSecurity("INSERT INTO products (id, name, price) VALUES (999, 'Hacked', 1);");
   assert("INSERT INTO is rejected", !insertTest.allowed);
