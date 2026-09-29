@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Lock, ArrowLeft, ShieldCheck, Database, EyeOff } from "lucide-react";
+import FeedbackLink from "@/components/FeedbackLink";
 
 export const metadata = {
   title: "Privacy Policy | SQL Office Simulator",
@@ -32,6 +33,7 @@ export default function PrivacyPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <FeedbackLink variant="pill" />
             <Link href="/terms" className="text-xs font-bold text-[var(--ink)] hover:underline">
               Terms & Honor Code
             </Link>
@@ -97,7 +99,7 @@ export default function PrivacyPage() {
             <h2 className="font-extrabold text-base text-[var(--ink)]">1. Information We Collect</h2>
             <ul className="list-disc pl-5 space-y-1.5 opacity-80">
               <li>
-                <strong>Account Information:</strong> If you sign up using Google OAuth or email, we store your email address, display name, and securely salted bcrypt password hash.
+                <strong>Account Information:</strong> When you create an account, we store your email address, display name, and securely salted bcrypt password hash.
               </li>
               <li>
                 <strong>Learning Activity:</strong> Question completions, XP gained, daily streak counts, hints unlocked, and timestamps of submissions.

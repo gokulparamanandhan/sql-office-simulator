@@ -22,8 +22,9 @@ export async function POST(
     let targetSchema = schema;
     if (!targetSchema || targetSchema === "ecom_l1") {
       const q = getQuestionById(id);
-      if (q && q.domain && q.domain !== "ecommerce") {
-        targetSchema = `${q.domain}_l${q.level || 1}`;
+      if (q && q.domain) {
+        const dom = q.domain === "ecommerce" ? "ecom" : q.domain;
+        targetSchema = `${dom}_l${q.level || 1}`;
       } else {
         targetSchema = "ecom_l1";
       }

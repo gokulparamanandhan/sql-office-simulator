@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { appDb } from "@/lib/db/app-db";
 import fs from "fs";
 import path from "path";
+import { hashSecurityAnswer } from "@/lib/auth/security-questions";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || "sql-office-simulator-super-secret-development-key-change-in-production-12345"
@@ -39,6 +40,8 @@ interface StoredUser {
   email: string;
   name: string;
   passwordHash?: string;
+  securityQuestion?: string;
+  securityAnswerHash?: string;
   role: string;
   avatar?: string;
   honorPledgeAcceptedAt: string;
@@ -119,11 +122,15 @@ export async function registerUser({
   password,
   name,
   honorPledgeAccepted,
+  securityQuestion,
+  securityAnswer,
 }: {
   email: string;
   password?: string;
   name: string;
   honorPledgeAccepted: boolean;
+  securityQuestion?: string;
+  securityAnswer?: string;
 }): Promise<{ user: UserSession; token: string }> {
   if (!honorPledgeAccepted) {
     throw new Error("You must accept the honor pledge to create an account.");
@@ -131,6 +138,7 @@ export async function registerUser({
 
   const normalizedEmail = email.toLowerCase().trim();
   const passwordHash = password ? await hashPassword(password) : undefined;
+  const securityAnswerHash = securityAnswer ? await hashSecurityAnswer(securityAnswer) : undefined;
   const now = new Date();
 
   let userRecord: UserSession | null = null;
@@ -142,11 +150,13 @@ export async function registerUser({
       throw new Error("An account with this email already exists.");
     }
 
-    const created = await appDb.user.create({
+    const created = await (appDb.user as any).create({
       data: {
         email: normalizedEmail,
         name: name.trim(),
         passwordHash,
+        securityQuestion: securityQuestion || null,
+        securityAnswerHash: securityAnswerHash || null,
         role: "learner",
         honorPledgeAcceptedAt: now,
       },
@@ -178,6 +188,8 @@ export async function registerUser({
       email: normalizedEmail,
       name: name.trim(),
       passwordHash,
+      securityQuestion: securityQuestion || undefined,
+      securityAnswerHash: securityAnswerHash || undefined,
       role: "learner",
       honorPledgeAcceptedAt: now.toISOString(),
       createdAt: now.toISOString(),

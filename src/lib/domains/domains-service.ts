@@ -93,39 +93,86 @@ export async function getLearnerDashboard(userId: string): Promise<{
       };
     }
   } catch {
-    // Database offline, use default initialized progress
+    // Database offline, use user-progress store fallback
   }
 
-  // Fallback default empty/initial state for new user
-  const defaultDomains: DomainProgressSummary[] = DOMAINS_SEED_DATA.map((d) => ({
-    id: d.slug,
-    slug: d.slug,
-    name: d.name,
-    description: d.description,
-    icon: d.icon,
-    currentLevel: 1,
-    totalXp: 0,
-    completedQuestions: 0,
-    totalQuestions: 500,
-    levels: LEVELS_CONFIG.map((lvl) => ({
-      number: lvl.number,
-      name: lvl.name,
-      unlocked: lvl.number === 1, // Level 1 is always unlocked
-      solvedCount: 0,
-      bossSolvedCount: 0,
-      totalQuestions: 100,
-      company: lvl.company,
-    })),
-  }));
+  // Load from isolated per-user progress store
+  try {
+    const { getUserProgress } = await import("@/lib/user/user-progress-service");
+    const userProg = await getUserProgress(userId);
 
-  return {
-    domains: defaultDomains,
-    totalXp: 0,
-    currentRank: "Intern (Solo Data Hire)",
-    streakDays: 1,
-    badgesEarned: 0,
-    totalBadges: BADGES_SEED_DATA.length,
-  };
+    const domainsSummary: DomainProgressSummary[] = DOMAINS_SEED_DATA.map((d) => {
+      const domainLevels = userProg.domains[d.slug] || {};
+      const levels = LEVELS_CONFIG.map((lvl) => {
+        const lvlRecord = domainLevels[lvl.number];
+        const solvedCount = lvlRecord ? lvlRecord.solvedCount : 0;
+        return {
+          number: lvl.number,
+          name: lvl.name,
+          unlocked: lvl.number === 1 || solvedCount >= 1,
+          solvedCount,
+          bossSolvedCount: 0,
+          totalQuestions: 100,
+          company: lvl.company,
+        };
+      });
+
+      const completedQuestions = levels.reduce((acc, l) => acc + l.solvedCount, 0);
+
+      return {
+        id: d.slug,
+        slug: d.slug,
+        name: d.name,
+        description: d.description,
+        icon: d.icon,
+        currentLevel: 1,
+        totalXp: userProg.totalXp,
+        completedQuestions,
+        totalQuestions: 500,
+        levels,
+      };
+    });
+
+    return {
+      domains: domainsSummary,
+      totalXp: userProg.totalXp,
+      currentRank: calculateRank(userProg.totalXp),
+      streakDays: userProg.streakDays || 1,
+      badgesEarned: Math.min(Math.floor(userProg.totalXp / 100), BADGES_SEED_DATA.length),
+      totalBadges: BADGES_SEED_DATA.length,
+    };
+  } catch {
+    // Absolute fallback default empty/initial state for new user
+    const defaultDomains: DomainProgressSummary[] = DOMAINS_SEED_DATA.map((d) => ({
+      id: d.slug,
+      slug: d.slug,
+      name: d.name,
+      description: d.description,
+      icon: d.icon,
+      currentLevel: 1,
+      totalXp: 0,
+      completedQuestions: 0,
+      totalQuestions: 500,
+      levels: LEVELS_CONFIG.map((lvl) => ({
+        number: lvl.number,
+        name: lvl.name,
+        unlocked: lvl.number === 1,
+        solvedCount: 0,
+        bossSolvedCount: 0,
+        totalQuestions: 100,
+        company: lvl.company,
+      })),
+    }));
+
+    return {
+      domains: defaultDomains,
+      totalXp: 0,
+      currentRank: "Intern (Solo Data Hire)",
+      streakDays: 1,
+      badgesEarned: 0,
+      totalBadges: BADGES_SEED_DATA.length,
+    };
+  }
 }
 
 export function calculateRank(xp: number): string {

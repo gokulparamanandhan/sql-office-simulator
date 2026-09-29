@@ -20,45 +20,10 @@ import {
   Award,
   Zap,
 } from "lucide-react";
-
-interface DatabaseHealth {
-  status: "connected" | "disconnected";
-  latencyMs?: number;
-  version?: string;
-  error?: string;
-}
+import FeedbackLink from "@/components/FeedbackLink";
 
 export default function Home() {
-  const [dbHealth, setDbHealth] = useState<{
-    appDb: DatabaseHealth;
-    sandboxDb: DatabaseHealth;
-    loading: boolean;
-  }>({
-    appDb: { status: "disconnected" },
-    sandboxDb: { status: "disconnected" },
-    loading: true,
-  });
-
   const [activeDomainTab, setActiveDomainTab] = useState<string>("ecommerce");
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => {
-        setDbHealth({
-          appDb: data.databases?.appDb || { status: "disconnected" },
-          sandboxDb: data.databases?.sandboxDb || { status: "disconnected" },
-          loading: false,
-        });
-      })
-      .catch((err) => {
-        setDbHealth({
-          appDb: { status: "disconnected", error: String(err) },
-          sandboxDb: { status: "disconnected", error: String(err) },
-          loading: false,
-        });
-      });
-  }, []);
 
   const domains = [
     {
@@ -214,23 +179,8 @@ export default function Home() {
               <span>Honor Code: Human SQL Only</span>
             </div>
 
-            {/* Live DB Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--white)] border border-[var(--sky)] text-xs font-medium">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  dbHealth.sandboxDb.status === "connected"
-                    ? "bg-emerald-500 animate-pulse"
-                    : "bg-amber-400"
-                }`}
-              />
-              <span className="text-[var(--ink)]">
-                {dbHealth.loading
-                  ? "Pinging DBs..."
-                  : dbHealth.sandboxDb.status === "connected"
-                  ? "PostgreSQL Ready"
-                  : "PostgreSQL Local"}
-              </span>
-            </div>
+            {/* Highlighted Feedback Link */}
+            <FeedbackLink variant="button" />
 
             <Link
               href="/auth/login"
@@ -522,120 +472,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* System Architecture & Health Monitor (Phase 0 Acceptance Criteria) */}
-        <section className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-2xl p-6 sm:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--sky)] pb-4">
-            <div>
-              <div className="text-xs font-extrabold uppercase tracking-wide text-[var(--ink)] opacity-75">
-                Phase 0 Foundation Checklist
-              </div>
-              <h3 className="text-xl font-black text-[var(--ink)]">
-                Dual PostgreSQL Database Orchestration
-              </h3>
-            </div>
-            <button
-              onClick={() => {
-                setDbHealth((prev) => ({ ...prev, loading: true }));
-                fetch("/api/health")
-                  .then((res) => res.json())
-                  .then((data) => {
-                    setDbHealth({
-                      appDb: data.databases?.appDb || { status: "disconnected" },
-                      sandboxDb: data.databases?.sandboxDb || { status: "disconnected" },
-                      loading: false,
-                    });
-                  });
-              }}
-              className="btn-secondary text-xs py-2 px-3 self-start sm:self-auto"
-            >
-              <Server className="w-3.5 h-3.5 text-[var(--ink)]" />
-              <span>Refresh Connection Status</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* App Database Card */}
-            <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Database className="w-5 h-5 text-[var(--ink)]" />
-                  <span className="font-extrabold text-sm text-[var(--ink)]">
-                    Application DB (Port 5432)
-                  </span>
-                </div>
-                <span
-                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                    dbHealth.appDb.status === "connected"
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      : "bg-amber-100 text-amber-800 border-amber-300"
-                  }`}
-                >
-                  {dbHealth.loading
-                    ? "Testing..."
-                    : dbHealth.appDb.status === "connected"
-                    ? `Connected (${dbHealth.appDb.latencyMs}ms)`
-                    : "Standby / Local"}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--ink)] opacity-80">
-                Manages users, Google OAuth identities, progress metrics, attempts log, streak tracking, and content metadata via Prisma ORM.
-              </p>
-              <div className="text-[11px] font-mono bg-[var(--white)] p-2 rounded border border-[var(--sky)] text-[var(--ink)]">
-                URL: postgresql://postgres:***@localhost:5432/sql_office_app
-              </div>
-            </div>
-
-            {/* Sandbox Database Card */}
-            <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-5 h-5 text-[var(--ink)]" />
-                  <span className="font-extrabold text-sm text-[var(--ink)]">
-                    Practice Sandbox DB (Port 5433)
-                  </span>
-                </div>
-                <span
-                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                    dbHealth.sandboxDb.status === "connected"
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      : "bg-amber-100 text-amber-800 border-amber-300"
-                  }`}
-                >
-                  {dbHealth.loading
-                    ? "Testing..."
-                    : dbHealth.sandboxDb.status === "connected"
-                    ? `Connected (${dbHealth.sandboxDb.latencyMs}ms)`
-                    : "Standby / Local"}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--ink)] opacity-80">
-                Strict read-only role (`sandbox_readonly`), 5-second execution timeout, automatic transaction rollbacks, and isolated schemas per domain-level.
-              </p>
-              <div className="text-[11px] font-mono bg-[var(--white)] p-2 rounded border border-[var(--sky)] text-[var(--ink)]">
-                URL: postgresql://sandbox_readonly:***@localhost:5433/sql_office_sandbox
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[var(--mist)] rounded-xl p-4 border border-[var(--sky)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[var(--white)] border border-[var(--ink)] flex items-center justify-center font-bold text-xs text-[var(--ink)]">
-                🐳
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[var(--ink)]">
-                  Docker Compose Local Orchestration
-                </div>
-                <div className="text-xs text-[var(--ink)] opacity-75">
-                  Run <code className="bg-[var(--white)] px-1 rounded font-mono">docker compose up -d</code> to activate both local containers.
-                </div>
-              </div>
-            </div>
-            <div className="text-xs font-bold text-[var(--ink)]">
-              Phase 0 Acceptance: Foundation & Design Tokens Configured
-            </div>
-          </div>
-        </section>
+        {/* Highlighted Feedback Section */}
+        <FeedbackLink variant="banner" />
 
         {/* Honor Policy Section */}
         <section className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--sun)] space-y-4">
@@ -680,9 +518,11 @@ export default function Home() {
               Progress & Mastery
             </Link>
             <span>•</span>
-            <Link href="/admin" className="hover:underline font-bold text-slate-500">
-              Admin QA
+            <Link href="/admin/login" className="hover:underline font-bold text-slate-400">
+              Admin Portal
             </Link>
+            <span>•</span>
+            <FeedbackLink variant="pill" />
           </div>
 
           <div className="flex items-center gap-2 text-[var(--ink)] opacity-75">

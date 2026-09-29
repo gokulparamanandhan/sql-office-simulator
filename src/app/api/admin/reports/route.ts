@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/auth-service";
+import { isCurrentAdmin } from "@/lib/auth/admin-auth";
 import {
   getReportedQuestions,
   resolveQuestionReports,
@@ -9,8 +10,15 @@ import { getAppConfig, updateAppConfig } from "@/lib/config/app-config";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const isAdmin = await isCurrentAdmin();
+  if (!isAdmin) {
+    return NextResponse.json(
+      { error: "Unauthorized. Admin authentication required." },
+      { status: 401 }
+    );
+  }
+
   const user = await getCurrentUser();
-  // Allow all in dev / prototype, or verify role
   const reports = await getReportedQuestions();
   const config = await getAppConfig();
 
@@ -22,6 +30,14 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const isAdmin = await isCurrentAdmin();
+  if (!isAdmin) {
+    return NextResponse.json(
+      { error: "Unauthorized. Admin authentication required." },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { action, questionId, configUpdates } = body;

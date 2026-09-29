@@ -58,16 +58,25 @@ const FORBIDDEN_FUNCTIONS = [
   "query_to_xml",
 ];
 
+export function stripSqlComments(sql: string): string {
+  // Remove block comments /* ... */
+  const withoutBlock = sql.replace(/\/\*[\s\S]*?\*\//g, "");
+  // Remove line comments -- ...
+  const withoutLine = withoutBlock.replace(/--.*$/gm, "");
+  return withoutLine.trim();
+}
+
 export function validateSqlSecurity(sql: string): SecurityCheckResult {
   const trimmed = sql.trim();
+  const cleanSql = stripSqlComments(sql);
 
-  if (!trimmed) {
+  if (!cleanSql && !trimmed) {
     return { allowed: false, reason: "Query cannot be empty." };
   }
 
   // 1. Check for multiple statements via semicolons
   // Strip trailing semicolon first
-  const withoutTrailingSemicolon = trimmed.replace(/;\s*$/, "");
+  const withoutTrailingSemicolon = cleanSql.replace(/;\s*$/, "");
   if (withoutTrailingSemicolon.includes(";")) {
     return {
       allowed: false,
@@ -78,7 +87,7 @@ export function validateSqlSecurity(sql: string): SecurityCheckResult {
   // 2. Keyword regex check for high-risk commands (case-insensitive word boundary)
   for (const kw of FORBIDDEN_KEYWORDS) {
     const regex = new RegExp(`\\b${kw}\\b`, "i");
-    if (regex.test(trimmed)) {
+    if (regex.test(cleanSql)) {
       return {
         allowed: false,
         reason: `Security Violation: The command '${kw}' is not allowed in this read-only sandbox. Only SELECT queries are permitted.`,
@@ -89,7 +98,7 @@ export function validateSqlSecurity(sql: string): SecurityCheckResult {
   // 3. System functions check
   for (const fn of FORBIDDEN_FUNCTIONS) {
     const regex = new RegExp(`\\b${fn}\\b\\s*\\(`, "i");
-    if (regex.test(trimmed)) {
+    if (regex.test(cleanSql)) {
       return {
         allowed: false,
         reason: `Security Violation: System function '${fn}()' is strictly blocked for security.`,
@@ -98,7 +107,7 @@ export function validateSqlSecurity(sql: string): SecurityCheckResult {
   }
 
   // 4. Must start with SELECT or WITH
-  const startsWithAllowed = /^\s*(SELECT|WITH)\b/i.test(trimmed);
+  const startsWithAllowed = /^\s*(SELECT|WITH)\b/i.test(cleanSql);
   if (!startsWithAllowed) {
     return {
       allowed: false,
@@ -126,9 +135,9 @@ export function validateSqlSecurity(sql: string): SecurityCheckResult {
       };
     }
   } catch (err: unknown) {
-    // If parser threw on exotic PG syntax, fallback to regex check
+    // If parser threw on exotic PG syntax or comments, fallback gracefully if cleanSql starts with SELECT/WITH
     const message = err instanceof Error ? err.message : String(err);
-    if (/syntax error/i.test(message) && !/select/i.test(trimmed)) {
+    if (!startsWithAllowed) {
       return {
         allowed: false,
         reason: `SQL Syntax or Security issue: ${message}`,
@@ -138,6 +147,6 @@ export function validateSqlSecurity(sql: string): SecurityCheckResult {
 
   return {
     allowed: true,
-    sanitizedSql: withoutTrailingSemicolon,
+    sanitizedSql: trimmed.replace(/;\s*$/, ""),
   };
 }

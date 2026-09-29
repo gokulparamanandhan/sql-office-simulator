@@ -16,6 +16,8 @@ model User {
   name                    String
   avatar                  String?
   role                    String    @default("learner") // learner | admin
+  securityQuestion        String?   @map("security_question")
+  securityAnswerHash      String?   @map("security_answer_hash")
   honorPledgeAcceptedAt   DateTime? @map("honor_pledge_accepted_at")
   createdAt               DateTime  @default(now()) @map("created_at")
   updatedAt               DateTime  @updatedAt @map("updated_at")

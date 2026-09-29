@@ -56,7 +56,24 @@ export async function POST(
     if (feedback.isCorrect) {
       // Hints penalty: each hint used reduces XP by 25% (Spec Section 9.4)
       const hintPenalty = Math.min(hintsUsed * 0.25, 0.75);
-      xpEarned = Math.round(question.xp * (1 - hintPenalty));
+      xpEarned = Math.round((question.xp ?? (question.level * 10)) * (1 - hintPenalty));
+
+      // Record to user's isolated progress store
+      if (user) {
+        try {
+          const { recordUserQuestionSolved } = await import("@/lib/user/user-progress-service");
+          await recordUserQuestionSolved(
+            user.id,
+            question.domain,
+            question.level,
+            id,
+            xpEarned,
+            user.email
+          );
+        } catch (e) {
+          console.warn("Could not save user progress:", e);
+        }
+      }
     }
 
     return NextResponse.json({

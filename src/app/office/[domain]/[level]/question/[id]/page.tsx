@@ -25,9 +25,12 @@ import {
   Trophy,
   PartyPopper,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import { getQuestionsForDomainAndLevel, getQuestionById } from "@/lib/content/content-registry";
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
+import ThemeToggle from "@/components/ThemeToggle";
+import FeedbackLink from "@/components/FeedbackLink";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -48,7 +51,7 @@ export default function QuestionWorkspacePage({
   const { domain, level, id } = use(params);
   const cleanLevel = (!level || level === "level-undefined" || level === "undefined") ? "1" : level.replace(/^level-/, "");
   const levelRoute = `level-${cleanLevel}`;
-  const office = getDomainOfficeMetadata(domain);
+  const office = getDomainOfficeMetadata(domain, cleanLevel);
   const domainQuestions = getQuestionsForDomainAndLevel(domain, parseInt(cleanLevel, 10));
 
   const question =
@@ -61,9 +64,7 @@ export default function QuestionWorkspacePage({
       : null;
 
   // Editor and execution state
-  const [sql, setSql] = useState<string>(
-    `-- Write your query below. Press Ctrl+Enter to Run Preview.\nSELECT `
-  );
+  const [sql, setSql] = useState<string>("SELECT ");
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -108,17 +109,35 @@ export default function QuestionWorkspacePage({
 
   // Celebration state
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
+  const [editorTheme, setEditorTheme] = useState<"vs-light" | "vs-dark">("vs-light");
+
+  useEffect(() => {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    if (currentTheme === "dark") setEditorTheme("vs-dark");
+
+    const observer = new MutationObserver(() => {
+      const t = document.documentElement.getAttribute("data-theme");
+      setEditorTheme(t === "dark" ? "vs-dark" : "vs-light");
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Load saved state for this question
   useEffect(() => {
     try {
-      const savedSql = localStorage.getItem(`sql_office_${id}_code`);
-      if (savedSql) setSql(savedSql);
+      let savedSql = localStorage.getItem(`sql_office_${id}_code`);
+      if (savedSql) {
+        savedSql = savedSql.replace(/^-- Write your query below\. Press Ctrl\+Enter to Run Preview\.\r?\n?/i, "");
+        setSql(savedSql);
+      }
 
       const savedScratch = localStorage.getItem(`sql_office_${id}_notes`);
       if (savedScratch) setScratchpad(savedScratch);
 
-      const savedSolved = localStorage.getItem(`sql_office_${domain}_l${level}_solved`);
+      const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+      const savedSolved = localStorage.getItem(`sql_office_${currentUserId}_${domain}_l${cleanLevel}_solved`);
       if (savedSolved) {
         const solvedMap = JSON.parse(savedSolved);
         if (solvedMap[id]) {
@@ -135,7 +154,7 @@ export default function QuestionWorkspacePage({
     } catch {
       // Ignore
     }
-  }, [id, domain, level, question.xp]);
+  }, [id, domain, cleanLevel, question.xp]);
 
   // Persist code on change
   const handleEditorChange = (value?: string) => {
@@ -147,6 +166,58 @@ export default function QuestionWorkspacePage({
         // Ignore
       }
     }
+  };
+
+  // Custom Schema-Aware Monaco Autocomplete Provider
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEditorMount = (_editor: any, monaco: any) => {
+    if (!monaco || !monaco.languages) return;
+    const tables = office.schema.map((t) => t.name);
+    const columns = Array.from(new Set(office.schema.flatMap((t) => t.columns.map((c) => c.name))));
+    const keywords = [
+      "SELECT", "FROM", "WHERE", "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "ON",
+      "GROUP BY", "ORDER BY", "HAVING", "LIMIT", "WITH", "AS", "AND", "OR", "IN",
+      "LIKE", "BETWEEN", "IS NULL", "IS NOT NULL", "CASE", "WHEN", "THEN", "ELSE", "END",
+      "COUNT", "SUM", "AVG", "MIN", "MAX", "DISTINCT", "COALESCE"
+    ];
+
+    monaco.languages.registerCompletionItemProvider("sql", {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        };
+
+        const suggestions = [
+          ...keywords.map((kw) => ({
+            label: kw,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: kw,
+            range,
+          })),
+          ...tables.map((t) => ({
+            label: t,
+            kind: monaco.languages.CompletionItemKind.Class,
+            insertText: t,
+            detail: `Table (${office.company.name})`,
+            range,
+          })),
+          ...columns.map((col) => ({
+            label: col,
+            kind: monaco.languages.CompletionItemKind.Field,
+            insertText: col,
+            detail: "Column",
+            range,
+          })),
+        ];
+
+        return { suggestions };
+      },
+    });
   };
 
   // Run Preview (does NOT count as attempt)
@@ -195,14 +266,35 @@ export default function QuestionWorkspacePage({
       setSubmitResult(data);
 
       if (data.isCorrect) {
-        // Mark question as solved in localStorage
+        // Mark question as solved in user-scoped storage
         try {
-          const solvedKey = `sql_office_${domain}_l${level}_solved`;
+          const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+          const solvedKey = `sql_office_${currentUserId}_${domain}_l${cleanLevel}_solved`;
           const current = JSON.parse(localStorage.getItem(solvedKey) || "{}");
           current[id] = true;
           localStorage.setItem(solvedKey, JSON.stringify(current));
 
-          // Check if all 10 are solved
+          // Also notify /api/user/progress
+          fetch("/api/user/progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              domain,
+              level: cleanLevel,
+              questionId: id,
+              xpEarned: data.xpEarned || question.xp || 10,
+            }),
+          }).catch(() => {});
+
+          // Track total user-scoped XP & streak
+          const xpGained = data.xpEarned || question.xp || 10;
+          const statsKey = `sql_office_${currentUserId}_user_stats`;
+          const userStats = JSON.parse(localStorage.getItem(statsKey) || '{"xp":0,"streak":1,"solvedCount":0}');
+          userStats.xp = (userStats.xp || 0) + xpGained;
+          userStats.solvedCount = (userStats.solvedCount || 0) + 1;
+          localStorage.setItem(statsKey, JSON.stringify(userStats));
+
+          // Check if celebration threshold reached
           const allCount = Object.keys(current).length;
           if (allCount >= 10 || question.difficulty === "boss") {
             setShowCelebration(true);
@@ -321,6 +413,7 @@ export default function QuestionWorkspacePage({
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {/* Previous / Next Question Navigation */}
           <div className="flex items-center border border-[var(--sky)] rounded-lg overflow-hidden bg-[var(--surface)]">
             <button
@@ -353,6 +446,8 @@ export default function QuestionWorkspacePage({
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+
+          <FeedbackLink variant="button" />
 
           <button
             onClick={() => setReportModalOpen(true)}
@@ -446,49 +541,7 @@ export default function QuestionWorkspacePage({
                   </div>
                 </div>
 
-                {/* Context & Requirements */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 tracking-wide">
-                    Operational Context &amp; Assumptions
-                  </h4>
-                  <div className="bg-[var(--surface)] border border-[var(--sky)] p-3 rounded-lg text-xs text-[var(--ink)] leading-relaxed">
-                    {question.context_notes}
-                  </div>
-                </div>
 
-                {/* Expected Output Columns */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 tracking-wide">
-                    Expected Output Columns
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {question.expected_columns.map((col) => (
-                      <span
-                        key={col}
-                        className="px-2.5 py-1 bg-[var(--mist)] border border-[var(--sky)] rounded text-xs font-mono font-bold text-[var(--ink)]"
-                      >
-                        {col}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Concept Tags */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 tracking-wide">
-                    Target SQL Concepts
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {question.concepts.map((c) => (
-                      <span
-                        key={c}
-                        className="px-2 py-0.5 bg-[var(--surface)] border border-[var(--sky)] rounded text-[11px] font-bold text-[var(--ink)]"
-                      >
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Solution Reveal Option */}
                 {solutionUnlocked && (
@@ -628,7 +681,7 @@ export default function QuestionWorkspacePage({
 
           {/* Left Footer Honor Reminder (Section 8) */}
           <div className="bg-[var(--surface)] border-t border-[var(--sky)] p-2.5 text-center text-[11px] font-bold text-[var(--ink)] opacity-75 shrink-0">
-            &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo;
+            &ldquo;First map the table relationships, then let your SELECT statement tell the story.&rdquo;
           </div>
         </div>
 
@@ -673,9 +726,10 @@ export default function QuestionWorkspacePage({
             <MonacoEditor
               height="100%"
               language="sql"
-              theme="vs-light"
+              theme={editorTheme}
               value={sql}
               onChange={handleEditorChange}
+              onMount={handleEditorMount}
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
@@ -685,6 +739,11 @@ export default function QuestionWorkspacePage({
                 automaticLayout: true,
                 wordWrap: "on",
                 tabSize: 2,
+                quickSuggestions: { other: true, comments: false, strings: false },
+                acceptSuggestionOnEnter: "smart",
+                suggestOnTriggerCharacters: true,
+                snippetSuggestions: "inline",
+                wordBasedSuggestions: "currentDocument",
               }}
             />
           </div>
@@ -810,9 +869,9 @@ export default function QuestionWorkspacePage({
         <div className="flex items-center gap-2 text-[var(--ink)] font-medium text-xs">
           <span>🛡️</span>
           <span className="italic font-semibold text-[var(--ink)]">
-            "Solve it yourself. That's where the learning happens."
+            &ldquo;In God we trust. All others must bring clean data.&rdquo;
           </span>
-          <span className="opacity-50 text-[10px] hidden md:inline">— SQL Office Honor Policy</span>
+          <span className="opacity-50 text-[10px] hidden md:inline">— W. Edwards Deming</span>
         </div>
 
         <div className="flex items-center gap-3">

@@ -41,7 +41,7 @@ async function ensureSchemaSeeded(pg: PGlite, schema: string): Promise<void> {
   const isVal = schema.endsWith("_val");
   const rawDomain = schema.replace(/_l\d+(_val)?$/, "").replace(/^ecom$/, "ecommerce");
   try {
-    const sql = generateDomainSql(rawDomain, isVal ? "validation" : "main");
+    const sql = generateDomainSql(rawDomain, isVal ? "validation" : "main", schema);
     if (sql) {
       await pg.exec(sql);
       seededSchemas.add(schema);
@@ -72,78 +72,81 @@ export async function runSandboxQuery(
 
   const queryToRun = security.sanitizedSql!;
 
-  // 2. Try External PostgreSQL Practice Database first
+  // 2. Execute via embedded PostgreSQL WASM (PGlite) for instant zero-latency compilation
+  // If external DB is explicitly configured via USE_EXTERNAL_DB=true, try TCP pool with short timeout
+  if (process.env.USE_EXTERNAL_DB === "true") {
+    try {
+      const connectPromise = sandboxPool.connect();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("External DB connection timeout")), 200)
+      );
+      const client = await Promise.race([connectPromise, timeoutPromise]);
+      try {
+        await client.query("BEGIN TRANSACTION READ ONLY;");
+        await client.query(`SET LOCAL search_path = "${schema}", pg_temp;`);
+        await client.query("SET LOCAL statement_timeout = 5000;");
+
+        const res = await client.query(queryToRun);
+        await client.query("ROLLBACK;");
+
+        const durationMs = Date.now() - startTime;
+        const columns = res.fields ? res.fields.map((f) => f.name) : [];
+        const rows = res.rows ? res.rows.slice(0, maxRows) : [];
+
+        return {
+          columns,
+          rows,
+          rowCount: res.rowCount ?? rows.length,
+          durationMs,
+        };
+      } finally {
+        client.release();
+      }
+    } catch (externalErr: unknown) {
+      const externalMsg = externalErr instanceof Error ? externalErr.message : String(externalErr);
+      if (
+        externalMsg.includes("syntax error") ||
+        externalMsg.includes("does not exist") ||
+        externalMsg.includes("column")
+      ) {
+        return {
+          columns: [],
+          rows: [],
+          rowCount: 0,
+          durationMs: Date.now() - startTime,
+          error: `SQL Error: ${externalMsg}`,
+        };
+      }
+    }
+  }
+
+  // Fast In-Process Embedded PostgreSQL 16 (PGlite)
   try {
-    const client = await sandboxPool.connect();
-    try {
-      await client.query("BEGIN TRANSACTION READ ONLY;");
-      await client.query(`SET LOCAL search_path = "${schema}", pg_temp;`);
-      await client.query("SET LOCAL statement_timeout = 5000;");
+    const pg = await getEmbeddedPg();
+    await ensureSchemaSeeded(pg, schema);
+    await pg.exec(`SET search_path = "${schema}";`);
+    const res = await pg.query(queryToRun);
 
-      const res = await client.query(queryToRun);
-      await client.query("ROLLBACK;");
+    const durationMs = Date.now() - startTime;
+    const columns = res.fields ? res.fields.map((f: { name: string }) => f.name) : [];
+    const rows = (res.rows as Record<string, unknown>[]).slice(0, maxRows);
 
-      const durationMs = Date.now() - startTime;
-      const columns = res.fields ? res.fields.map((f) => f.name) : [];
-      const rows = res.rows ? res.rows.slice(0, maxRows) : [];
-
-      return {
-        columns,
-        rows,
-        rowCount: res.rowCount ?? rows.length,
-        durationMs,
-      };
-    } finally {
-      client.release();
-    }
-  } catch (externalErr: unknown) {
-    // If external DB is offline or refused connection, fallback to embedded PGlite
-    const externalMsg = externalErr instanceof Error ? externalErr.message : String(externalErr);
-
-    // If it was a SQL syntax error inside the query itself, return the error
-    if (
-      externalMsg.includes("syntax error") ||
-      externalMsg.includes("does not exist") ||
-      externalMsg.includes("column")
-    ) {
-      return {
-        columns: [],
-        rows: [],
-        rowCount: 0,
-        durationMs: Date.now() - startTime,
-        error: `SQL Error: ${externalMsg}`,
-      };
-    }
-
-    // Otherwise fallback to embedded PostgreSQL 16
-    try {
-      const pg = await getEmbeddedPg();
-      await ensureSchemaSeeded(pg, schema);
-      // Set schema search path
-      await pg.exec(`SET search_path = "${schema}";`);
-      const res = await pg.query(queryToRun);
-
-      const durationMs = Date.now() - startTime;
-      const columns = res.fields ? res.fields.map((f: { name: string }) => f.name) : [];
-      const rows = (res.rows as Record<string, unknown>[]).slice(0, maxRows);
-
-      return {
-        columns,
-        rows,
-        rowCount: res.rows.length,
-        durationMs,
-      };
-    } catch (embeddedErr: unknown) {
-      const durationMs = Date.now() - startTime;
-      const message = embeddedErr instanceof Error ? embeddedErr.message : String(embeddedErr);
-      return {
-        columns: [],
-        rows: [],
-        rowCount: 0,
-        durationMs,
-        error: `SQL Error: ${message}`,
-      };
-    }
+    return {
+      columns,
+      rows,
+      rowCount: res.rows.length,
+      durationMs,
+    };
+  } catch (embeddedErr: unknown) {
+    const durationMs = Date.now() - startTime;
+    const message = embeddedErr instanceof Error ? embeddedErr.message : String(embeddedErr);
+    return {
+      columns: [],
+      rows: [],
+      rowCount: 0,
+      durationMs,
+      error: `SQL Error: ${message}`,
+    };
   }
 }
 

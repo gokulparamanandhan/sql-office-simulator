@@ -29,12 +29,23 @@ const DEFAULT_CONFIG: UnlockRuleConfig = {
 
 // In-memory / cache fallback for fast evaluation
 let cachedConfig: UnlockRuleConfig = { ...DEFAULT_CONFIG };
+let lastDbCheck = 0;
+let dbOffline = false;
 
 export async function getAppConfig(): Promise<UnlockRuleConfig> {
+  const now = Date.now();
+  if (dbOffline && now - lastDbCheck < 60000) {
+    return cachedConfig;
+  }
+
   try {
-    const record = await appDb.appConfig.findUnique({
+    const findPromise = appDb.appConfig.findUnique({
       where: { key: "unlock_rule" },
     });
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("DB timeout")), 150)
+    );
+    const record = await Promise.race([findPromise, timeoutPromise]);
     if (record && record.valueJson) {
       const json = record.valueJson as Record<string, number>;
       cachedConfig = {
@@ -47,9 +58,12 @@ export async function getAppConfig(): Promise<UnlockRuleConfig> {
         reportAutoHideThreshold:
           json.report_auto_hide_threshold ?? DEFAULT_CONFIG.reportAutoHideThreshold,
       };
+      dbOffline = false;
     }
   } catch {
-    // Database offline or fallback
+    // Database offline or slow connection - trip circuit breaker for 60s
+    dbOffline = true;
+    lastDbCheck = now;
   }
   return cachedConfig;
 }

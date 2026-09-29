@@ -20,8 +20,11 @@ import {
   Layers,
   Sparkles,
   HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import { DomainProgressSummary } from "@/lib/domains/domains-service";
+import ThemeToggle from "@/components/ThemeToggle";
+import FeedbackLink from "@/components/FeedbackLink";
 
 interface DashboardData {
   user: {
@@ -46,6 +49,74 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDomainSlug, setSelectedDomainSlug] = useState<string>("ecommerce");
 
+  const mergeLocalProgress = (dashboard: DashboardData): DashboardData => {
+    if (typeof window === "undefined" || !dashboard.user?.id) return dashboard;
+
+    const currentUserId = dashboard.user.id;
+    const lastUserId = localStorage.getItem("sql_office_last_user_id");
+
+    // If switching users, purge legacy un-scoped cache
+    if (lastUserId && lastUserId !== currentUserId) {
+      localStorage.removeItem("sql_office_user_stats");
+      localStorage.removeItem("sql_office_ecommerce_l1_solved");
+      localStorage.removeItem("sql_office_academy_solved");
+    }
+    localStorage.setItem("sql_office_last_user_id", currentUserId);
+
+    let calculatedTotalXp = dashboard.totalXp;
+    let totalSolvedAllDomains = 0;
+    try {
+      const userStats = JSON.parse(
+        localStorage.getItem(`sql_office_${currentUserId}_user_stats`) || "{}"
+      );
+      if (userStats.xp && userStats.xp > calculatedTotalXp) {
+        calculatedTotalXp = userStats.xp;
+      }
+    } catch {
+      // Ignore
+    }
+
+    const updatedDomains = dashboard.domains.map((dom) => {
+      let domainCompletedCount = 0;
+      const updatedLevels = dom.levels.map((lvl) => {
+        let solved = lvl.solvedCount;
+        try {
+          const stored = localStorage.getItem(`sql_office_${currentUserId}_${dom.slug}_l${lvl.number}_solved`);
+          if (stored) {
+            const solvedMap = JSON.parse(stored);
+            const localCount = Object.keys(solvedMap).filter((k) => solvedMap[k]).length;
+            if (localCount > solved) solved = localCount;
+          }
+        } catch {
+          // Ignore
+        }
+        domainCompletedCount += solved;
+        totalSolvedAllDomains += solved;
+        return {
+          ...lvl,
+          solvedCount: solved,
+          unlocked: lvl.number === 1 || solved >= 1 || lvl.unlocked,
+        };
+      });
+
+      return {
+        ...dom,
+        completedQuestions: domainCompletedCount > dom.completedQuestions ? domainCompletedCount : dom.completedQuestions,
+        levels: updatedLevels,
+      };
+    });
+
+    if (calculatedTotalXp === 0 && totalSolvedAllDomains > 0) {
+      calculatedTotalXp = totalSolvedAllDomains * 10;
+    }
+
+    return {
+      ...dashboard,
+      totalXp: calculatedTotalXp,
+      domains: updatedDomains,
+    };
+  };
+
   useEffect(() => {
     fetch("/api/dashboard")
       .then(async (res) => {
@@ -57,7 +128,8 @@ export default function DashboardPage() {
       })
       .then((resData) => {
         if (resData) {
-          setData(resData);
+          const merged = mergeLocalProgress(resData);
+          setData(merged);
         }
         setLoading(false);
       })
@@ -67,8 +139,12 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleLogout = async () => {
+    localStorage.removeItem("sql_office_last_user_id");
+    localStorage.removeItem("sql_office_user_stats");
+    localStorage.removeItem("sql_office_ecommerce_l1_solved");
+    localStorage.removeItem("sql_office_academy_solved");
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
+    router.push("/auth/login");
   };
 
   if (loading) {
@@ -120,13 +196,15 @@ export default function DashboardPage() {
                 <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
                 <span>Honor Pledged</span>
               </div>
-              <Link
-                href="/admin"
-                className="px-2.5 py-1 rounded-full border border-[var(--sky)] bg-[var(--surface)] hover:bg-[var(--mist)] text-[11px] font-bold text-[var(--ink)] transition-colors"
-                title="QA Reports & Platform Thresholds"
-              >
-                Admin QA
-              </Link>
+              {data.user.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="px-2.5 py-1 rounded-full border border-amber-500 bg-amber-100 hover:bg-amber-200 text-[11px] font-bold text-amber-950 transition-colors"
+                  title="QA Reports & Platform Thresholds"
+                >
+                  Admin Console
+                </Link>
+              )}
             </div>
 
             {/* Streak & XP */}
@@ -137,6 +215,17 @@ export default function DashboardPage() {
               <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
               <span>{data.totalXp} XP</span>
             </div>
+
+            {/* Learn SQL Academy & Theme Toggle */}
+            <Link
+              href="/learn"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--sun)] text-xs font-extrabold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] hover:brightness-105 transition-all"
+            >
+              <BookOpen className="w-4 h-4 text-[var(--ink)]" />
+              <span>Learn SQL</span>
+            </Link>
+            <FeedbackLink variant="button" />
+            <ThemeToggle />
 
             {/* User Profile Pill & Logout */}
             <div className="flex items-center gap-2">
@@ -191,6 +280,61 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Neo-Brutalist Career XP & Progression Bar (Image 4 Design) */}
+        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[6px_6px_0px_var(--ink)] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
+                <Zap className="w-5 h-5 text-[var(--ink)] fill-[var(--ink)]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--ink)] opacity-70">
+                    Current Career Rank
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-[var(--accent-teal)] border border-[var(--ink)] text-[10px] font-black text-[var(--ink)]">
+                    {data.currentRank}
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-[var(--ink)] mt-0.5">
+                  Level {data.domains[0]?.currentLevel || 1} • {data.totalXp} Total XP Earned
+                </h2>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] text-xs font-extrabold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]">
+                <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+                <span>{data.streakDays} Day Streak</span>
+              </div>
+              <div className="text-right hidden md:block">
+                <span className="text-xs font-black text-[var(--ink)]">
+                  {data.totalXp >= 100 ? `${data.totalXp} / 300 XP` : `${data.totalXp} / 100 XP`}
+                </span>
+                <div className="text-[10px] font-bold text-[var(--ink)] opacity-70">
+                  {Math.max(0, (data.totalXp >= 100 ? 300 : 100) - data.totalXp)} XP to next milestone
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Prominent High-Contrast Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-black text-[var(--ink)]">
+              <span>PROGRESS TO LEVEL {data.totalXp >= 100 ? "3" : "2"}</span>
+              <span className="font-mono">{Math.min(100, Math.round((data.totalXp / (data.totalXp >= 100 ? 300 : 100)) * 100))}%</span>
+            </div>
+            <div className="w-full h-5 bg-[var(--paper-beige)] border-2 border-[var(--ink)] rounded-lg overflow-hidden shadow-[2px_2px_0px_var(--ink)] p-0.5">
+              <div
+                className="h-full bg-[var(--accent-teal)] rounded-sm border-r-2 border-[var(--ink)] transition-all duration-500"
+                style={{
+                  width: `${Math.max(3, Math.min(100, Math.round((data.totalXp / (data.totalXp >= 100 ? 300 : 100)) * 100)))}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Domain Navigation Tabs */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -209,12 +353,12 @@ export default function DashboardPage() {
                 onClick={() => setSelectedDomainSlug(dom.slug)}
                 className={`p-3 rounded-xl border-2 text-left transition-all ${
                   selectedDomainSlug === dom.slug
-                    ? "bg-[var(--ocean)] border-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
-                    : "bg-[var(--white)] border-[var(--sky)] hover:bg-[var(--mist)]"
+                    ? "bg-[var(--accent-teal)] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)]"
+                    : "bg-[var(--white)] border-[var(--ink)] hover:bg-[var(--paper-beige)] shadow-[2px_2px_0px_var(--ink)]"
                 }`}
               >
                 <div className="text-xs font-black text-[var(--ink)] truncate">{dom.name}</div>
-                <div className="text-[11px] font-semibold text-[var(--ink)] opacity-80 mt-0.5">
+                <div className="text-[11px] font-bold text-[var(--ink)] opacity-90 mt-0.5">
                   L{dom.currentLevel} • {dom.completedQuestions}/500
                 </div>
               </button>
@@ -223,10 +367,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Selected Domain Overview & Company Stages */}
-        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--ocean)] space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--sky)] pb-5">
+        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--ink)] space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[var(--ink)] pb-5">
             <div>
-              <div className="text-xs font-extrabold uppercase tracking-wide text-[var(--ocean-hover)]">
+              <div className="text-xs font-extrabold uppercase tracking-wide text-[var(--accent-teal)]">
                 Active Domain
               </div>
               <h3 className="text-2xl font-black text-[var(--ink)]">{currentDomain.name}</h3>
@@ -238,8 +382,8 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-xs font-bold text-[var(--ink)]">Domain Progress</div>
-                <div className="text-sm font-black text-[var(--ink)]">
-                  {currentDomain.completedQuestions} / 500 Questions Solved
+                <div className="text-base font-black text-[var(--ink)]">
+                  {currentDomain.completedQuestions} / 500 Solved
                 </div>
               </div>
             </div>
@@ -255,26 +399,26 @@ export default function DashboardPage() {
               {currentDomain.levels.map((lvl) => (
                 <div
                   key={lvl.number}
-                  className={`rounded-xl border-2 p-4 flex flex-col justify-between space-y-4 transition-all ${
+                  className={`rounded-2xl border-2 p-4 flex flex-col justify-between space-y-4 transition-all ${
                     lvl.unlocked
-                      ? "bg-[var(--white)] border-[var(--ink)] shadow-[3px_3px_0px_var(--ocean)]"
-                      : "bg-[var(--surface)] border-[var(--sky)] opacity-75"
+                      ? "bg-[var(--white)] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)] hover:shadow-[6px_6px_0px_var(--ink)]"
+                      : "bg-[var(--paper-beige)] border-[var(--ink)] opacity-70"
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center font-black text-xs ${
+                        className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center font-black text-xs ${
                           lvl.unlocked
-                            ? "bg-[var(--sun)] border-[var(--ink)] text-[var(--ink)]"
+                            ? "bg-[var(--sun)] border-[var(--ink)] text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
                             : "bg-slate-200 border-slate-400 text-slate-600"
                         }`}
                       >
                         L{lvl.number}
                       </span>
                       {lvl.unlocked ? (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
-                          <Unlock className="w-3 h-3 text-emerald-700" />
+                        <span className="flex items-center gap-1 text-[11px] font-extrabold text-[var(--ink)] bg-[#bbf7d0] border border-[var(--ink)] px-2 py-0.5 rounded-full">
+                          <Unlock className="w-3 h-3 text-[var(--ink)]" />
                           Unlocked
                         </span>
                       ) : (
@@ -291,20 +435,30 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-3 pt-2 border-t border-[var(--sky)]">
-                    <div className="flex items-center justify-between text-xs font-semibold text-[var(--ink)]">
-                      <span>Solved</span>
-                      <span className="font-mono font-bold">
-                        {lvl.solvedCount} / {lvl.totalQuestions}
-                      </span>
+                  <div className="space-y-3 pt-2 border-t-2 border-[var(--ink)]">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)]">
+                        <span>Solved</span>
+                        <span className="font-mono font-black">
+                          {lvl.solvedCount} / {lvl.totalQuestions}
+                        </span>
+                      </div>
+                      <div className="w-full h-2.5 bg-[var(--paper-beige)] border border-[var(--ink)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[var(--accent-teal)] transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, Math.round((lvl.solvedCount / lvl.totalQuestions) * 100))}%`,
+                          }}
+                        />
+                      </div>
                     </div>
 
                     {lvl.unlocked ? (
                       <Link
                         href={`/office/${currentDomain.slug}/level-${lvl.number}`}
-                        className="w-full btn-primary text-xs py-2"
+                        className="w-full btn-primary text-xs py-2 shadow-[2px_2px_0px_var(--ink)] active:translate-x-[1px] active:translate-y-[1px]"
                       >
-                        Enter Office
+                        <span>Enter Office</span>
                         <ArrowRight className="w-3.5 h-3.5 text-[var(--ink)]" />
                       </Link>
                     ) : (
@@ -321,7 +475,7 @@ export default function DashboardPage() {
 
         {/* Footer Honor Reminder */}
         <div className="bg-[var(--mist)] border border-[var(--sky)] rounded-xl p-4 text-center text-xs font-bold text-[var(--ink)]">
-          &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo; — The SQL Office Simulator Team
+          &ldquo;Mastering SQL gives you a direct, unfiltered conversation with business reality.&rdquo; — The SQL Office Simulator Team
         </div>
 
         <footer className="pt-4 pb-6 text-center text-xs text-[var(--ink)] opacity-75 flex flex-wrap items-center justify-center gap-4">
@@ -332,6 +486,8 @@ export default function DashboardPage() {
           <Link href="/privacy" className="hover:underline font-bold">
             Privacy Policy
           </Link>
+          <span>•</span>
+          <FeedbackLink variant="pill" />
           <span>•</span>
           <span>© 2026 SQL Office Simulator • 100% Free Forever</span>
         </footer>

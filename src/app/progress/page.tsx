@@ -351,7 +351,7 @@ export default function ProgressPage() {
 
       {/* Footer */}
       <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-6 px-4 text-center text-xs font-semibold text-[var(--ink)] mt-12">
-        &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo; — SQL Office Simulator
+        &ldquo;Consistency turns raw queries into senior-level engineering instinct.&rdquo; — SQL Office Simulator
       </footer>
     </div>
   );

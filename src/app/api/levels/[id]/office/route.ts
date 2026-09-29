@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { id } = await params;
   const domain = req.nextUrl.searchParams.get("domain") || "ecommerce";
-  const metadata = getDomainOfficeMetadata(domain);
+  const metadata = getDomainOfficeMetadata(domain, id);
 
   return NextResponse.json({
     levelId: id,

@@ -4,7 +4,7 @@ import { registerUser } from "@/lib/auth/auth-service";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password, name, honorPledgeAccepted } = body;
+    const { email, password, name, honorPledgeAccepted, termsAccepted, securityQuestion, securityAnswer } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
     if (!honorPledgeAccepted) {
       return NextResponse.json(
         { error: "You must accept the honor pledge to create an account." },
+        { status: 400 }
+      );
+    }
+
+    if (!termsAccepted) {
+      return NextResponse.json(
+        { error: "You must accept the Terms of Service & Commercial Use Restriction to create an account." },
         { status: 400 }
       );
     }
@@ -32,6 +39,8 @@ export async function POST(req: NextRequest) {
       password,
       name,
       honorPledgeAccepted: Boolean(honorPledgeAccepted),
+      securityQuestion: securityQuestion ? String(securityQuestion).trim() : undefined,
+      securityAnswer: securityAnswer ? String(securityAnswer).trim() : undefined,
     });
 
     return NextResponse.json({

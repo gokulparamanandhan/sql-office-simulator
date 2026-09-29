@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
 import { getQuestionsForDomainAndLevel } from "@/lib/content/content-registry";
+import FeedbackLink from "@/components/FeedbackLink";
 
 export default function OfficeLevelPage({
   params,
@@ -32,7 +33,7 @@ export default function OfficeLevelPage({
   const { domain, level } = use(params);
   const cleanLevel = (!level || level === "level-undefined" || level === "undefined") ? "1" : level.replace(/^level-/, "");
   const levelRoute = `level-${cleanLevel}`;
-  const office = getDomainOfficeMetadata(domain);
+  const office = getDomainOfficeMetadata(domain, cleanLevel);
   const questions = getQuestionsForDomainAndLevel(domain, parseInt(cleanLevel, 10));
 
   const [activeTab, setActiveTab] = useState<"inbox" | "team" | "schema">("inbox");
@@ -43,15 +44,16 @@ export default function OfficeLevelPage({
   const [pledgeModalOpen, setPledgeModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    // Load solved states from localStorage
+    // Load solved states from user-scoped storage
     try {
-      const stored = localStorage.getItem(`sql_office_${domain}_l${cleanLevel}_solved`);
+      const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+      const stored = localStorage.getItem(`sql_office_${currentUserId}_${domain}_l${cleanLevel}_solved`);
       if (stored) {
         setSolvedMap(JSON.parse(stored));
       }
 
       // Check if learner has acknowledged level honor pledge
-      const ack = localStorage.getItem(`sql_office_level_pledge_ack_${domain}_${cleanLevel}`);
+      const ack = localStorage.getItem(`sql_office_${currentUserId}_level_pledge_ack_${domain}_${cleanLevel}`);
       if (!ack) {
         setPledgeModalOpen(true);
       }
@@ -62,7 +64,8 @@ export default function OfficeLevelPage({
 
   const handleAcknowledgePledge = () => {
     try {
-      localStorage.setItem(`sql_office_level_pledge_ack_${domain}_${cleanLevel}`, "true");
+      const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+      localStorage.setItem(`sql_office_${currentUserId}_level_pledge_ack_${domain}_${cleanLevel}`, "true");
     } catch {
       // Ignore
     }
@@ -128,6 +131,8 @@ export default function OfficeLevelPage({
               </span>
             </div>
 
+            <FeedbackLink variant="button" />
+
             <Link
               href={`/office/${domain}/${levelRoute}/question/${questions[0]?.id || "ecom-L1-001"}`}
               className="btn-primary text-xs py-2 px-3.5"
@@ -141,8 +146,27 @@ export default function OfficeLevelPage({
 
       {/* Office Simulation Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+        {/* Office Level XP & Completion Bar */}
+        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-4 shadow-[4px_4px_0px_var(--ink)] space-y-2">
+          <div className="flex items-center justify-between text-xs font-black text-[var(--ink)]">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-[var(--sun)] border border-[var(--ink)] text-[10px] font-black">
+                LEVEL PROGRESS
+              </span>
+              <span>{solvedCount} of {totalQuestions} Requests Completed ({solvedCount * 10} XP Earned)</span>
+            </div>
+            <span className="font-mono">{Math.round((solvedCount / totalQuestions) * 100)}%</span>
+          </div>
+          <div className="w-full h-3.5 bg-[var(--paper-beige)] border-2 border-[var(--ink)] rounded-full overflow-hidden p-0.5">
+            <div
+              className="h-full bg-[var(--accent-teal)] rounded-full transition-all duration-300"
+              style={{ width: `${Math.max(solvedCount > 0 ? 3 : 0, Math.round((solvedCount / totalQuestions) * 100))}%` }}
+            />
+          </div>
+        </div>
+
         {/* CEO Welcome Memo Card */}
-        <div className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-2xl p-6 shadow-[3px_3px_0px_var(--ocean)] space-y-3">
+        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[4px_4px_0px_var(--ink)] space-y-3">
           <div className="flex items-center justify-between border-b border-[var(--sky)] pb-3">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -396,7 +420,7 @@ export default function OfficeLevelPage({
 
       {/* Footer */}
       <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-6 px-4 sm:px-8 mt-12 text-center text-xs font-semibold text-[var(--ink)]">
-        &ldquo;Solve it yourself. That&apos;s where the learning happens.&rdquo; — SQL Office Simulator
+        &ldquo;Real data analysts don&apos;t wait for answers—they query the truth directly.&rdquo; — SQL Office Simulator
       </footer>
 
       {/* LEVEL HONOR PLEDGE REMINDER MODAL (SPEC SECTION 8 & PHASE 5) */}
