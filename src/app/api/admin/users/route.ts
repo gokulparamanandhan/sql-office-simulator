@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { appDb } from "@/lib/db/app-db";
 import { isCurrentAdmin } from "@/lib/auth/admin-auth";
-import fs from "fs";
-import path from "path";
+import { safeReadJson } from "@/lib/storage/file-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +15,7 @@ export async function GET() {
     );
   }
 
-  const LOCAL_STORE_FILE = path.join(process.cwd(), "data", "local-users.json");
+  const USERS_FILENAME = "local-users.json";
 
   let users: Array<{
     id: string;
@@ -50,23 +49,19 @@ export async function GET() {
     // DB offline fallback
   }
 
-  // If DB didn't return users, check local file store
-  if (users.length === 0 && fs.existsSync(LOCAL_STORE_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(LOCAL_STORE_FILE, "utf-8"));
-      users = (data.users || []).map((u: any) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        role: u.role || "learner",
-        provider: "Password",
-        avatar: u.avatar,
-        createdAt: u.createdAt,
-        honorPledgeAcceptedAt: u.honorPledgeAcceptedAt,
-      }));
-    } catch {
-      // Ignore
-    }
+  // If DB didn't return users, check local safe store
+  if (users.length === 0) {
+    const data = safeReadJson<{ users: any[] }>(USERS_FILENAME, { users: [] });
+    users = (data.users || []).map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role || "learner",
+      provider: "Password",
+      avatar: u.avatar,
+      createdAt: u.createdAt,
+      honorPledgeAcceptedAt: u.honorPledgeAcceptedAt,
+    }));
   }
 
   return NextResponse.json({

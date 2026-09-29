@@ -1,6 +1,5 @@
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 
 // Base32 character set (RFC 4648)
 const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -124,7 +123,7 @@ export function generateBackupCodes(count: number = 8): string[] {
 // ==========================================
 // Admin 2FA Settings Persistence
 // ==========================================
-const CONFIG_FILE = path.join(process.cwd(), "data", "admin-2fa.json");
+const CONFIG_FILENAME = "admin-2fa.json";
 
 export interface Admin2FAConfig {
   enabled: boolean;
@@ -134,20 +133,10 @@ export interface Admin2FAConfig {
   lastVerifiedAt?: string;
 }
 
-function ensureDataDir() {
-  const dir = path.dirname(CONFIG_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
 export function getAdmin2FAConfig(): Admin2FAConfig {
-  ensureDataDir();
-  if (fs.existsSync(CONFIG_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
-      return data;
-    } catch {
-      // Fallback
-    }
+  const existing = safeReadJson<Admin2FAConfig | null>(CONFIG_FILENAME, null);
+  if (existing && existing.secret) {
+    return existing;
   }
 
   // Initial un-enabled config
@@ -157,13 +146,12 @@ export function getAdmin2FAConfig(): Admin2FAConfig {
     backupCodes: generateBackupCodes(8),
     createdAt: new Date().toISOString(),
   };
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(initial, null, 2));
+  safeWriteJson(CONFIG_FILENAME, initial);
   return initial;
 }
 
 export function saveAdmin2FAConfig(config: Admin2FAConfig) {
-  ensureDataDir();
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  safeWriteJson(CONFIG_FILENAME, config);
 }
 
 export function verifyAdminBackupCode(code: string): boolean {

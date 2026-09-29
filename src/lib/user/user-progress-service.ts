@@ -1,8 +1,7 @@
-import fs from "fs";
-import path from "path";
 import { appDb } from "@/lib/db/app-db";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 
-const PROGRESS_FILE = path.join(process.cwd(), "data", "user-progress.json");
+const PROGRESS_FILENAME = "user-progress.json";
 
 export interface LevelProgressRecord {
   solvedCount: number;
@@ -19,27 +18,12 @@ export interface UserProgressData {
   updatedAt: string;
 }
 
-function ensureProgressDir() {
-  const dir = path.dirname(PROGRESS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(PROGRESS_FILE)) {
-    fs.writeFileSync(PROGRESS_FILE, JSON.stringify({}, null, 2));
-  }
-}
-
 function getAllUserProgress(): Record<string, UserProgressData> {
-  ensureProgressDir();
-  try {
-    const raw = fs.readFileSync(PROGRESS_FILE, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
+  return safeReadJson<Record<string, UserProgressData>>(PROGRESS_FILENAME, {});
 }
 
 function saveAllUserProgress(data: Record<string, UserProgressData>) {
-  ensureProgressDir();
-  fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
+  safeWriteJson(PROGRESS_FILENAME, data);
 }
 
 /**

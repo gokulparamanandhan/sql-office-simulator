@@ -1,33 +1,18 @@
 import bcrypt from "bcryptjs";
-import fs from "fs";
-import path from "path";
 import { appDb } from "@/lib/db/app-db";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 import { SECURITY_QUESTIONS } from "./security-questions-constants";
 export { SECURITY_QUESTIONS };
 
-const LOCAL_STORE_FILE = path.join(process.cwd(), "data", "local-users.json");
-
-function ensureLocalStoreDir() {
-  const dir = path.dirname(LOCAL_STORE_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
+const USERS_FILENAME = "local-users.json";
 
 function getLocalUsers(): any[] {
-  ensureLocalStoreDir();
-  try {
-    if (fs.existsSync(LOCAL_STORE_FILE)) {
-      const data = fs.readFileSync(LOCAL_STORE_FILE, "utf-8");
-      return JSON.parse(data).users || [];
-    }
-  } catch {
-    // Ignore
-  }
-  return [];
+  const data = safeReadJson<{ users: any[] }>(USERS_FILENAME, { users: [] });
+  return data.users || [];
 }
 
 function saveLocalUsers(users: any[]) {
-  ensureLocalStoreDir();
-  fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify({ users }, null, 2));
+  safeWriteJson(USERS_FILENAME, { users });
 }
 
 export function normalizeSecurityAnswer(answer: string): string {

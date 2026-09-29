@@ -2,8 +2,7 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { appDb } from "@/lib/db/app-db";
-import fs from "fs";
-import path from "path";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 import { hashSecurityAnswer } from "@/lib/auth/security-questions";
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -23,17 +22,7 @@ export interface UserSession {
 }
 
 // Local file store fallback when DB is starting or in dev
-const LOCAL_STORE_FILE = path.join(process.cwd(), "data", "local-users.json");
-
-function ensureLocalStoreDir() {
-  const dir = path.dirname(LOCAL_STORE_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  if (!fs.existsSync(LOCAL_STORE_FILE)) {
-    fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify({ users: [] }, null, 2));
-  }
-}
+const USERS_FILENAME = "local-users.json";
 
 interface StoredUser {
   id: string;
@@ -49,20 +38,14 @@ interface StoredUser {
 }
 
 function getLocalUsers(): StoredUser[] {
-  ensureLocalStoreDir();
-  try {
-    const data = fs.readFileSync(LOCAL_STORE_FILE, "utf-8");
-    return JSON.parse(data).users || [];
-  } catch {
-    return [];
-  }
+  const data = safeReadJson<{ users: StoredUser[] }>(USERS_FILENAME, { users: [] });
+  return data.users || [];
 }
 
 function saveLocalUser(user: StoredUser) {
-  ensureLocalStoreDir();
   const users = getLocalUsers().filter((u) => u.email !== user.email);
   users.push(user);
-  fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify({ users }, null, 2));
+  safeWriteJson(USERS_FILENAME, { users });
 }
 
 export async function hashPassword(password: string): Promise<string> {

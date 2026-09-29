@@ -1,11 +1,10 @@
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import bcrypt from "bcryptjs";
 import { appDb } from "@/lib/db/app-db";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 
-const RESET_FILE = path.join(process.cwd(), "data", "password-resets.json");
-const LOCAL_USERS_FILE = path.join(process.cwd(), "data", "local-users.json");
+const RESETS_FILENAME = "password-resets.json";
+const USERS_FILENAME = "local-users.json";
 
 export interface PasswordResetEntry {
   email: string;
@@ -16,30 +15,16 @@ export interface PasswordResetEntry {
   used: boolean;
 }
 
-function ensureDataDir() {
-  const dir = path.dirname(RESET_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
 function getStoredResets(): PasswordResetEntry[] {
-  ensureDataDir();
-  if (fs.existsSync(RESET_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(RESET_FILE, "utf-8"));
-      return data.resets || [];
-    } catch {
-      return [];
-    }
-  }
-  return [];
+  const data = safeReadJson<{ resets: PasswordResetEntry[] }>(RESETS_FILENAME, { resets: [] });
+  return data.resets || [];
 }
 
 function saveStoredResets(resets: PasswordResetEntry[]) {
-  ensureDataDir();
-  // Filter out expired entries older than 24h to keep file clean
+  // Filter out expired entries older than 24h to keep store clean
   const now = Date.now();
   const cleaned = resets.filter((r) => r.expiresAt > now - 24 * 60 * 60 * 1000);
-  fs.writeFileSync(RESET_FILE, JSON.stringify({ resets: cleaned }, null, 2));
+  safeWriteJson(RESETS_FILENAME, { resets: cleaned });
 }
 
 /**
@@ -57,15 +42,9 @@ export async function userExists(email: string): Promise<boolean> {
   }
 
   // 2. Local JSON store
-  if (fs.existsSync(LOCAL_USERS_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(LOCAL_USERS_FILE, "utf-8"));
-      const exists = (data.users || []).some((u: any) => u.email.toLowerCase() === normalized);
-      if (exists) return true;
-    } catch {
-      // Ignore
-    }
-  }
+  const data = safeReadJson<{ users: any[] }>(USERS_FILENAME, { users: [] });
+  const exists = (data.users || []).some((u: any) => u.email.toLowerCase() === normalized);
+  if (exists) return true;
 
   return false;
 }
@@ -146,19 +125,15 @@ export async function completePasswordReset(
   }
 
   // 2. Update in local store
-  if (fs.existsSync(LOCAL_USERS_FILE)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(LOCAL_USERS_FILE, "utf-8"));
-      const users = (data.users || []).map((u: any) => {
-        if (u.email.toLowerCase() === normalized) {
-          return { ...u, passwordHash };
-        }
-        return u;
-      });
-      fs.writeFileSync(LOCAL_USERS_FILE, JSON.stringify({ users }, null, 2));
-    } catch {
-      // Ignore
-    }
+  const data = safeReadJson<{ users: any[] }>(USERS_FILENAME, { users: [] });
+  if (data.users && data.users.length > 0) {
+    const updatedUsers = data.users.map((u: any) => {
+      if (u.email.toLowerCase() === normalized) {
+        return { ...u, passwordHash };
+      }
+      return u;
+    });
+    safeWriteJson(USERS_FILENAME, { users: updatedUsers });
   }
 
   // Mark token as used

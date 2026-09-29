@@ -1,8 +1,7 @@
 import crypto from "crypto";
 import { appDb } from "@/lib/db/app-db";
 import { createSessionToken, setSessionCookie, UserSession } from "./auth-service";
-import fs from "fs";
-import path from "path";
+import { safeReadJson, safeWriteJson } from "@/lib/storage/file-storage";
 
 export interface TwoFactorChallenge {
   email: string;
@@ -17,15 +16,7 @@ export interface TwoFactorChallenge {
 
 // In-memory 2FA challenge store (with file backup for resilience across worker restarts)
 const challengeStore = new Map<string, TwoFactorChallenge>();
-const LOCAL_STORE_FILE = path.join(process.cwd(), "data", "local-users.json");
-
-function ensureLocalStore() {
-  const dir = path.dirname(LOCAL_STORE_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(LOCAL_STORE_FILE)) {
-    fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify({ users: [] }, null, 2));
-  }
-}
+const USERS_FILENAME = "local-users.json";
 
 interface StoredUser {
   id: string;
@@ -42,20 +33,14 @@ interface StoredUser {
 }
 
 function getStoredUsers(): StoredUser[] {
-  ensureLocalStore();
-  try {
-    const raw = fs.readFileSync(LOCAL_STORE_FILE, "utf-8");
-    return JSON.parse(raw).users || [];
-  } catch {
-    return [];
-  }
+  const data = safeReadJson<{ users: StoredUser[] }>(USERS_FILENAME, { users: [] });
+  return data.users || [];
 }
 
 function saveStoredUser(user: StoredUser) {
-  ensureLocalStore();
   const users = getStoredUsers().filter((u) => u.email !== user.email);
   users.push(user);
-  fs.writeFileSync(LOCAL_STORE_FILE, JSON.stringify({ users }, null, 2));
+  safeWriteJson(USERS_FILENAME, { users });
 }
 
 /**
