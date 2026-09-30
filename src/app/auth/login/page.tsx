@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Building2, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { Building2, AlertCircle, ArrowRight, ShieldCheck, Sparkles, BookOpen } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,9 +34,15 @@ export default function LoginPage() {
         throw new Error(data.error || "Failed to log in.");
       }
 
+      if (data.user?.id) {
+        localStorage.setItem("sql_office_last_user_id", data.user.id);
+      }
+
       // If logged in as admin, redirect directly to admin console
       if (data.isAdmin || data.user?.role === "admin") {
         router.push("/admin");
+      } else if (redirectUrl && redirectUrl.startsWith("/")) {
+        router.push(redirectUrl);
       } else {
         router.push("/dashboard");
       }
@@ -53,7 +62,16 @@ export default function LoginPage() {
         >
           ← Back to Simulator
         </Link>
-        <FeedbackLink variant="pill" />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/onboarding"
+            className="text-xs font-bold text-[var(--ocean-hover)] hover:underline flex items-center gap-1"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Onboarding Guide</span>
+          </Link>
+          <FeedbackLink variant="pill" />
+        </div>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -71,9 +89,15 @@ export default function LoginPage() {
         <p className="mt-1 text-center text-xs font-semibold text-[var(--ink)] opacity-80">
           Pick up where you left off in your company inbox
         </p>
+
+        {redirectUrl && (
+          <div className="mt-3 p-2.5 rounded-lg bg-[var(--sun)]/30 border border-[var(--sun)] text-xs font-bold text-[var(--ink)] text-center">
+            Sign in to continue into your chosen workplace domain & database sandbox.
+          </div>
+        )}
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-[var(--white)] py-8 px-6 sm:px-10 border-2 border-[var(--ink)] rounded-2xl shadow-[4px_4px_0px_var(--ocean)] space-y-6">
           {error && (
             <div className="p-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-xs font-semibold flex items-center gap-2">
@@ -134,7 +158,7 @@ export default function LoginPage() {
           <div className="pt-2 border-t border-[var(--sky)] text-center text-xs font-semibold text-[var(--ink)] opacity-80">
             Don&apos;t have an account yet?{" "}
             <Link
-              href="/auth/signup"
+              href={`/auth/signup${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ""}`}
               className="font-extrabold text-[var(--ocean-hover)] underline hover:text-[var(--ink)]"
             >
               Sign Up with Honor Pledge & Terms
@@ -143,5 +167,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center font-bold text-xs text-[var(--ink)]">
+          Loading...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -124,6 +124,18 @@ export default function QuestionWorkspacePage({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) {
+          router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+        }
+      })
+      .catch(() => {
+        router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+      });
+  }, [router]);
+
   // Load saved state for this question
   useEffect(() => {
     try {

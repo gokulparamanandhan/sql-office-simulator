@@ -12,7 +12,13 @@ export async function POST(
   try {
     const { id } = await params;
     const user = await getCurrentUser();
-    const userId = user?.id || "guest_learner";
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in or create an account to submit answers." },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
 
     const config = await getAppConfig();
     const rateLimitResult = checkRateLimit(

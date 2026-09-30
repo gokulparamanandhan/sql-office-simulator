@@ -19,11 +19,41 @@ import {
   Clock,
   Award,
   Zap,
+  Lock,
+  Globe,
+  BookOpen,
+  X,
+  Compass,
 } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
 
 export default function Home() {
   const [activeDomainTab, setActiveDomainTab] = useState<string>("ecommerce");
+  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
+  const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
+  const [selectedModalDomain, setSelectedModalDomain] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data?.authenticated && data.user) {
+          setUser(data.user);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  const handleLogout = async () => {
+    localStorage.removeItem("sql_office_last_user_id");
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+  };
 
   const domains = [
     {
@@ -148,6 +178,14 @@ export default function Home() {
 
   const selectedDomain = domains.find((d) => d.id === activeDomainTab) || domains[0];
 
+  const handleStartLevelClick = (e: React.MouseEvent, domainItem: typeof domains[0]) => {
+    if (!user) {
+      e.preventDefault();
+      setSelectedModalDomain(domainItem);
+      setOnboardingModalOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
       {/* Top Office Header */}
@@ -173,8 +211,17 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Onboarding Guide Link */}
+            <Link
+              href="/onboarding"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[var(--ocean-hover)]" />
+              <span>Onboarding Guide</span>
+            </Link>
+
             {/* Honor Pledge Badge */}
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-semibold text-[var(--ink)]">
+            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-semibold text-[var(--ink)]">
               <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
               <span>Honor Code: Human SQL Only</span>
             </div>
@@ -182,24 +229,70 @@ export default function Home() {
             {/* Highlighted Feedback Link */}
             <FeedbackLink variant="button" />
 
-            <Link
-              href="/auth/login"
-              className="btn-secondary text-xs py-2 px-3.5"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="btn-primary text-xs py-2 px-3.5"
-            >
-              Sign Up
-            </Link>
+            {/* Auth Buttons */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-xs font-bold text-[var(--ink)] bg-[var(--mist)] px-2.5 py-1.5 rounded-md border border-[var(--sky)]">
+                  Hi, {user.name}
+                </span>
+                <Link
+                  href="/dashboard"
+                  className="btn-primary text-xs py-2 px-3.5"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn-secondary text-xs py-2 px-3"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/auth/login"
+                  className="btn-secondary text-xs py-2 px-3.5"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="btn-primary text-xs py-2 px-3.5"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-12">
+        {/* User Logged-in Banner if authenticated */}
+        {user && (
+          <div className="bg-[var(--sun)]/25 border-2 border-[var(--ink)] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[2px_2px_0px_var(--ink)]">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">💼</span>
+              <div>
+                <span className="font-extrabold text-sm text-[var(--ink)]">
+                  Logged in as {user.name} ({user.email})
+                </span>
+                <p className="text-xs text-[var(--ink)] opacity-80">
+                  Your sandbox progress is being saved automatically. Ready for your next query challenge?
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard"
+              className="btn-primary text-xs py-1.5 px-3 shrink-0"
+            >
+              Continue to Career Dashboard →
+            </Link>
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="relative overflow-hidden rounded-2xl bg-[var(--white)] border-2 border-[var(--sky)] p-6 sm:p-10 shadow-[4px_4px_0px_var(--ocean)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -218,23 +311,68 @@ export default function Home() {
                 Executives, VPs, and managers send you urgent requests—you inspect real schemas, write SQL queries, and deliver answers.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <a
-                  href="#domains"
-                  className="btn-primary"
-                >
-                  <Briefcase className="w-4 h-4 text-[var(--ink)]" />
-                  <span>Choose Your Industry Domain</span>
-                  <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
-                </a>
+              {/* Hero Call to Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {user ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="btn-primary"
+                    >
+                      <Briefcase className="w-4 h-4 text-[var(--ink)]" />
+                      <span>Go to Career Dashboard</span>
+                      <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
+                    </Link>
+                    <a
+                      href="#domains"
+                      className="btn-secondary"
+                    >
+                      <span>Choose Industry Domain</span>
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth/signup"
+                      className="btn-primary"
+                    >
+                      <Sparkles className="w-4 h-4 text-[var(--ink)]" />
+                      <span>Create Free Account (Sign Up)</span>
+                      <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
+                    </Link>
+                    <Link
+                      href="/auth/login"
+                      className="btn-secondary"
+                    >
+                      <span>Sign In</span>
+                    </Link>
+                    <a
+                      href="#domains"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-[var(--sky)] text-xs font-extrabold hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
+                    >
+                      <Compass className="w-4 h-4 text-[var(--ink)]" />
+                      <span>Explore 7 Domains</span>
+                    </a>
+                  </>
+                )}
 
-                <a
-                  href="#career"
-                  className="btn-secondary"
+                <Link
+                  href="/onboarding"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-[var(--sky)] text-xs font-extrabold hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
                 >
-                  <span>Explore 5 Career Levels</span>
-                </a>
+                  <BookOpen className="w-4 h-4 text-[var(--ocean-hover)]" />
+                  <span>Onboarding Tour</span>
+                </Link>
               </div>
+
+              {!user && (
+                <div className="flex items-center gap-2 pt-1 text-xs font-semibold text-[var(--ink)] opacity-75">
+                  <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>
+                    Free account required to enter live database sandboxes &amp; save query progress.
+                  </span>
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--sky)]">
                 <div>
@@ -323,6 +461,39 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Onboarding & Orientation Callout Banner */}
+        <section className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-[var(--ocean)] border border-[var(--ink)] flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-[var(--ink)]" />
+            </div>
+            <div>
+              <h3 className="font-black text-sm text-[var(--ink)]">
+                New Employee Orientation &amp; Platform Guide
+              </h3>
+              <p className="text-xs text-[var(--ink)] opacity-80 leading-relaxed mt-0.5">
+                Understand how the simulator works, explore the 7 industry schemas, discover the 5 company growth stages, and learn about our dual-dataset anti-cheat evaluation.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/onboarding"
+              className="btn-secondary text-xs py-2 px-3.5 whitespace-nowrap"
+            >
+              Read Onboarding Guide →
+            </Link>
+            {!user && (
+              <Link
+                href="/auth/signup"
+                className="btn-primary text-xs py-2 px-3.5 whitespace-nowrap"
+              >
+                Sign Up Free
+              </Link>
+            )}
+          </div>
+        </section>
+
         {/* 7 Domains Section */}
         <section id="domains" className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -369,16 +540,28 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
                   {selectedDomain.xp}
                 </span>
-                <Link
-                  href={`/office/${selectedDomain.id}/level-1`}
-                  className="btn-primary text-xs py-2 px-4"
-                >
-                  Start Level 1
-                </Link>
+
+                {user ? (
+                  <Link
+                    href={`/office/${selectedDomain.id}/level-1`}
+                    className="btn-primary text-xs py-2 px-4"
+                  >
+                    Start Level 1
+                  </Link>
+                ) : (
+                  <button
+                    onClick={(e) => handleStartLevelClick(e, selectedDomain)}
+                    className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+                    title="Sign up or Sign in required to access database sandbox"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-[var(--ink)]" />
+                    <span>Start Level 1 (Sign Up Required)</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -493,6 +676,93 @@ export default function Home() {
         </section>
       </main>
 
+      {/* Onboarding / Account Required Modal */}
+      {onboardingModalOpen && selectedModalDomain && (
+        <div className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--white)] border-3 border-[var(--ink)] rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-5 shadow-[8px_8px_0px_var(--ocean)] relative">
+            <button
+              onClick={() => setOnboardingModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b-2 border-[var(--sky)] pb-4">
+              <div className="w-12 h-12 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center text-2xl shadow-[2px_2px_0px_var(--ink)] shrink-0">
+                🏢
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--ocean-hover)]">
+                  Simulated Workplace Access
+                </span>
+                <h3 className="text-lg font-black text-[var(--ink)]">
+                  Join {selectedModalDomain.name} ({selectedModalDomain.tagline})
+                </h3>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs sm:text-sm text-[var(--ink)] leading-relaxed">
+                To access the live PostgreSQL sandbox for <strong>{selectedModalDomain.name}</strong>, inspect real multi-table schemas, and start answering requests from <strong>{selectedModalDomain.sampleStakeholder}</strong>, you need to sign in or create an account.
+              </p>
+
+              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-3.5 space-y-2 text-xs text-[var(--ink)]">
+                <div className="flex items-center gap-2 font-bold text-[var(--ocean-hover)]">
+                  <Sparkles className="w-4 h-4" />
+                  <span>What you get with your free account:</span>
+                </div>
+                <div className="space-y-1.5 pl-1 font-medium">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Access to all 7 industry domains and 3,500 questions</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>In-browser PostgreSQL queries with Monaco editor</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Dual-dataset automated testing &amp; XP tracking</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>100% Free Forever • Zero paywalls or credit cards</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <Link
+                href={`/auth/signup?redirect=/office/${selectedModalDomain.id}/level-1`}
+                className="w-full btn-primary text-xs py-2.5 justify-center flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-[var(--ink)]" />
+                <span>Create Free Account &amp; Start Level 1</span>
+                <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
+              </Link>
+
+              <Link
+                href={`/auth/login?redirect=/office/${selectedModalDomain.id}/level-1`}
+                className="w-full btn-secondary text-xs py-2.5 justify-center flex items-center gap-2"
+              >
+                <span>Sign In to Existing Account</span>
+              </Link>
+
+              <div className="text-center pt-1">
+                <Link
+                  href="/onboarding"
+                  className="text-xs font-bold text-[var(--ocean-hover)] underline hover:text-[var(--ink)]"
+                >
+                  New to the platform? Read Full Onboarding Guide →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-8 px-4 sm:px-8 mt-12">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs font-semibold text-[var(--ink)]">
@@ -502,8 +772,12 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-5 text-[var(--ink)]">
+            <Link href="/onboarding" className="hover:underline font-bold text-[var(--ocean-hover)]">
+              Onboarding Guide
+            </Link>
+            <span>•</span>
             <Link href="/terms" className="hover:underline font-bold">
-              Terms & Honor Code
+              Terms &amp; Honor Code
             </Link>
             <span>•</span>
             <Link href="/privacy" className="hover:underline font-bold">
@@ -515,7 +789,7 @@ export default function Home() {
             </Link>
             <span>•</span>
             <Link href="/progress" className="hover:underline font-bold">
-              Progress & Mastery
+              Progress &amp; Mastery
             </Link>
             <span>•</span>
             <Link href="/admin/login" className="hover:underline font-bold text-slate-400">

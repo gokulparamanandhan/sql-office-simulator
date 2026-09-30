@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runSandboxQuery } from "@/lib/sandbox/sandbox-engine";
 import { getQuestionById } from "@/lib/content/content-registry";
+import { getCurrentUser } from "@/lib/auth/auth-service";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in or create an account to run SQL queries." },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const body = await req.json();
     const { sql, schema } = body;

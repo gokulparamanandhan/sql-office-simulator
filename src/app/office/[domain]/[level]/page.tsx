@@ -44,6 +44,17 @@ export default function OfficeLevelPage({
   const [pledgeModalOpen, setPledgeModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
+    // Verify user is authenticated; redirect to signup if not
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) {
+          router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+        }
+      })
+      .catch(() => {
+        router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+      });
+
     // Load solved states from user-scoped storage
     try {
       const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
@@ -60,7 +71,7 @@ export default function OfficeLevelPage({
     } catch {
       // Ignore
     }
-  }, [domain, cleanLevel]);
+  }, [domain, cleanLevel, router]);
 
   const handleAcknowledgePledge = () => {
     try {
