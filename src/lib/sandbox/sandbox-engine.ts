@@ -21,16 +21,21 @@ async function getEmbeddedPg(): Promise<PGlite> {
   if (embeddedPgInitializing) return embeddedPgInitializing;
 
   embeddedPgInitializing = (async () => {
-    const pg = new PGlite();
-    // Pre-seed ecom_l1 and ecom_l1_val schemas
-    const mainSql = generateEcomL1Sql("main");
-    const valSql = generateEcomL1Sql("validation");
+    try {
+      const pg = new PGlite();
+      // Pre-seed ecom_l1 and ecom_l1_val schemas
+      const mainSql = generateEcomL1Sql("main");
+      const valSql = generateEcomL1Sql("validation");
 
-    await pg.exec(mainSql);
-    await pg.exec(valSql);
+      await pg.exec(mainSql);
+      await pg.exec(valSql);
 
-    embeddedPgInstance = pg;
-    return pg;
+      embeddedPgInstance = pg;
+      return pg;
+    } catch (err) {
+      embeddedPgInitializing = null;
+      throw err;
+    }
   })();
 
   return embeddedPgInitializing;
