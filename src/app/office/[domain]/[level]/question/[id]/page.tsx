@@ -29,6 +29,8 @@ import {
   Table2,
   Copy,
   Check,
+  Search,
+  Database,
 } from "lucide-react";
 import { getQuestionsForDomainAndLevel, getQuestionById } from "@/lib/content/content-registry";
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
@@ -112,9 +114,12 @@ export default function QuestionWorkspacePage({
   const [viewingSolution, setViewingSolution] = useState<boolean>(false);
   const [solutionPenalized, setSolutionPenalized] = useState<boolean>(false);
 
-  // Scratchpad
+  // Scratchpad & Schema lookup state
   const [scratchpad, setScratchpad] = useState<string>("");
   const [activeLeftTab, setActiveLeftTab] = useState<"brief" | "hints" | "scratchpad" | "schema">("brief");
+  const [schemaSearch, setSchemaSearch] = useState<string>("");
+  const [copiedSchemaText, setCopiedSchemaText] = useState<string | null>(null);
+  const [schemaToast, setSchemaToast] = useState<string | null>(null);
 
   // Report issue modal
   const [reportModalOpen, setReportModalOpen] = useState<boolean>(false);
@@ -229,6 +234,34 @@ export default function QuestionWorkspacePage({
     } catch {}
     setInsertedFeedback(true);
     setTimeout(() => setInsertedFeedback(false), 2000);
+  };
+
+  const handleCopySchemaText = (text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedSchemaText(text);
+    setSchemaToast(`Copied "${text}"`);
+    setTimeout(() => {
+      setCopiedSchemaText(null);
+      setSchemaToast(null);
+    }, 1800);
+  };
+
+  const handleInsertSchemaText = (text: string) => {
+    setSql((prev) => {
+      const trimmed = prev.trimEnd();
+      let updated: string;
+      if (!trimmed || trimmed === "SELECT") {
+        updated = trimmed + " " + text;
+      } else {
+        updated = trimmed + " " + text;
+      }
+      try {
+        localStorage.setItem(`sql_office_${id}_code`, updated);
+      } catch {}
+      return updated;
+    });
+    setSchemaToast(`Inserted "${text}" into editor`);
+    setTimeout(() => setSchemaToast(null), 1800);
   };
 
   // Persist code on change
@@ -858,30 +891,191 @@ export default function QuestionWorkspacePage({
             {/* TAB: SCHEMA */}
             {activeLeftTab === "schema" && (
               <div className="space-y-4">
-                <p className="text-xs font-semibold text-[var(--ink)] opacity-80">
-                  Quick schema lookup for {office.company.name} tables:
-                </p>
-                {office.schema.map((tbl) => (
-                  <div
-                    key={tbl.name}
-                    className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-3 space-y-2 text-xs"
-                  >
-                    <div className="font-mono font-black text-[var(--ink)] flex items-center justify-between">
-                      <span>{tbl.name}</span>
-                      <span className="text-[10px] opacity-60 font-sans">{tbl.columns.length} columns</span>
+                <div className="bg-[var(--surface)] border border-[var(--sky)] p-3 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-[var(--ink)] flex items-center gap-1.5">
+                        <Database className="w-3.5 h-3.5 text-[var(--ocean)]" />
+                        <span>Database Schema Explorer</span>
+                      </h4>
+                      <p className="text-[11px] text-[var(--ink)] opacity-70">
+                        {office.company.name} • {office.schema.length} Operational Tables
+                      </p>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {tbl.columns.map((c) => (
-                        <span
-                          key={c.name}
-                          className="font-mono text-[11px] bg-[var(--white)] border border-[var(--sky)] px-1.5 py-0.5 rounded text-[var(--ink)]"
-                        >
-                          {c.name}
-                        </span>
-                      ))}
-                    </div>
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)]">
+                      {(domain === "ecommerce" ? "ecom" : domain)}_l{cleanLevel}
+                    </span>
                   </div>
-                ))}
+
+                  {/* Schema Search / Filter Input */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink)] opacity-50 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={schemaSearch}
+                      onChange={(e) => setSchemaSearch(e.target.value)}
+                      placeholder="Search tables, columns, or keys (e.g. shipments, carrier)..."
+                      className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ocean)] transition-all shadow-xs"
+                    />
+                    {schemaSearch && (
+                      <button
+                        onClick={() => setSchemaSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--ink)] opacity-60 hover:opacity-100 font-bold"
+                        title="Clear search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Toast feedback */}
+                  {schemaToast && (
+                    <div className="text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-1 rounded flex items-center gap-1 animate-fade-in">
+                      <Check className="w-3 h-3 text-emerald-700" />
+                      <span>{schemaToast}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Table Cards List */}
+                {(() => {
+                  const filteredTables = office.schema.filter((tbl) => {
+                    if (!schemaSearch.trim()) return true;
+                    const q = schemaSearch.toLowerCase();
+                    return (
+                      tbl.name.toLowerCase().includes(q) ||
+                      tbl.description.toLowerCase().includes(q) ||
+                      tbl.columns.some(
+                        (c) =>
+                          c.name.toLowerCase().includes(q) ||
+                          c.type.toLowerCase().includes(q) ||
+                          c.description.toLowerCase().includes(q)
+                      )
+                    );
+                  });
+
+                  if (filteredTables.length === 0) {
+                    return (
+                      <div className="bg-[var(--surface)] border-2 border-dashed border-[var(--sky)] rounded-xl p-6 text-center space-y-2">
+                        <p className="text-xs font-bold text-[var(--ink)]">
+                          No tables or columns match &ldquo;{schemaSearch}&rdquo;
+                        </p>
+                        <p className="text-[11px] text-[var(--ink)] opacity-70">
+                          Try searching for table names like &ldquo;shipments&rdquo;, &ldquo;orders&rdquo;, or &ldquo;products&rdquo;.
+                        </p>
+                        <button
+                          onClick={() => setSchemaSearch("")}
+                          className="btn-secondary text-xs px-3 py-1 mt-2 inline-flex items-center gap-1"
+                        >
+                          Clear Search &amp; Show All {office.schema.length} Tables
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink)] opacity-70 px-1">
+                        <span>
+                          {filteredTables.length === office.schema.length
+                            ? `All ${office.schema.length} Tables Available`
+                            : `Showing ${filteredTables.length} of ${office.schema.length} Tables`}
+                        </span>
+                        <span className="text-[10px] font-normal">Click column to copy • &ldquo;Use&rdquo; to insert</span>
+                      </div>
+
+                      {filteredTables.map((tbl) => {
+                        const isTargetMatched =
+                          schemaSearch.trim() && tbl.name.toLowerCase().includes(schemaSearch.toLowerCase());
+
+                        return (
+                          <div
+                            key={tbl.name}
+                            className={`bg-[var(--surface)] border-2 rounded-xl p-3.5 space-y-2.5 text-xs transition-all shadow-xs ${
+                              isTargetMatched
+                                ? "border-[var(--ocean)] shadow-[2px_2px_0px_var(--ocean)]"
+                                : "border-[var(--sky)] hover:border-[var(--ink)]"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 border-b border-[var(--sky)] pb-2">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-black text-sm text-[var(--ink)]">
+                                    {tbl.name}
+                                  </span>
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)] opacity-80">
+                                    {tbl.columns.length} cols
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-[var(--ink)] opacity-75 mt-0.5 leading-snug">
+                                  {tbl.description}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => handleInsertSchemaText(`FROM ${tbl.name}`)}
+                                className="text-[10px] font-bold text-[var(--ocean-hover)] hover:underline flex items-center gap-1 shrink-0 bg-[var(--white)] px-2 py-1 rounded border border-[var(--sky)] shadow-xs transition-colors"
+                                title={`Insert "FROM ${tbl.name}" into editor`}
+                              >
+                                <Copy className="w-3 h-3" />
+                                <span>Use Table</span>
+                              </button>
+                            </div>
+
+                            {/* Columns Chips Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                              {tbl.columns.map((c) => {
+                                const isColMatched =
+                                  schemaSearch.trim() &&
+                                  (c.name.toLowerCase().includes(schemaSearch.toLowerCase()) ||
+                                    c.description.toLowerCase().includes(schemaSearch.toLowerCase()));
+                                const isCopied = copiedSchemaText === c.name;
+
+                                return (
+                                  <div
+                                    key={c.name}
+                                    onClick={() => handleCopySchemaText(c.name)}
+                                    className={`group flex items-center justify-between p-1.5 rounded-lg border font-mono text-[11px] cursor-pointer transition-all ${
+                                      isCopied
+                                        ? "bg-emerald-100 border-emerald-400 text-emerald-900"
+                                        : isColMatched
+                                        ? "bg-amber-50 border-amber-400 text-[var(--ink)] font-bold shadow-xs"
+                                        : "bg-[var(--white)] hover:bg-[var(--mist)] border-[var(--sky)] text-[var(--ink)]"
+                                    }`}
+                                    title={`${c.description} • Click to copy "${c.name}"`}
+                                  >
+                                    <div className="flex items-center gap-1.5 truncate">
+                                      <span className="font-bold truncate">{c.name}</span>
+                                      {c.isPk && (
+                                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold px-1 rounded shrink-0">
+                                          PK
+                                        </span>
+                                      )}
+                                      {c.fkTarget && (
+                                        <span className="bg-sky-100 text-sky-900 border border-sky-300 text-[9px] font-bold px-1 rounded shrink-0" title={`Foreign Key to ${c.fkTarget}`}>
+                                          FK
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                                      <span className="text-[9px] opacity-60 font-sans">{c.type}</span>
+                                      {isCopied ? (
+                                        <Check className="w-3 h-3 text-emerald-600" />
+                                      ) : (
+                                        <span className="opacity-0 group-hover:opacity-70 text-[9px]">📋</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

@@ -1,6 +1,5 @@
 import { validateSqlSecurity } from "./security-guard";
 import { sandboxPool, SandboxExecutionResult } from "@/lib/db/sandbox-db";
-import { generateEcomL1Sql } from "@/lib/datasets/ecom-l1-generator";
 import { generateDomainSql } from "@/lib/datasets/multi-domain-generators";
 import { PGlite } from "@electric-sql/pglite";
 
@@ -23,9 +22,9 @@ async function getEmbeddedPg(): Promise<PGlite> {
   embeddedPgInitializing = (async () => {
     try {
       const pg = new PGlite();
-      // Pre-seed ecom_l1 and ecom_l1_val schemas
-      const mainSql = generateEcomL1Sql("main");
-      const valSql = generateEcomL1Sql("validation");
+      // Pre-seed ecom_l1 and ecom_l1_val schemas with all 15 operational tables
+      const mainSql = generateDomainSql("ecommerce", "main", "ecom_l1");
+      const valSql = generateDomainSql("ecommerce", "validation", "ecom_l1_val");
 
       await pg.exec(mainSql);
       await pg.exec(valSql);

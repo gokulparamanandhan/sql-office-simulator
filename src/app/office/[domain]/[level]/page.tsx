@@ -19,6 +19,7 @@ import {
   Sparkles,
   HelpCircle,
   ExternalLink,
+  Search,
 } from "lucide-react";
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
 import { getQuestionsForDomainAndLevel } from "@/lib/content/content-registry";
@@ -38,6 +39,7 @@ export default function OfficeLevelPage({
 
   const [activeTab, setActiveTab] = useState<"inbox" | "team" | "schema">("inbox");
   const [selectedTable, setSelectedTable] = useState<string>(office.schema[0]?.name || "customers");
+  const [tableFilter, setTableFilter] = useState<string>("");
 
   // In local browser state, track which questions are solved
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
@@ -357,23 +359,56 @@ export default function OfficeLevelPage({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Table Selector Sidebar */}
             <div className="lg:col-span-4 bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-4 space-y-2">
-              <div className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-75 mb-2">
-                Operational Tables ({schema.length})
+              <div className="flex items-center justify-between text-xs font-extrabold uppercase text-[var(--ink)] opacity-75 mb-2">
+                <span>Operational Tables ({schema.length})</span>
+                {tableFilter && (
+                  <button
+                    onClick={() => setTableFilter("")}
+                    className="text-[10px] text-[var(--ocean-hover)] hover:underline normal-case font-bold"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
-              {schema.map((tbl) => (
-                <button
-                  key={tbl.name}
-                  onClick={() => setSelectedTable(tbl.name)}
-                  className={`w-full text-left p-2.5 rounded-lg border-2 text-xs font-bold transition-all flex items-center justify-between ${
-                    selectedTable === tbl.name
-                      ? "bg-[var(--ocean)] border-[var(--ink)] text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
-                      : "bg-[var(--surface)] border-[var(--sky)] text-[var(--ink)] hover:bg-[var(--mist)]"
-                  }`}
-                >
-                  <span className="font-mono">{tbl.name}</span>
-                  <span className="text-[10px] opacity-75">{tbl.columns.length} cols</span>
-                </button>
-              ))}
+
+              {/* Table search filter */}
+              <div className="relative mb-3">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink)] opacity-50 pointer-events-none" />
+                <input
+                  type="text"
+                  value={tableFilter}
+                  onChange={(e) => setTableFilter(e.target.value)}
+                  placeholder="Filter tables or columns..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--surface)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ocean)]"
+                />
+              </div>
+
+              <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
+                {schema
+                  .filter((tbl) => {
+                    if (!tableFilter.trim()) return true;
+                    const q = tableFilter.toLowerCase();
+                    return (
+                      tbl.name.toLowerCase().includes(q) ||
+                      tbl.description.toLowerCase().includes(q) ||
+                      tbl.columns.some((c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q))
+                    );
+                  })
+                  .map((tbl) => (
+                    <button
+                      key={tbl.name}
+                      onClick={() => setSelectedTable(tbl.name)}
+                      className={`w-full text-left p-2.5 rounded-lg border-2 text-xs font-bold transition-all flex items-center justify-between ${
+                        selectedTable === tbl.name
+                          ? "bg-[var(--ocean)] border-[var(--ink)] text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
+                          : "bg-[var(--surface)] border-[var(--sky)] text-[var(--ink)] hover:bg-[var(--mist)]"
+                      }`}
+                    >
+                      <span className="font-mono">{tbl.name}</span>
+                      <span className="text-[10px] opacity-75">{tbl.columns.length} cols</span>
+                    </button>
+                  ))}
+              </div>
             </div>
 
             {/* Table Column Detail */}
@@ -383,8 +418,8 @@ export default function OfficeLevelPage({
                   <h3 className="font-mono text-xl font-black text-[var(--ink)]">
                     {currentTableDef.name}
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)]">
-                    Schema: ecom_l1
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)] font-mono">
+                    Schema: {domain === "ecommerce" ? "ecom" : domain}_l{cleanLevel}
                   </span>
                 </div>
                 <p className="text-xs text-[var(--ink)] opacity-80 mt-1">

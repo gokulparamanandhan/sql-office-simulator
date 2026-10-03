@@ -1783,40 +1783,9 @@ export function getDomainOfficeMetadata(
     : levelParam || 1;
   const level = Math.max(1, Math.min(5, rawLvl));
 
-  // Determine table slice count based on level:
-  // Level 1: 6 tables
-  // Level 2: 9 tables (+3 tables)
-  // Level 3: 12 tables (+3 tables)
-  // Level 4: 14 tables (+2 tables)
-  // Level 5: 15 tables (+1 table)
-  const tableLimitByLevel: Record<number, number> = {
-    1: 6,
-    2: 9,
-    3: 12,
-    4: 14,
-    5: 15,
-  };
-  const tableCount = tableLimitByLevel[level] || 6;
-
-  // Progressive column revelation:
-  // In Level 1: 4-5 core foundational columns per table
-  // In Level 2: 6 columns
-  // In Level 3: 7 columns
-  // In Level 4: 8 columns
-  // In Level 5: All columns
-  const maxColsByLevel: Record<number, number> = {
-    1: 5,
-    2: 6,
-    3: 7,
-    4: 8,
-    5: 20,
-  };
-  const maxCols = maxColsByLevel[level] || 5;
-
-  const slicedTables = base.schema.slice(0, tableCount).map((tbl) => ({
-    ...tbl,
-    columns: tbl.columns.slice(0, Math.max(4, Math.min(tbl.columns.length, maxCols))),
-  }));
+  // Always provide the complete domain schema (all 15 tables and all columns)
+  // so learners can find and query any table/column required by workplace questions.
+  const completeSchema = base.schema;
 
   // Resolve progressive company stage profile
   const stageInfo = DOMAIN_LEVEL_STAGES[norm]?.[level] || DOMAIN_LEVEL_STAGES.ecommerce[level];
@@ -1832,6 +1801,6 @@ export function getDomainOfficeMetadata(
   return {
     company: dynamicCompany,
     team: base.team,
-    schema: slicedTables,
+    schema: completeSchema,
   };
 }
