@@ -27,6 +27,8 @@ export interface ValidationFeedback {
   expectedRowCount?: number; // Only row count is shared, never actual data rows
   columnCount?: number;
   expectedColumnCount?: number;
+  actualColumns?: string[];
+  expectedColumns?: string[];
 }
 
 function normalizeValue(val: unknown, tolerance: number): unknown {
@@ -152,12 +154,15 @@ export async function validateSubmission(
 
   // 3. Compare column count
   if (learnerMain.columns.length !== refMain.columns.length) {
+    const expectedCols = question.expected_columns || refMain.columns;
     return {
       isCorrect: false,
       code: "COLUMN_COUNT_MISMATCH",
-      message: `Your query returned ${learnerMain.columns.length} column(s), but ${refMain.columns.length} column(s) were expected. Check your SELECT clause.`,
+      message: `Your query returned ${learnerMain.columns.length} column(s) [${learnerMain.columns.join(", ")}], but ${refMain.columns.length} column(s) were expected: [${expectedCols.join(", ")}]. Check your SELECT clause.`,
       columnCount: learnerMain.columns.length,
       expectedColumnCount: refMain.columns.length,
+      actualColumns: learnerMain.columns,
+      expectedColumns: expectedCols,
       durationMs: Date.now() - startTime,
     };
   }

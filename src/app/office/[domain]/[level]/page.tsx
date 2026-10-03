@@ -276,6 +276,11 @@ export default function OfficeLevelPage({
                                 {q.difficulty}
                               </span>
                             )}
+                            {q.expected_columns && q.expected_columns.length > 0 && (
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--white)] border border-[var(--sky)] text-[var(--ink)] shadow-xs">
+                                {q.expected_columns.length} {q.expected_columns.length === 1 ? "col" : "cols"}
+                              </span>
+                            )}
                             {isSolved && (
                               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-700" /> Solved

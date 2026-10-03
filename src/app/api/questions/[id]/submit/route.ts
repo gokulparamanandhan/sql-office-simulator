@@ -89,7 +89,11 @@ export async function POST(
       message: feedback.message,
       durationMs: feedback.durationMs,
       rowCount: feedback.rowCount,
+      expectedRowCount: feedback.expectedRowCount,
       columnCount: feedback.columnCount,
+      expectedColumnCount: feedback.expectedColumnCount,
+      actualColumns: feedback.actualColumns,
+      expectedColumns: feedback.expectedColumns,
       xpEarned,
     });
   } catch (err: unknown) {

@@ -127,7 +127,7 @@ export default function LearnAcademyPage() {
           isCorrect,
           message: isCorrect
             ? "Outstanding! Query returned the expected result."
-            : "Query executed, but output columns did not match expected requirements.",
+            : `Query executed, but output columns did not match expected requirements: [${currentQuestion.expectedColumns.join(", ")}]. Check your SELECT clause.`,
         });
       }
     } catch (err: unknown) {
@@ -329,7 +329,7 @@ export default function LearnAcademyPage() {
               </div>
 
               {/* Practice Task Instruction */}
-              <div className="bg-[#FFE6FF] border-2 border-[var(--ink)] p-4 rounded-xl shadow-[3px_3px_0px_var(--ink)] space-y-1">
+              <div className="bg-[#FFE6FF] border-2 border-[var(--ink)] p-4 rounded-xl shadow-[3px_3px_0px_var(--ink)] space-y-2.5">
                 <div className="text-xs font-black uppercase text-[var(--ink)] flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-[var(--ink)]" />
                   <span>Your Practice Task:</span>
@@ -337,6 +337,21 @@ export default function LearnAcademyPage() {
                 <p className="text-xs font-extrabold text-[var(--ink)] leading-snug">
                   {currentQuestion.task}
                 </p>
+                {currentQuestion.expectedColumns && currentQuestion.expectedColumns.length > 0 && (
+                  <div className="pt-2 border-t border-[var(--ink)]/20 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-black uppercase text-[var(--ink)] opacity-75">
+                      Expected Output ({currentQuestion.expectedColumns.length} {currentQuestion.expectedColumns.length === 1 ? "col" : "cols"}):
+                    </span>
+                    {currentQuestion.expectedColumns.map((col) => (
+                      <span
+                        key={col}
+                        className="px-2 py-0.5 bg-[var(--white)] border border-[var(--ink)] rounded text-[11px] font-mono font-bold text-[var(--ink)] shadow-xs"
+                      >
+                        {col}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

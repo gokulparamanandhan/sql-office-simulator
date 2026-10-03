@@ -26,6 +26,9 @@ import {
   PartyPopper,
   ExternalLink,
   BookOpen,
+  Table2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { getQuestionsForDomainAndLevel, getQuestionById } from "@/lib/content/content-registry";
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
@@ -84,8 +87,23 @@ export default function QuestionWorkspacePage({
     durationMs: number;
     rowCount?: number;
     columnCount?: number;
+    expectedRowCount?: number;
+    expectedColumnCount?: number;
+    actualColumns?: string[];
+    expectedColumns?: string[];
     xpEarned?: number;
   } | null>(null);
+
+  // Expected deliverable specification & preview state
+  const [expectedInfo, setExpectedInfo] = useState<{
+    expectedColumns: string[];
+    columnCount: number;
+    rowCount: number;
+    sampleRows: Record<string, unknown>[];
+    orderSensitive: boolean;
+  } | null>(null);
+  const [copiedCol, setCopiedCol] = useState<string | null>(null);
+  const [insertedFeedback, setInsertedFeedback] = useState<boolean>(false);
 
   // Hints and solutions
   const [hintsRevealed, setHintsRevealed] = useState<number>(0);
@@ -167,6 +185,51 @@ export default function QuestionWorkspacePage({
       // Ignore
     }
   }, [id, domain, cleanLevel, question.xp]);
+
+  // Load expected deliverable details & sample rows
+  useEffect(() => {
+    let isMounted = true;
+    fetch(`/api/questions/${id}/expected`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && !data.error) {
+          setExpectedInfo(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleCopyColumn = (col: string) => {
+    navigator.clipboard?.writeText(col);
+    setCopiedCol(col);
+    setTimeout(() => setCopiedCol(null), 1800);
+  };
+
+  const handleInsertExpectedColumns = () => {
+    const cols = question.expected_columns || [];
+    if (!cols.length) return;
+    const colList = cols.join(", ");
+
+    let newSql = sql;
+    if (!sql || sql.trim() === "SELECT" || sql.trim() === "SELECT " || sql.trim() === "") {
+      newSql = `SELECT ${colList}\nFROM `;
+    } else if (sql.includes("SELECT *")) {
+      newSql = sql.replace("SELECT *", `SELECT ${colList}`);
+    } else if (/^SELECT\s+/i.test(sql) && !sql.toUpperCase().includes("FROM")) {
+      newSql = `SELECT ${colList} `;
+    } else {
+      navigator.clipboard?.writeText(colList);
+    }
+    setSql(newSql);
+    try {
+      localStorage.setItem(`sql_office_${id}_code`, newSql);
+    } catch {}
+    setInsertedFeedback(true);
+    setTimeout(() => setInsertedFeedback(false), 2000);
+  };
 
   // Persist code on change
   const handleEditorChange = (value?: string) => {
@@ -553,7 +616,161 @@ export default function QuestionWorkspacePage({
                   </div>
                 </div>
 
+                {/* Expected Output Specification & Sample Preview Card */}
+                <div className="bg-[var(--surface)] border-2 border-[var(--ink)] rounded-xl p-4 shadow-[3px_3px_0px_var(--ink)] space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-[var(--sky)] pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center text-[var(--ink)] shadow-[1px_1px_0px_var(--ink)] shrink-0">
+                        <Table2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-black text-xs uppercase tracking-wider text-[var(--ink)] flex items-center gap-1.5">
+                          <span>Expected Output</span>
+                          <span className="text-[10px] lowercase text-[var(--ocean-hover)] font-mono font-bold">
+                            ({question.expected_columns.length} {question.expected_columns.length === 1 ? "col" : "cols"})
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-[var(--ink)] opacity-70">
+                          Required schema for stakeholder verification
+                        </div>
+                      </div>
+                    </div>
 
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[var(--white)] border border-[var(--ink)] text-[var(--ink)] shadow-xs">
+                        {question.expected_columns.length} {question.expected_columns.length === 1 ? "column" : "columns"}
+                      </span>
+                      {question.validation?.order_sensitive ? (
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300"
+                          title="ORDER BY clause is required for grading"
+                        >
+                          Ordered
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300"
+                          title="Any row order accepted"
+                        >
+                          Any Order
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Deliverable Guidance Note */}
+                  {question.context_notes && (
+                    <div className="bg-[var(--mist)] border border-[var(--sky)] p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-[var(--ocean)] shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed text-[var(--ink)]">
+                        <span className="font-bold">Deliverable Note: </span>
+                        {question.context_notes}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Required Columns Pill List */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)]">
+                      <span className="text-[11px]">Required Columns ({question.expected_columns.length}):</span>
+                      <button
+                        onClick={handleInsertExpectedColumns}
+                        className="text-[10px] font-bold text-[var(--ocean-hover)] hover:underline flex items-center gap-1 transition-colors"
+                        title="Fill SELECT statement with these expected columns"
+                      >
+                        {insertedFeedback ? (
+                          <span className="text-emerald-700 font-bold flex items-center gap-0.5">
+                            <Check className="w-3 h-3" /> Inserted into Editor!
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Copy className="w-3 h-3" />
+                            <span>Use in Editor</span>
+                          </span>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {question.expected_columns.map((col, idx) => {
+                        const isCopied = copiedCol === col;
+                        return (
+                          <button
+                            key={col}
+                            onClick={() => handleCopyColumn(col)}
+                            className="group flex items-center gap-1 font-mono text-[11px] bg-[var(--white)] hover:bg-[var(--mist)] border border-[var(--sky)] px-2 py-0.5 rounded text-[var(--ink)] transition-colors shadow-xs"
+                            title={`Click to copy "${col}"`}
+                          >
+                            <span className="text-[9px] opacity-40 font-bold">#{idx + 1}</span>
+                            <span className="font-bold">{col}</span>
+                            {isCopied ? (
+                              <Check className="w-2.5 h-2.5 text-emerald-600" />
+                            ) : (
+                              <span className="opacity-0 group-hover:opacity-70 text-[9px]">📋</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Sample Format Preview Table */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)] opacity-80">
+                      <span className="text-[11px]">Deliverable Format Preview:</span>
+                      <span className="text-[10px] font-normal opacity-60">
+                        {expectedInfo?.rowCount !== undefined
+                          ? `${expectedInfo.rowCount} rows expected`
+                          : "Evaluating sample rows..."}
+                      </span>
+                    </div>
+
+                    <div className="border border-[var(--sky)] rounded-lg overflow-x-auto bg-[var(--white)] shadow-xs">
+                      <table className="w-full text-left text-[11px] font-mono border-collapse">
+                        <thead className="bg-[var(--mist)] border-b border-[var(--sky)] text-[var(--ink)]">
+                          <tr>
+                            <th className="py-1 px-2 text-center text-[10px] opacity-50 w-7">#</th>
+                            {question.expected_columns.map((col) => (
+                              <th key={col} className="py-1 px-2.5 font-bold whitespace-nowrap">
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--sky)]">
+                          {expectedInfo && expectedInfo.sampleRows && expectedInfo.sampleRows.length > 0 ? (
+                            expectedInfo.sampleRows.map((row, idx) => (
+                              <tr key={idx} className="hover:bg-[var(--surface)]">
+                                <td className="py-1 px-2 text-center text-[10px] opacity-40">{idx + 1}</td>
+                                {question.expected_columns.map((col) => (
+                                  <td key={col} className="py-1 px-2.5 whitespace-nowrap text-[var(--ink)]">
+                                    {row[col] !== undefined && row[col] !== null ? (
+                                      String(row[col])
+                                    ) : (
+                                      <span className="italic opacity-40">NULL</span>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td className="py-1.5 px-2 text-center text-[10px] opacity-40">1</td>
+                              {question.expected_columns.map((col) => (
+                                <td key={col} className="py-1.5 px-2.5 whitespace-nowrap text-xs text-gray-400 italic">
+                                  ...
+                                </td>
+                              ))}
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-[10px] text-[var(--ink)] opacity-60 italic">
+                      * First {expectedInfo?.sampleRows?.length || 1} sample rows shown for structure. Your query must produce these exact columns.
+                    </p>
+                  </div>
+                </div>
 
                 {/* Solution Reveal Option */}
                 {solutionUnlocked && (
@@ -705,6 +922,23 @@ export default function QuestionWorkspacePage({
               <span className="text-xs font-extrabold text-[var(--ink)] uppercase">
                 SQL Editor (PostgreSQL)
               </span>
+              <button
+                onClick={handleInsertExpectedColumns}
+                className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--sun)] hover:bg-amber-300 border border-[var(--ink)] text-[var(--ink)] transition-colors flex items-center gap-1 shadow-xs"
+                title="Populate SELECT statement with expected columns"
+              >
+                {insertedFeedback ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-800" />
+                    <span>Columns Inserted!</span>
+                  </>
+                ) : (
+                  <>
+                    <Table2 className="w-3 h-3 text-[var(--ink)]" />
+                    <span>Columns ({question.expected_columns.length})</span>
+                  </>
+                )}
+              </button>
               <span className="text-[10px] text-[var(--ink)] opacity-60 hidden sm:inline">
                 Ctrl+Enter to Run
               </span>
@@ -765,42 +999,66 @@ export default function QuestionWorkspacePage({
             {/* Feedback Alert Banner (if submitted) */}
             {submitResult && (
               <div
-                className={`p-3 border-b-2 text-xs font-semibold flex items-center justify-between shrink-0 ${
+                className={`p-3 border-b-2 text-xs font-semibold flex flex-col gap-2 shrink-0 ${
                   submitResult.isCorrect
                     ? "bg-emerald-50 text-emerald-900 border-emerald-300"
                     : "bg-rose-50 text-rose-900 border-rose-300"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  {submitResult.isCorrect ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  )}
-                  <span>{submitResult.message}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {submitResult.isCorrect ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{submitResult.message}</span>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    {submitResult.isCorrect && submitResult.xpEarned !== undefined && (
+                      <span className="font-extrabold text-xs text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        +{submitResult.xpEarned} XP
+                      </span>
+                    )}
+                    {submitResult.isCorrect && nextQuestion && (
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/office/${domain}/${levelRoute}/question/${nextQuestion.id}`
+                          )
+                        }
+                        className="btn-primary text-xs py-1 px-2.5"
+                      >
+                        <span>Next Request</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-[var(--ink)]" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
-                  {submitResult.isCorrect && submitResult.xpEarned !== undefined && (
-                    <span className="font-extrabold text-xs text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                      +{submitResult.xpEarned} XP
+                {!submitResult.isCorrect && submitResult.code === "COLUMN_COUNT_MISMATCH" && (
+                  <div className="pt-2 border-t border-rose-200 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="font-bold text-rose-950">
+                      Expected {question.expected_columns.length} columns:
                     </span>
-                  )}
-                  {submitResult.isCorrect && nextQuestion && (
+                    {question.expected_columns.map((c) => (
+                      <span
+                        key={c}
+                        className="font-mono px-1.5 py-0.5 bg-white border border-rose-300 rounded text-rose-950 font-bold"
+                      >
+                        {c}
+                      </span>
+                    ))}
                     <button
-                      onClick={() =>
-                        router.push(
-                          `/office/${domain}/${levelRoute}/question/${nextQuestion.id}`
-                        )
-                      }
-                      className="btn-primary text-xs py-1 px-2.5"
+                      onClick={handleInsertExpectedColumns}
+                      className="ml-auto underline font-bold text-rose-800 hover:text-rose-950 text-[10px]"
                     >
-                      <span>Next Request</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[var(--ink)]" />
+                      Insert into editor
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -814,9 +1072,25 @@ export default function QuestionWorkspacePage({
 
             {/* Results Table Header */}
             <div className="bg-[var(--surface)] border-b border-[var(--sky)] px-4 py-1.5 flex items-center justify-between text-xs font-bold text-[var(--ink)] shrink-0">
-              <span className="font-mono text-[11px]">
-                {runResult ? `Results Preview (${runResult.rowCount} rows)` : "Results Preview"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[11px]">
+                  {runResult ? `Results Preview (${runResult.rowCount} rows)` : "Results Preview"}
+                </span>
+                {runResult && (
+                  runResult.columns.length === question.expected_columns.length ? (
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                      ✓ {runResult.columns.length}/{question.expected_columns.length} cols match
+                    </span>
+                  ) : (
+                    <span
+                      className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                      title={`Expected ${question.expected_columns.length} columns: ${question.expected_columns.join(', ')}`}
+                    >
+                      ⚠️ {runResult.columns.length}/{question.expected_columns.length} cols ({question.expected_columns.length} expected)
+                    </span>
+                  )
+                )}
+              </div>
               {runResult && (
                 <span className="text-[10px] opacity-75 font-mono">
                   Execution: {runResult.durationMs}ms
