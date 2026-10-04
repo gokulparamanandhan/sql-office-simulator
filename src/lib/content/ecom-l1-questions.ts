@@ -43,7 +43,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Ahead of our quarterly investor presentation, we need to inspect our current electronics merchandise catalog. Could you retrieve our active electronics products, showing what each item is called, its retail price, and warehouse stock units, sorted alphabetically by product name?",
-    "context_notes": "Join products with categories to filter for 'Electronics'. Show name, price, and stock_quantity.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -82,7 +82,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Finance is reconciling our highest-value customer transactions from recent operations. Could you pull up all delivered orders that totaled $500 or more, ordered from our largest sales downward?",
-    "context_notes": "Filter orders where status = 'delivered' and total_amount >= 500. Order by total_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -120,7 +120,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "We are planning regional fulfillment centers and need to understand where our customer accounts are located across the country. Please count how many shoppers we have registered in each geographic region, showing only regions with at least 2 registered customers, with our largest markets first.",
-    "context_notes": "Group customers by region, calculate total customer count, filter using HAVING count >= 2, and sort descending.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -159,7 +159,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Our field marketing representatives are launching a targeted regional promotion in the North territory. Could you pull our registered customer directory for the North region, sorted alphabetically by surname then given name?",
-    "context_notes": "Filter customers where region = 'North'. Sort by last_name ASC, first_name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -196,7 +196,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "The warehouse operations team is reviewing replenishment needs for our apparel line before peak season. Could you list all apparel merchandise items that currently have less than 200 units remaining on hand, with lowest stock items shown first?",
-    "context_notes": "Join products and categories. Filter for 'Apparel' and stock_quantity < 200. Order by stock_quantity ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -235,7 +235,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "USPS regional dispatch sent an inquiry regarding postal parcels sent out from our primary facility. Could you extract all shipments handled by USPS, sorted by shipment identifier?",
-    "context_notes": "Query shipments where carrier = 'USPS'. Order by id ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -272,7 +272,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Merchandising is curating a mid-tier promotional collection for our upcoming holiday catalog. Can you pull all products priced between $50 and $130, showing their name, retail price, and acquisition cost, sorted from highest price downward?",
-    "context_notes": "Filter products where price BETWEEN 50 AND 130. Sort by price DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -310,7 +310,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Marketing wants to feature glowing testimonials on our homepage. Could you retrieve all five-star product reviews from verified buyers, ordered by review date so our freshest feedback appears first?",
-    "context_notes": "Filter customer_reviews WHERE rating = 5 and is_verified_purchase = true. Order by review_date DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -348,7 +348,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Our checkout team needs to audit active promotional codes currently valid in our store. Could you list all currently active coupons, showing their code, discount percentage, and total redemption limits, sorted by largest discount first?",
-    "context_notes": "Filter coupons WHERE is_active = true. Order by discount_percent DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -386,7 +386,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "We have a service review meeting with FedEx tomorrow morning. Could you retrieve all shipments assigned to FedEx that have already been dispatched, ordered by dispatch time with the newest departures first?",
-    "context_notes": "Query shipments WHERE carrier = 'FedEx' AND shipped_at IS NOT NULL. Order by shipped_at DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -425,7 +425,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is analyzing our regional storage footprint across fulfillment hubs. Could you list all warehouses with a storage capacity of at least 50,000 square feet, showing the facility name, city, state, and capacity, sorted from largest facility downward?",
-    "context_notes": "Filter warehouses WHERE capacity_sqft >= 50000. Order by capacity_sqft DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -463,7 +463,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Finance is reviewing customer refund velocity and high-impact payouts. Could you fetch all return claims where the refund amount reached $150 or more, ordered from largest refund downward?",
-    "context_notes": "Filter returns WHERE refund_amount >= 150.00. Order by refund_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -502,7 +502,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Our support team is clearing backlog items for dissatisfied shoppers. Please list all customer support tickets flagged with urgent or high priority that remain unresolved, ordered chronologically with the oldest pending tickets first.",
-    "context_notes": "Filter support_tickets WHERE priority IN ('urgent', 'high') AND status <> 'resolved'. Order by created_at ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -543,7 +543,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Supply chain is renegotiating annual supplier contracts. Please bring up all commercial vendors with a quality rating of 4.5 or higher, showing the company name, headquarters country, contact email, and rating, ordered highest rating first.",
-    "context_notes": "Filter suppliers WHERE rating >= 4.5. Order by rating DESC, company_name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -581,7 +581,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Brand strategy wants to review our high-end manufacturing labels. Could you extract all brand partners classified under the luxury or premium tier, ordered by brand name alphabetically?",
-    "context_notes": "Filter brands WHERE tier IN ('luxury', 'premium'). Order by name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -619,7 +619,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales is auditing multi-unit purchasing habits across customer checkout baskets. Could you pull all order line items where a shopper purchased 3 units of an item in a single order line, ordered by unit price descending?",
-    "context_notes": "Filter order_items WHERE quantity = 3. Order by unit_price DESC, order_id ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -657,7 +657,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Warehouse dispatch is checking unfulfilled customer baskets. Can you retrieve all orders that currently hold a pending status, sorted by transaction timestamp with the earliest orders first?",
-    "context_notes": "Filter orders WHERE status = 'pending'. Order by order_date ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -695,7 +695,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "We need an immediate stockout prevention sweep. Pull all catalog merchandise items that have less than 50 units remaining across our shelves, showing product title, retail price, and on-hand units, ordered lowest inventory first.",
-    "context_notes": "Filter products WHERE stock_quantity < 50. Order by stock_quantity ASC, name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -732,7 +732,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Customer service is tracking order reversal rates. Could you extract all orders that resulted in a returned status, sorted with our highest-value returned transactions first?",
-    "context_notes": "Filter orders WHERE status = 'returned'. Order by total_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -770,7 +770,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Quality control is inspecting items that failed after delivery. Pull all customer return records where the stated reason mentions defective merchandise, ordered by refund amount descending.",
-    "context_notes": "Filter returns WHERE reason LIKE '%defect%'. Order by refund_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -809,7 +809,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "To prepare for peak shipping volume rerouting, show me all distribution warehouses located in California and Texas, ordered by storage capacity descending.",
-    "context_notes": "Filter warehouses WHERE state IN ('CA', 'TX'). Order by capacity_sqft DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -848,7 +848,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Our marketing team wants to review our most aggressive discount offers. List all coupons offering a discount of 20% or greater, ordered from highest discount percentage downward.",
-    "context_notes": "Filter coupons WHERE discount_percent >= 20. Order by discount_percent DESC, code ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -885,7 +885,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "UPS logistics dispatch is auditing delivery manifests. Could you pull up all shipments handled by UPS that have been successfully delivered, sorted by delivery time with recent deliveries first?",
-    "context_notes": "Filter shipments WHERE carrier = 'UPS' AND delivered_at IS NOT NULL. Order by delivered_at DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -924,7 +924,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Our West Coast regional sales director is preparing outreach to local shoppers. Retrieve our registered customer accounts from the West region, sorted alphabetically by surname.",
-    "context_notes": "Filter customers WHERE region = 'West'. Order by last_name ASC, first_name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -962,7 +962,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Our billing support team needs to address unresolved payment inquiries. Extract all support tickets under the billing category that remain open, sorted with our earliest unresolved issues first.",
-    "context_notes": "Filter support_tickets WHERE category = 'billing' AND status = 'open'. Order by created_at ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1000,7 +1000,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Customs and tariffs compliance is compiling a manifest of foreign manufacturing partners. Show all suppliers based outside the USA, ordered by vendor reliability score descending.",
-    "context_notes": "Filter suppliers WHERE country <> 'USA'. Order by rating DESC, company_name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1037,7 +1037,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "To support an introductory marketing campaign, pull all catalog products priced under $30.00, sorted from lowest price upward so shoppers see our most affordable entry points.",
-    "context_notes": "Filter products WHERE price < 30.00. Order by price ASC, name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1074,7 +1074,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive leadership is updating our internal corporate org chart. Retrieve all company operational departments with their designated department head, ordered alphabetically by department title.",
-    "context_notes": "Query departments table. Order by name ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "ORDER BY"
@@ -1109,7 +1109,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Our customer experience team wants to review neutral customer feedback to identify opportunities for delight. Pull all product reviews where the customer left a 3-star rating, ordered by review timestamp with newest reviews first.",
-    "context_notes": "Filter customer_reviews WHERE rating = 3. Order by review_date DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1148,7 +1148,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales is evaluating the popularity of our standard shipping promotion. Retrieve all completed orders where the shipping fee was under $5.00, ordered from largest order value downward.",
-    "context_notes": "Filter orders WHERE shipping_fee < 5.00 AND status = 'delivered'. Order by total_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1186,7 +1186,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Operations is reviewing our order processing pipeline. Could you aggregate all orders by their current fulfillment status, showing how many orders are in each status and the average shipping fee charged, sorted with our highest volume statuses first?",
-    "context_notes": "Group orders by status, count orders, round average shipping fee to 2 decimals, order by order_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1227,7 +1227,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is balancing carrier quotas across our freight partners. Please calculate the total number of shipments assigned to each carrier, ordered from our busiest carrier downward.",
-    "context_notes": "Group shipments by carrier and calculate shipment count. Order by shipment_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1265,7 +1265,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Merchandising is analyzing price tiering across our store categories. Group our catalog by category to compute the total product count, minimum retail price, maximum retail price, and average price per category, sorted with our highest average prices first.",
-    "context_notes": "Join categories and products. Group by category name. Compute count, min price, max price, and round avg price to 2 decimals. Order by avg_price DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1311,7 +1311,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Executive management needs regional sales revenue numbers for board reporting. Link customers and delivered orders to calculate total completed order count and total revenue generated for each geographic region, ordered by revenue descending.",
-    "context_notes": "Join customers and orders. Filter where status = 'delivered'. Group by region. Calculate order_count and sum total_amount. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1353,7 +1353,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Real estate operations is reviewing regional warehouse footprints. Summarize our physical distribution centers by state, displaying the number of facilities and combined square footage in each state, ordered by total capacity descending.",
-    "context_notes": "Group warehouses by state. Compute warehouse_count and sum capacity_sqft. Order by total_capacity DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1393,7 +1393,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Customer success is conducting a post-mortem on return claims. Group customer returns by their stated reason, computing the total number of returns and total dollars refunded, ordered with our most common return reasons first.",
-    "context_notes": "Group returns by reason. Calculate return_count and sum refund_amount. Order by return_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1433,7 +1433,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Merchandising wants to identify which products are generating the highest customer satisfaction. Join products and customer reviews to compute the total review count and average rating for each reviewed item, showing only products with at least 2 reviews, sorted highest rating first.",
-    "context_notes": "Join products and customer_reviews. Group by product id and name. Filter with HAVING COUNT >= 2. Order by avg_rating DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1475,7 +1475,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Support staffing needs to forecast staffing requirements across help desk queues. Group customer support tickets by category to display ticket volume, ordered from our busiest support queue downward.",
-    "context_notes": "Group support_tickets by category and compute count. Order by ticket_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1513,7 +1513,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Brand partnerships is reviewing our retail positioning across marketplace tiers. Count how many brands belong to each brand tier, ordered with our most prevalent tier first.",
-    "context_notes": "Group brands by tier and count brands. Order by brand_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1551,7 +1551,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Supply chain resilience is evaluating international manufacturing risk. Group suppliers by headquarters country to display supplier count and average vendor rating, ordered highest average rating first.",
-    "context_notes": "Group suppliers by country. Calculate count and avg rating. Order by avg_rating DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1591,7 +1591,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales wants to rank our best-selling merchandise by volume. Join products and order line items to calculate the total units sold for each product, showing only products with at least 10 units sold, ordered from highest unit sales downward.",
-    "context_notes": "Join products and order_items. Group by product id and name. Filter with HAVING SUM(quantity) >= 10. Order by total_units_sold DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1631,7 +1631,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Loyalty marketing is identifying repeat buyers who have placed multiple successful orders. Join customers and orders to calculate how many delivered orders each customer has placed, showing only shoppers with at least 3 delivered orders, sorted from highest order frequency downward.",
-    "context_notes": "Join customers and orders. Filter where status = 'delivered'. Group by customer id, first_name, last_name. Filter HAVING count >= 3. Order by delivered_orders DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1673,7 +1673,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Growth marketing is evaluating coupon voucher engagement. For all active coupons, calculate how many uses remain available before hitting the campaign ceiling, sorted with the most heavily redeemed coupons first.",
-    "context_notes": "Query coupons WHERE is_active = true. Calculate (max_uses - current_uses) as remaining_uses. Order by current_uses DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1713,7 +1713,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive leadership is assessing the breadth of merchandise curated by each internal department. Link departments, categories, and products to calculate total catalog products managed by each department, ordered from largest department downward.",
-    "context_notes": "Join departments, categories, and products. Group by department name. Calculate product count. Order by total_products DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1753,7 +1753,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Packaging operations needs to know which customer orders contain the largest physical quantities of goods. Join orders and order line items to calculate the total units in each order, showing only orders with at least 8 items, ordered from highest unit count downward.",
-    "context_notes": "Join orders and order_items. Group by order_id, order_date, status. Filter HAVING SUM(quantity) >= 8. Order by total_items DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1794,7 +1794,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Pricing strategy is benchmarking consumer purchasing power across regional territories. Join customers and orders to calculate the average transaction value per completed order in each region, ordered with our highest-spending regions first.",
-    "context_notes": "Join customers and orders. Filter where status = 'delivered'. Group by region. Compute average total_amount rounded to 2 decimals. Order by avg_order_value DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1835,7 +1835,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Carrier logistics review: For each carrier partner, count how many parcels have been successfully marked as delivered, ordered by total delivered volume descending.",
-    "context_notes": "Filter shipments WHERE delivered_at IS NOT NULL. Group by carrier. Calculate delivered_count. Order by delivered_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -1875,7 +1875,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "The customer operations desk is managing customer claims workflow. Group all customer return requests by their processing status, calculating total returns and total refund value, ordered from highest claim count downward.",
-    "context_notes": "Group returns by status. Calculate return_count and sum refund_amount. Order by return_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1916,7 +1916,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Customer service management is reviewing incoming ticket severity. Group our support ticket records by priority tier to calculate ticket counts and unresolved tickets still open, ordered by priority count descending.",
-    "context_notes": "Group support_tickets by priority. Calculate total tickets and count where status = 'open'. Order by total_tickets DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -1954,7 +1954,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Corporate finance needs a profitability scan across merchandise sectors. For each category, join products to compute the average unit gross profit (retail price minus cost), sorted from our most profitable product lines downward.",
-    "context_notes": "Join categories and products. Group by category name. Compute ROUND(AVG(price - cost), 2). Order by avg_unit_profit DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -1995,7 +1995,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales leadership is evaluating SKU revenue contributions. Join products and order line items to calculate the total dollar revenue generated by each product, showing only products that have generated over $500 in total sales, ordered highest revenue first.",
-    "context_notes": "Join products and order_items. Group by product id and name. Compute SUM(quantity * unit_price). Filter HAVING revenue > 500. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2036,7 +2036,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Procurement is evaluating single-supplier dependency risks. Group inventory records by warehouse to find the total units of inventory stored in each warehouse facility, ordered from largest stored quantity downward.",
-    "context_notes": "Group inventory by warehouse_id. Calculate sum quantity_on_hand. Order by total_stored_units DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2074,7 +2074,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Warehouse logistics is evaluating committed stock buffers. Group inventory records by warehouse to calculate total available stock on hand and total stock reserved for unfulfilled orders, ordered by warehouse identifier.",
-    "context_notes": "Group inventory by warehouse_id. Calculate SUM(quantity_on_hand) and SUM(reserved_quantity). Order by warehouse_id ASC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2113,7 +2113,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "The regional sales manager for Central wants to review completed delivery volume and sales dollars. Link customers and delivered orders in the Central region, calculating completed order count and total sales revenue.",
-    "context_notes": "Join customers and orders where region = 'Central' and status = 'delivered'. Group by region.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2154,7 +2154,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Finance is reviewing quarterly sales momentum. Count how many completed orders were placed in each status category with an order value of at least $100, ordered from highest volume status downward.",
-    "context_notes": "Filter orders WHERE total_amount >= 100.00. Group by status. Calculate order_count. Order by order_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -2193,7 +2193,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Product quality is reviewing authentic customer feedback ratings. Group verified buyer reviews by their numerical star rating, calculating how many reviews each star level received, ordered from 5 stars downward.",
-    "context_notes": "Filter customer_reviews WHERE is_verified_purchase = true. Group by rating. Calculate review_count. Order by rating DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -2232,7 +2232,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Finance is auditing warranty and return claims. Group return claims by reason to determine the average dollar amount refunded per claim, ordered from highest average refund downward.",
-    "context_notes": "Group returns by reason. Compute ROUND(AVG(refund_amount), 2). Order by avg_refund DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2271,7 +2271,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Customer success is identifying high-friction accounts experiencing multiple operational issues. Group support tickets by customer to find any customers who have submitted at least 2 separate support tickets, ordered by ticket volume descending.",
-    "context_notes": "Group support_tickets by customer_id. Filter with HAVING count >= 2. Order by ticket_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2310,7 +2310,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is analyzing domestic supply chain resilience. Group suppliers by origin classification — categorizing suppliers in the USA as Domestic and all others as International — showing supplier count in each group, ordered by count descending.",
-    "context_notes": "Group suppliers using CASE WHEN country = 'USA' THEN 'Domestic' ELSE 'International' END. Count suppliers. Order by supplier_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "CASE WHEN",
@@ -2349,7 +2349,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Inventory replenishment needs to know which categories suffer from low inventory levels. For all products with under 100 units in stock, join categories and calculate the count of low-stock items in each category, ordered highest count first.",
-    "context_notes": "Join categories and products WHERE stock_quantity < 100. Group by category name. Calculate count. Order by low_stock_items DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2389,7 +2389,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive leadership is auditing gross financial ledger flows. Calculate the total billed transaction dollars across each order status, ordered with our largest dollar volume categories first.",
-    "context_notes": "Group orders by status. Sum total_amount rounded to 2 decimals. Order by total_billed DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2428,7 +2428,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales is evaluating order sizes among repeat shoppers. Join customers and orders to calculate each shopper's average order value across completed deliveries, showing only customers who have placed at least 2 delivered orders, ordered highest average spend first, limited to top 15.",
-    "context_notes": "Join customers and orders WHERE status = 'delivered'. Group by customer id, first_name, last_name. Filter HAVING count >= 2. Order by avg_spend DESC LIMIT 15.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2472,7 +2472,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Sales leadership is evaluating growth in the South territory. Calculate total delivered orders and total revenue generated by customers located in the South region.",
-    "context_notes": "Join customers and orders WHERE region = 'South' and status = 'delivered'. Group by region.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2513,7 +2513,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Support leadership is tracking SLA resolution efficiency. Group support tickets by status to calculate ticket volume across each workflow status, ordered by ticket count descending.",
-    "context_notes": "Group support_tickets by status. Compute count. Order by ticket_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2551,7 +2551,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Warehouse management is reviewing space allocation by department line. Join categories, products, and inventory to calculate the total units of inventory stored in warehouses for each category, ordered highest quantity first.",
-    "context_notes": "Join categories, products, and inventory. Group by category name. Sum quantity_on_hand. Order by total_units DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2591,7 +2591,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is analyzing heavy freight fees passed to consumers. Group orders with shipping fees of $10.00 or higher by their current status to see order counts and average shipping fee, ordered by count descending.",
-    "context_notes": "Filter orders WHERE shipping_fee >= 10.00. Group by status. Compute count and avg shipping fee. Order by order_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -2634,7 +2634,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Marketing is analyzing review polarity across our customer base. Group all customer reviews by rating to calculate how many total reviews were submitted for each star rating, ordered from 5 stars down to 1 star.",
-    "context_notes": "Group customer_reviews by rating. Compute review_count. Order by rating DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2672,7 +2672,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Merchandising wants to see orders containing diverse items. Group order line items by order to calculate the number of distinct products purchased in each order, showing only orders with at least 3 distinct products, ordered highest product variety first, limited to top 15.",
-    "context_notes": "Group order_items by order_id. Filter HAVING COUNT(DISTINCT product_id) >= 3. Order by distinct_products DESC LIMIT 15.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2713,7 +2713,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Our East Coast regional team is auditing order delivery performance. Join customers and orders to calculate completed order volume and total collected revenue for customers in the East region.",
-    "context_notes": "Join customers and orders WHERE region = 'East' and status = 'delivered'. Group by region.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "INNER JOIN",
@@ -2754,7 +2754,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Growth strategy is planning regional acquisition budgets. Count the total registered customers in each geographic region, ordered from our largest user base downward.",
-    "context_notes": "Group customers by region. Compute customer_count. Order by customer_count DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "GROUP BY",
@@ -2792,7 +2792,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Marketing is launching an exclusive concierge reward tier for our top patrons. Join customers and completed delivered orders to identify all customers who have accumulated more than $400 in total completed purchases, showing their names, email, and cumulative spend, ordered from highest spend downward.",
-    "context_notes": "Join customers and orders on c.id = o.customer_id WHERE o.status = 'delivered'. Group by customer id, first_name, last_name, email. Filter HAVING SUM > 400. Order by total_spent DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "WHERE",
@@ -2835,7 +2835,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive management is reviewing unit gross profitability across our product catalog. Calculate each item's unit profit in dollars (retail price minus cost) and profit margin percentage (profit divided by price), showing products with a margin of at least 50%, ordered highest dollar profit first, limited to top 15.",
-    "context_notes": "Query products WHERE (price - cost) / price >= 0.50. Calculate profit and margin_pct. Order by unit_profit DESC LIMIT 15.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -2878,7 +2878,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Corporate finance needs an end-to-end performance audit across operating departments. Link departments, categories, products, and order items to calculate total units sold and total dollar revenue generated by each department, ordered from highest revenue downward.",
-    "context_notes": "Join departments, categories, products, and order_items. Group by department name. Sum quantity and sum line revenue. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "4-WAY JOIN",
@@ -2920,7 +2920,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is analyzing carrier handling of our highest-value orders. Join shipments and orders for all delivered orders of $300 or greater to calculate shipment volume and average shipping fee per carrier, ordered by shipment count descending.",
-    "context_notes": "Join shipments and orders WHERE o.status = 'delivered' and o.total_amount >= 300.00. Group by carrier. Compute count and avg shipping fee. Order by shipment_count DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "WHERE",
@@ -2962,7 +2962,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Marketing wants to launch an 'Editor's Choice' badge on our best-reviewed catalog items. Join products, categories, and customer reviews to find all items that have an average customer rating of at least 4.0 across at least 2 reviews, showing product title, category, review count, and average rating, ordered highest rating first.",
-    "context_notes": "Join products, categories, and customer_reviews. Group by product id, name, category name. Filter HAVING count >= 2 AND avg rating >= 4.0. Order by avg_rating DESC, review_count DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3007,7 +3007,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Quality control is assessing which product sectors suffer from the highest refund exposure. Link categories, products, order items, orders, and returns to calculate total refund claims and total dollar refund volume per category, ordered highest refund amount first.",
-    "context_notes": "Join categories, products, order_items, orders, and returns. Group by category name. Calculate return count and sum refund amount. Order by total_refunded DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "MULTI-TABLE JOIN",
@@ -3050,7 +3050,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Customer success is conducting VIP service recovery. Join customers, support tickets, and orders to locate customers who have filed support tickets and also placed high-value orders ($250+), displaying customer names, ticket category, priority, and order spend, ordered highest spend first.",
-    "context_notes": "Join customers, support_tickets, and orders WHERE o.total_amount >= 250.00. Show customer details, ticket details, and total_amount. Order by total_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3091,7 +3091,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Accounting is preparing our physical inventory balance sheet. Join warehouses, inventory, and products to calculate the total units stored and total cost value of goods held in each warehouse facility, ordered from highest value facility downward.",
-    "context_notes": "Join warehouses, inventory, and products. Group by warehouse id and name. Compute sum quantity and sum (quantity * cost). Order by total_inventory_cost DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3133,7 +3133,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Marketing wants to identify our top customer cohort for annual rewards. Join customers and completed orders to locate all customers who have placed at least 3 delivered orders AND accumulated over $600 in total sales, ordered by spend descending.",
-    "context_notes": "Join customers and orders WHERE status = 'delivered'. Group by customer id and details. Filter HAVING count >= 3 AND sum > 600. Order by total_spend DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "WHERE",
@@ -3177,7 +3177,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Merchandising needs our all-star merchandise list for banner ads. Join products, categories, and order line items to calculate total units sold and total line sales revenue for each product, showing only products with at least 15 units sold, ordered highest revenue first.",
-    "context_notes": "Join products, categories, and order_items. Group by product id, name, category name. Filter HAVING sum quantity >= 15. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3220,7 +3220,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Territory planners need to see where customer demand concentrates geographically. Link customers, orders, and order items to find total units purchased by customers in each geographic region, ordered highest unit volume first.",
-    "context_notes": "Join customers, orders, and order_items WHERE o.status = 'delivered'. Group by region. Sum quantity. Order by total_units DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3260,7 +3260,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Vendor management is reviewing supplier partnerships. Join suppliers and products to calculate how many distinct products each vendor manufactures and their vendor rating, ordered by product count descending, then rating descending.",
-    "context_notes": "Join suppliers and products. Group by supplier id, company_name, rating. Count products. Order by catalog_items DESC, rating DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "GROUP BY",
@@ -3299,7 +3299,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Finance is reviewing pricing consistency across corporate departments. Link departments, categories, and products to calculate the lowest price, highest price, and average price per unit across each department, ordered by average price descending.",
-    "context_notes": "Join departments, categories, and products. Group by department name. Compute MIN, MAX, and ROUND(AVG(price), 2). Order by avg_price DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3344,7 +3344,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is conducting premium order tracking. Join shipments and orders to locate all shipments dispatched for customer orders that reached $350 or more, ordered from highest order value downward.",
-    "context_notes": "Join shipments and orders on s.order_id = o.id WHERE o.total_amount >= 350.00. Order by o.total_amount DESC, s.id ASC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "WHERE",
@@ -3384,7 +3384,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Product quality wants to celebrate flawlessly manufactured items. Find product line sales for items that have generated at least 8 units sold, ordered highest sales volume first.",
-    "context_notes": "Join products and order_items. Group by product id and name. Filter HAVING sum quantity >= 8. Order by units_sold DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "GROUP BY",
@@ -3423,7 +3423,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Operations is reviewing regional customer friction. Join customers and support tickets to calculate total support inquiries submitted across each region, ordered with our highest ticket volume territories first.",
-    "context_notes": "Join customers and support_tickets. Group by region. Count tickets. Order by total_tickets DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "GROUP BY",
@@ -3461,7 +3461,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is reviewing on-time delivery service level agreements. For all shipments that have both dispatch and delivery timestamps, calculate total fulfilled shipments per carrier, ordered by volume descending.",
-    "context_notes": "Filter shipments WHERE shipped_at IS NOT NULL AND delivered_at IS NOT NULL. Group by carrier. Calculate shipment count. Order by fulfilled_shipments DESC.",
+    "context_notes": "",
     "concepts": [
       "SELECT",
       "WHERE",
@@ -3501,7 +3501,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive leadership is assessing the financial traction of our high-end brand partnerships. Join brands, products, and order items to calculate total units sold and total gross revenue generated by brand partners classified as luxury or premium, ordered by total revenue descending.",
-    "context_notes": "Join brands, products, and order_items WHERE tier IN ('luxury', 'premium'). Group by brand name, tier. Calculate units and revenue. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "3-WAY JOIN",
@@ -3544,7 +3544,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Quality control is cross-referencing customer refunds against initial transaction values. Join orders and customer returns where the stated reason is defective merchandise, displaying order id, initial order amount, and refund amount, ordered by refund amount descending.",
-    "context_notes": "Join orders and returns WHERE ret.reason LIKE '%defect%'. Show o.id, o.total_amount, ret.refund_amount. Order by ret.refund_amount DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "WHERE",
@@ -3583,7 +3583,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Logistics is reviewing warehouse buffer allocations across distribution facilities. Join warehouses and inventory to calculate total on-hand inventory units and total reserved inventory units for each warehouse facility, ordered by reserved units descending.",
-    "context_notes": "Join warehouses and inventory. Group by warehouse id and name. Sum on hand and reserved. Order by total_reserved DESC.",
+    "context_notes": "",
     "concepts": [
       "INNER JOIN",
       "GROUP BY",
@@ -3622,7 +3622,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Board presentation deliverable: We need an authoritative executive revenue leaderboard of our top 10 lifetime customers. Join customer accounts and completed delivered orders to compute each shopper's total orders placed, cumulative revenue collected, and average order value, ordered with our biggest patrons first, limited to the top 10.",
-    "context_notes": "Join customers and orders WHERE status = 'delivered'. Group by customer id, first_name, last_name, region. Compute order count, sum total_amount, avg total_amount. Order by total_revenue DESC LIMIT 10.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "WHERE",
@@ -3670,7 +3670,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Executive financial analysis: I need a cross-divisional profitability scorecard for our board audit. Join departments, categories, products, and order items to calculate total units sold, gross sales revenue, estimated wholesale cost of goods sold, and total net gross profit for each department, ordered from highest gross profit downward.",
-    "context_notes": "Join departments, categories, products, and order_items. Group by department id and name. Compute units sold, gross revenue, cost of goods, and net profit (revenue - cost). Order by net_gross_profit DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "4-WAY JOIN",
@@ -3715,7 +3715,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Carrier contract renegotiation: Liam here. We need a comprehensive logistics scorecard evaluating our delivery partners. For each freight carrier, compute total shipments handled, count of successfully delivered parcels, and average shipping fee billed, ordered from our largest carrier partner downward.",
-    "context_notes": "Join shipments and orders on s.order_id = o.id. Group by carrier. Compute total shipments, count of delivered shipments, and average shipping fee. Order by total_shipments DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "INNER JOIN",
@@ -3759,7 +3759,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Fulfillment & Operations Manager"
     },
     "request": "Executive supply audit: We need to quantify company capital tied up on warehouse shelves. Join categories, products, and inventory to calculate total warehouse stock on hand, total reserved inventory, and total asset valuation (quantity on hand multiplied by cost) for each category, ordered highest capital exposure first.",
-    "context_notes": "Join categories, products, and inventory. Group by category name. Compute sum quantity_on_hand, sum reserved_quantity, and sum (quantity_on_hand * cost). Order by total_asset_value DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "3-WAY JOIN",
@@ -3803,7 +3803,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Territory expansion briefing: Rachel here. We need a holistic market penetration matrix across our 5 operating regions. Join customers and orders to calculate total registered shoppers, total completed delivered orders, and total net revenue collected per region, ordered by revenue descending.",
-    "context_notes": "Join customers and orders on c.id = o.customer_id. Group by region. Count distinct customers, count delivered orders, sum total_amount for delivered orders. Order by regional_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "GROUP BY",
@@ -3847,7 +3847,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "VP of Sales & Growth"
     },
     "request": "Investor deck analysis: We need to demonstrate strong shopper retention. Join customers and delivered orders to identify repeat patrons who have placed 3 or more separate delivered orders, displaying their names, region, total orders placed, cumulative spend, and average basket size, ordered by cumulative spend descending, limited to top 10.",
-    "context_notes": "Join customers and orders WHERE o.status = 'delivered'. Group by customer id, first_name, last_name, region. Filter HAVING count >= 3. Order by cumulative_spend DESC LIMIT 10.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "WHERE",
@@ -3896,7 +3896,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "Marketplace positioning review: Alex here. We need to evaluate which brand tiers generate the most sales. Join brands, products, and order line items to calculate total units sold, gross merchandise revenue, and average selling price across brand positioning tiers, ordered from highest gross revenue downward.",
-    "context_notes": "Join brands, products, and order_items. Group by brand tier. Compute units sold, gross revenue, and avg unit price. Order by gross_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "3-WAY JOIN",
@@ -3940,7 +3940,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Risk mitigation meeting: Marcus here. We must present our full returns exposure to the executive committee. Group return records by reason to calculate total refund claims, total refunded capital, average refund per incident, and minimum/maximum refund values, ordered from highest total refunded amount downward.",
-    "context_notes": "Group returns by reason. Compute count, sum refund, avg refund, min refund, max refund. Order by total_refunded DESC.",
+    "context_notes": "",
     "concepts": [
       "GROUP BY",
       "COUNT",
@@ -3985,7 +3985,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Customer Success Lead"
     },
     "request": "Annual brand health check: We want to audit customer satisfaction across our merchandise lines. Join categories, products, and customer reviews from verified buyers to calculate review count and average satisfaction rating for each category, ordered highest rating first.",
-    "context_notes": "Join categories, products, and customer_reviews WHERE is_verified_purchase = true. Group by category name. Compute count and avg rating. Order by avg_rating DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "3-WAY JOIN",
@@ -4028,7 +4028,7 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
       "role": "Chief Executive Officer"
     },
     "request": "The ultimate startup audit: Alex Rivera here. To conclude our Startup Stage at OmniCart Direct, I need an all-hands master ledger summary. Join customer accounts and completed delivered orders to compute our total delivered order volume, total enterprise revenue collected, average shipping fee per order, and average order transaction size, grouped by customer region, ordered from highest revenue market downward.",
-    "context_notes": "Join customers and orders WHERE status = 'delivered'. Group by region. Compute delivered orders, total revenue, average shipping fee, and average transaction size. Order by total_revenue DESC.",
+    "context_notes": "",
     "concepts": [
       "MULTI-TABLE JOIN",
       "WHERE",

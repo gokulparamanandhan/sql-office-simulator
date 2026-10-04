@@ -735,17 +735,6 @@ export default function QuestionWorkspacePage({
                     </div>
                   </div>
 
-                  {/* Deliverable Guidance Note */}
-                  {question.context_notes && (
-                    <div className="bg-[var(--mist)] border border-[var(--sky)] p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-xs">
-                      <Sparkles className="w-3.5 h-3.5 text-[var(--ocean)] shrink-0 mt-0.5" />
-                      <div className="text-[11px] leading-relaxed text-[var(--ink)]">
-                        <span className="font-bold">Deliverable Note: </span>
-                        {question.context_notes}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Required Columns Pill List */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)]">

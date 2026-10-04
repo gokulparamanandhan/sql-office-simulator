@@ -22,7 +22,6 @@ export async function GET(
     title: question.title,
     stakeholder: question.stakeholder,
     request: question.request,
-    context_notes: question.context_notes,
     concepts: question.concepts,
     expected_columns: question.expected_columns,
     hints: question.hints,

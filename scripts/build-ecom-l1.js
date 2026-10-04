@@ -33,7 +33,7 @@ const q = (
     role: stakeholderRole
   },
   request,
-  context_notes,
+  context_notes: "",
   concepts,
   expected_columns,
   reference_sql,
