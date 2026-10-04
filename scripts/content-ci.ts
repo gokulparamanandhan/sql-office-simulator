@@ -94,11 +94,13 @@ async function runContentCI() {
   domain: string;
   level: number;
   order: number;
-  difficulty: "warm-up" | "core" | "challenging" | "boss";
+  difficulty: "warm-up" | "core" | "challenging" | "boss" | "easy" | "medium" | "hard" | "advanced" | "expert" | string;
   title: string;
   stakeholder: {
     name: string;
     role: string;
+    avatar?: string;
+    department?: string;
   };
   request: string;
   context_notes: string;
@@ -111,9 +113,10 @@ async function runContentCI() {
     numeric_tolerance: number;
   };
   hints: string[];
-  solution_explanation: string;
-  xp: number;
-  estimated_minutes: number;
+  starter_sql?: string;
+  solution_explanation?: string;
+  xp?: number;
+  estimated_minutes?: number;
 }
 
 // 100 Automated-Gate Validated Questions for E-Commerce Level 1

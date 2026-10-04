@@ -133,6 +133,16 @@ export default function QuestionWorkspacePage({
   // Celebration state
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [editorTheme, setEditorTheme] = useState<"vs-light" | "vs-dark">("vs-light");
+  const completionDisposableRef = useRef<{ dispose: () => void } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (completionDisposableRef.current) {
+        completionDisposableRef.current.dispose();
+        completionDisposableRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -280,6 +290,21 @@ export default function QuestionWorkspacePage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorMount = (_editor: any, monaco: any) => {
     if (!monaco || !monaco.languages) return;
+
+    // Dispose existing provider before registering a new one to prevent duplicated suggestions
+    if (completionDisposableRef.current) {
+      completionDisposableRef.current.dispose();
+      completionDisposableRef.current = null;
+    }
+    // Also check global window tracker across remounts / StrictMode
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window !== "undefined" && (window as any).__sqlCompletionDisposable) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__sqlCompletionDisposable.dispose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__sqlCompletionDisposable = null;
+    }
+
     const tables = office.schema.map((t) => t.name);
     const columns = Array.from(new Set(office.schema.flatMap((t) => t.columns.map((c) => c.name))));
     const keywords = [
@@ -289,7 +314,7 @@ export default function QuestionWorkspacePage({
       "COUNT", "SUM", "AVG", "MIN", "MAX", "DISTINCT", "COALESCE"
     ];
 
-    monaco.languages.registerCompletionItemProvider("sql", {
+    const provider = monaco.languages.registerCompletionItemProvider("sql", {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       provideCompletionItems: (model: any, position: any) => {
         const word = model.getWordUntilPosition(position);
@@ -300,7 +325,7 @@ export default function QuestionWorkspacePage({
           endColumn: word.endColumn,
         };
 
-        const suggestions = [
+        const rawSuggestions = [
           ...keywords.map((kw) => ({
             label: kw,
             kind: monaco.languages.CompletionItemKind.Keyword,
@@ -323,9 +348,27 @@ export default function QuestionWorkspacePage({
           })),
         ];
 
+        // Deduplicate suggestions by label to ensure no duplicate items
+        const seen = new Set<string>();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const suggestions: any[] = [];
+        for (const item of rawSuggestions) {
+          const key = item.label.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            suggestions.push(item);
+          }
+        }
+
         return { suggestions };
       },
     });
+
+    completionDisposableRef.current = provider;
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__sqlCompletionDisposable = provider;
+    }
   };
 
   // Run Preview (does NOT count as attempt)
@@ -402,9 +445,10 @@ export default function QuestionWorkspacePage({
           userStats.solvedCount = (userStats.solvedCount || 0) + 1;
           localStorage.setItem(statsKey, JSON.stringify(userStats));
 
-          // Check if celebration threshold reached
+          // Check if level completion celebration threshold reached (all questions in this level completed)
           const allCount = Object.keys(current).length;
-          if (allCount >= 10 || question.difficulty === "boss") {
+          const totalInLevel = domainQuestions.length;
+          if (totalInLevel > 0 && allCount >= totalInLevel) {
             setShowCelebration(true);
           }
         } catch {
@@ -1460,13 +1504,13 @@ export default function QuestionWorkspacePage({
 
             <div className="space-y-2">
               <span className="text-xs font-extrabold uppercase tracking-widest text-[var(--ocean-hover)]">
-                Level 1 Complete!
+                Level {cleanLevel} Complete!
               </span>
               <h2 className="text-2xl font-black text-[var(--ink)]">
                 Outstanding Performance, Analyst!
               </h2>
               <p className="text-xs sm:text-sm text-[var(--ink)] opacity-85 leading-relaxed">
-                You have answered leadership&apos;s requests and successfully cleared the Startup stage at OmniCart Direct. Level 2 (Growing Company) is now ready to unlock!
+                You have answered leadership&apos;s requests and successfully cleared Level {cleanLevel} at {office.company.name}. Level {Number(cleanLevel) + 1} is now ready to unlock!
               </p>
             </div>
 

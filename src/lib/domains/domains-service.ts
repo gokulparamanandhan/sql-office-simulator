@@ -103,13 +103,16 @@ export async function getLearnerDashboard(userId: string): Promise<{
 
     const domainsSummary: DomainProgressSummary[] = DOMAINS_SEED_DATA.map((d) => {
       const domainLevels = userProg.domains[d.slug] || {};
+      let prevLevelCompleted = true;
       const levels = LEVELS_CONFIG.map((lvl) => {
         const lvlRecord = domainLevels[lvl.number];
         const solvedCount = lvlRecord ? lvlRecord.solvedCount : 0;
+        const isUnlocked = lvl.number === 1 || prevLevelCompleted;
+        prevLevelCompleted = solvedCount >= 100;
         return {
           number: lvl.number,
           name: lvl.name,
-          unlocked: lvl.number === 1 || solvedCount >= 1,
+          unlocked: isUnlocked,
           solvedCount,
           bossSolvedCount: 0,
           totalQuestions: 100,

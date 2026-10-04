@@ -409,7 +409,7 @@ function generateL1Question(
   const intro = intros[(order - 1) % intros.length];
 
   let title = `Review ${friendlyName} records`;
-  let request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you pull up our '${targetTable}' table showing ${col1} and ${col2}? Please sort in ascending order by ${col1}. (Limit to the first 25 records)."`;
+  let request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you pull up an operational overview from our ${friendlyName} register? Please organize the records in ascending order. (Limit to the first 25 records)."`;
   let refSql = `SELECT ${col1}, ${col2} FROM ${targetTable} ORDER BY ${col1} ASC LIMIT 25;`;
   let expectedCols = [col1, col2];
   let concepts = ["SELECT", "ORDER BY", "LIMIT"];
@@ -417,19 +417,19 @@ function generateL1Question(
   // Varied authentic business inquiries
   if (order % 4 === 1) {
     title = `Operational verification of ${friendlyName}`;
-    request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you retrieve our '${targetTable}' entries, displaying ${col1} alongside ${col2}? Please order the results ascending by ${col1}. (Limit to the top 20 records)."`;
+    request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you retrieve a baseline report of our ${friendlyName} entries? Please sort the dataset in ascending order. (Limit to the top 20 records)."`;
     refSql = `SELECT ${col1}, ${col2} FROM ${targetTable} ORDER BY ${col1} ASC LIMIT 20;`;
     expectedCols = [col1, col2];
     concepts = ["SELECT", "ORDER BY ASC", "LIMIT"];
   } else if (order % 4 === 2) {
-    title = `Distinct ${col2} values in ${friendlyName}`;
-    request = `From: ${persona.name} (${persona.role})\n\n"${intro} our compliance officers need a clean catalog of every unique ${col2} recorded in '${targetTable}'. Please return only unique non-null entries, sorted in alphabetical order."`;
+    title = `Distinct entries in ${friendlyName}`;
+    request = `From: ${persona.name} (${persona.role})\n\n"${intro} our compliance officers need a clean catalog of every unique category or status entry recorded in our ${friendlyName} register. Please return only unique non-null entries in alphabetical order."`;
     refSql = `SELECT DISTINCT ${col2} FROM ${targetTable} WHERE ${col2} IS NOT NULL ORDER BY ${col2} ASC;`;
     expectedCols = [col2];
     concepts = ["SELECT", "DISTINCT", "WHERE", "ORDER BY"];
   } else if (order % 4 === 3) {
     title = `Top sorted entries from ${friendlyName}`;
-    request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you extract the leading records from '${targetTable}'? Please include ${col1} and ${col2}, ordered descending by ${col1}. (Limit to the first 15 records)."`;
+    request = `From: ${persona.name} (${persona.role})\n\n"${intro} could you extract the leading entries from our ${friendlyName} system? Please arrange the records in descending order. (Limit to the first 15 records)."`;
     refSql = `SELECT ${col1}, ${col2} FROM ${targetTable} ORDER BY ${col1} DESC LIMIT 15;`;
     expectedCols = [col1, col2];
     concepts = ["SELECT", "ORDER BY DESC", "LIMIT"];

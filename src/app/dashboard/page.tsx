@@ -78,6 +78,7 @@ export default function DashboardPage() {
 
     const updatedDomains = dashboard.domains.map((dom) => {
       let domainCompletedCount = 0;
+      let prevLevelCompleted = true;
       const updatedLevels = dom.levels.map((lvl) => {
         let solved = lvl.solvedCount;
         try {
@@ -92,10 +93,15 @@ export default function DashboardPage() {
         }
         domainCompletedCount += solved;
         totalSolvedAllDomains += solved;
+
+        // Level 1 is always unlocked. Next levels unlock only after completing previous level
+        const isUnlocked = lvl.number === 1 || prevLevelCompleted;
+        prevLevelCompleted = solved >= lvl.totalQuestions;
+
         return {
           ...lvl,
           solvedCount: solved,
-          unlocked: lvl.number === 1 || solved >= 1 || lvl.unlocked,
+          unlocked: isUnlocked,
         };
       });
 
@@ -463,7 +469,7 @@ export default function DashboardPage() {
                       </Link>
                     ) : (
                       <div className="text-[10px] text-center font-semibold text-slate-600 bg-slate-100 p-2 rounded border border-slate-300">
-                        Unlocks at ≥ 70 solved &amp; 5 boss questions in Level {lvl.number - 1}
+                        Unlocks after completing Level {lvl.number - 1}
                       </div>
                     )}
                   </div>
