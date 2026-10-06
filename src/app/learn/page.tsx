@@ -19,6 +19,7 @@ import {
   Code2,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { updateStreak } from "@/lib/gamification/gamification-service";
 import { LEARNING_QUESTIONS, LEARNING_LEVELS, LearningQuestion } from "@/lib/content/learning-curriculum";
 
 export default function LearnAcademyPage() {
@@ -111,8 +112,24 @@ export default function LearnAcademyPage() {
           // Award XP to user stats
           try {
             const statsKey = `sql_office_${currentUserId}_user_stats`;
-            const stats = JSON.parse(localStorage.getItem(statsKey) || '{"xp":0}');
+            const stats = JSON.parse(localStorage.getItem(statsKey) || '{"xp":0,"streak":1,"solvedCount":0}');
             stats.xp = (stats.xp || 0) + 10;
+            stats.solvedCount = (stats.solvedCount || 0) + 1;
+
+            const streakResult = updateStreak(
+              stats.streak || 1,
+              stats.longestStreak || stats.streak || 1,
+              stats.lastActiveDate,
+              {
+                totalXp: stats.xp,
+                activeDates: stats.activeDates,
+              }
+            );
+            stats.streak = streakResult.currentStreak;
+            stats.longestStreak = streakResult.longestStreak;
+            stats.lastActiveDate = streakResult.lastActiveDate;
+            stats.activeDates = streakResult.activeDates;
+
             localStorage.setItem(statsKey, JSON.stringify(stats));
           } catch {
             // Ignore

@@ -20,7 +20,7 @@ import {
   ArrowRight,
   BookOpen,
 } from "lucide-react";
-import { ConceptMastery } from "@/lib/gamification/gamification-service";
+import { ConceptMastery, getCareerProgression } from "@/lib/gamification/gamification-service";
 
 interface ProgressData {
   user: {
@@ -88,9 +88,16 @@ export default function ProgressPage() {
 
   if (!data) return null;
 
-  // Calculate rank progression
-  const nextRankThreshold = 500;
-  const rankProgressPct = Math.min(Math.round((data.totalXp / nextRankThreshold) * 100), 100);
+  // Calculate rank progression dynamically
+  const progression = getCareerProgression(data.totalXp);
+  const nextRankName =
+    progression.nextLevel === 2
+      ? "Data Analyst"
+      : progression.nextLevel === 3
+      ? "Senior Data Analyst"
+      : progression.nextLevel === 4
+      ? "Data Lead"
+      : "Head of Data / Chief Analytics Officer";
 
   return (
     <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
@@ -138,10 +145,10 @@ export default function ProgressPage() {
               </div>
               <div>
                 <span className="text-xs font-extrabold uppercase text-[var(--ocean-hover)] tracking-wider">
-                  Current Professional Standing
+                  Current Professional Standing • Level {progression.currentLevel}
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-black text-[var(--ink)]">
-                  {data.currentRank}
+                  {progression.currentRank}
                 </h1>
                 <p className="text-xs font-semibold text-[var(--ink)] opacity-75">
                   Learner: {data.user.name} ({data.user.email})
@@ -151,24 +158,31 @@ export default function ProgressPage() {
 
             <div className="text-left sm:text-right">
               <div className="text-xs font-bold text-[var(--ink)] opacity-70">
-                Next Rank: Data Analyst
+                {progression.isMaxLevel ? "Max Career Rank" : `Next Rank: ${nextRankName}`}
               </div>
               <div className="text-sm font-black text-[var(--ink)]">
-                {data.totalXp} / {nextRankThreshold} XP
+                {progression.isMaxLevel
+                  ? `${data.totalXp.toLocaleString()} XP (Mastered)`
+                  : `${data.totalXp.toLocaleString()} / ${progression.nextLevelXp.toLocaleString()} XP`}
               </div>
+              {!progression.isMaxLevel && (
+                <div className="text-[10px] font-bold text-[var(--ink)] opacity-70">
+                  {progression.xpToNextMilestone.toLocaleString()} XP to promotion
+                </div>
+              )}
             </div>
           </div>
 
           {/* Rank Progress Bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs font-bold text-[var(--ink)]">
-              <span>Promotion Track</span>
-              <span>{rankProgressPct}% Complete</span>
+              <span>Promotion Track (Progress to Level {progression.nextLevel})</span>
+              <span>{progression.progressPct}% Complete</span>
             </div>
             <div className="h-3 w-full bg-[var(--surface)] border border-[var(--sky)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[var(--ocean)] transition-all duration-500 rounded-full"
-                style={{ width: `${rankProgressPct}%` }}
+                style={{ width: `${Math.max(progression.progressPct > 0 ? 3 : 0, progression.progressPct)}%` }}
               />
             </div>
           </div>

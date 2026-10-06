@@ -36,6 +36,7 @@ import { getQuestionsForDomainAndLevel, getQuestionById } from "@/lib/content/co
 import { getDomainOfficeMetadata } from "@/lib/office/all-domains-metadata";
 import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
+import { updateStreak } from "@/lib/gamification/gamification-service";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -443,6 +444,21 @@ export default function QuestionWorkspacePage({
           const userStats = JSON.parse(localStorage.getItem(statsKey) || '{"xp":0,"streak":1,"solvedCount":0}');
           userStats.xp = (userStats.xp || 0) + xpGained;
           userStats.solvedCount = (userStats.solvedCount || 0) + 1;
+
+          const streakResult = updateStreak(
+            userStats.streak || 1,
+            userStats.longestStreak || userStats.streak || 1,
+            userStats.lastActiveDate,
+            {
+              totalXp: userStats.xp,
+              activeDates: userStats.activeDates,
+            }
+          );
+          userStats.streak = streakResult.currentStreak;
+          userStats.longestStreak = streakResult.longestStreak;
+          userStats.lastActiveDate = streakResult.lastActiveDate;
+          userStats.activeDates = streakResult.activeDates;
+
           localStorage.setItem(statsKey, JSON.stringify(userStats));
 
           // Check if level completion celebration threshold reached (all questions in this level completed)

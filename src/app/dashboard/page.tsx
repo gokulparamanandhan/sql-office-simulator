@@ -23,6 +23,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { DomainProgressSummary } from "@/lib/domains/domains-service";
+import { getCareerProgression, updateStreak } from "@/lib/gamification/gamification-service";
 import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
 
@@ -32,6 +33,7 @@ interface DashboardData {
     email: string;
     name: string;
     role: string;
+    createdAt?: string;
     honorPledgeAccepted: boolean;
     honorPledgeAcceptedAt?: string;
   };
@@ -65,9 +67,19 @@ export default function DashboardPage() {
 
     let calculatedTotalXp = dashboard.totalXp;
     let totalSolvedAllDomains = 0;
+    const statsKey = `sql_office_${currentUserId}_user_stats`;
+    let userStats: {
+      xp?: number;
+      streak?: number;
+      longestStreak?: number;
+      lastActiveDate?: string;
+      activeDates?: string[];
+      solvedCount?: number;
+    } = {};
+
     try {
-      const userStats = JSON.parse(
-        localStorage.getItem(`sql_office_${currentUserId}_user_stats`) || "{}"
+      userStats = JSON.parse(
+        localStorage.getItem(statsKey) || "{}"
       );
       if (userStats.xp && userStats.xp > calculatedTotalXp) {
         calculatedTotalXp = userStats.xp;
@@ -116,9 +128,54 @@ export default function DashboardPage() {
       calculatedTotalXp = totalSolvedAllDomains * 10;
     }
 
+    // Dynamic career progression based on total XP
+    const progression = getCareerProgression(calculatedTotalXp);
+
+    // Calculate updated streak and days
+    const currentStreakVal = Math.max(dashboard.streakDays || 1, userStats.streak || 1);
+    const longestStreakVal = Math.max(dashboard.streakDays || 1, userStats.longestStreak || userStats.streak || 1);
+    const streakResult = updateStreak(
+      currentStreakVal,
+      longestStreakVal,
+      userStats.lastActiveDate,
+      {
+        createdAtStr: dashboard.user.createdAt || dashboard.user.honorPledgeAcceptedAt,
+        totalXp: calculatedTotalXp,
+        activeDates: userStats.activeDates,
+      }
+    );
+
+    // Persist updated streak & stats to client localStorage
+    userStats.xp = calculatedTotalXp;
+    userStats.streak = streakResult.currentStreak;
+    userStats.longestStreak = streakResult.longestStreak;
+    userStats.lastActiveDate = streakResult.lastActiveDate;
+    userStats.activeDates = streakResult.activeDates;
+    try {
+      localStorage.setItem(statsKey, JSON.stringify(userStats));
+    } catch {
+      // Ignore
+    }
+
+    // Background sync to server API
+    fetch("/api/user/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "sync",
+        totalXp: calculatedTotalXp,
+        streakDays: streakResult.currentStreak,
+        longestStreak: streakResult.longestStreak,
+        lastActiveDate: streakResult.lastActiveDate,
+        activeDates: streakResult.activeDates,
+      }),
+    }).catch(() => {});
+
     return {
       ...dashboard,
       totalXp: calculatedTotalXp,
+      currentRank: progression.currentRank,
+      streakDays: streakResult.currentStreak,
       domains: updatedDomains,
     };
   };
@@ -173,6 +230,7 @@ export default function DashboardPage() {
 
   const currentDomain =
     data.domains.find((d) => d.slug === selectedDomainSlug) || data.domains[0];
+  const progression = getCareerProgression(data.totalXp);
 
   return (
     <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
@@ -237,7 +295,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <div className="hidden md:block text-right">
                 <div className="text-xs font-extrabold text-[var(--ink)]">{data.user.name}</div>
-                <div className="text-[10px] font-bold text-[var(--ocean-hover)]">{data.currentRank}</div>
+                <div className="text-[10px] font-bold text-[var(--ocean-hover)]">{progression.currentRank}</div>
               </div>
               <button
                 onClick={handleLogout}
@@ -264,7 +322,7 @@ export default function DashboardPage() {
               Welcome to the Team, {data.user.name.split(" ")[0]}!
             </h1>
             <p className="text-xs sm:text-sm text-[var(--ink)] opacity-85 max-w-xl">
-              You are currently an <strong>{data.currentRank}</strong>. Choose an industry domain below to enter your company office, meet your stakeholders, and start answering real requests.
+              You are currently a <strong>{progression.currentRank}</strong>. Choose an industry domain below to enter your company office, meet your stakeholders, and start answering real requests.
             </p>
           </div>
 
@@ -299,11 +357,11 @@ export default function DashboardPage() {
                     Current Career Rank
                   </span>
                   <span className="px-2 py-0.5 rounded bg-[var(--accent-teal)] border border-[var(--ink)] text-[10px] font-black text-[var(--ink)]">
-                    {data.currentRank}
+                    {progression.currentRank}
                   </span>
                 </div>
                 <h2 className="text-xl font-black text-[var(--ink)] mt-0.5">
-                  Level {data.domains[0]?.currentLevel || 1} • {data.totalXp} Total XP Earned
+                  Level {progression.currentLevel} • {data.totalXp.toLocaleString()} Total XP Earned
                 </h2>
               </div>
             </div>
@@ -315,10 +373,14 @@ export default function DashboardPage() {
               </div>
               <div className="text-right hidden md:block">
                 <span className="text-xs font-black text-[var(--ink)]">
-                  {data.totalXp >= 100 ? `${data.totalXp} / 300 XP` : `${data.totalXp} / 100 XP`}
+                  {progression.isMaxLevel
+                    ? `${data.totalXp.toLocaleString()} XP (Max Rank)`
+                    : `${data.totalXp.toLocaleString()} / ${progression.nextLevelXp.toLocaleString()} XP`}
                 </span>
                 <div className="text-[10px] font-bold text-[var(--ink)] opacity-70">
-                  {Math.max(0, (data.totalXp >= 100 ? 300 : 100) - data.totalXp)} XP to next milestone
+                  {progression.isMaxLevel
+                    ? "Max milestone reached"
+                    : `${progression.xpToNextMilestone.toLocaleString()} XP to next milestone`}
                 </div>
               </div>
             </div>
@@ -327,14 +389,18 @@ export default function DashboardPage() {
           {/* Prominent High-Contrast Progress Bar */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs font-black text-[var(--ink)]">
-              <span>PROGRESS TO LEVEL {data.totalXp >= 100 ? "3" : "2"}</span>
-              <span className="font-mono">{Math.min(100, Math.round((data.totalXp / (data.totalXp >= 100 ? 300 : 100)) * 100))}%</span>
+              <span>
+                {progression.isMaxLevel
+                  ? "MAX CAREER RANK ACHIEVED"
+                  : `PROGRESS TO LEVEL ${progression.nextLevel}`}
+              </span>
+              <span className="font-mono">{progression.progressPct}%</span>
             </div>
             <div className="w-full h-5 bg-[var(--paper-beige)] border-2 border-[var(--ink)] rounded-lg overflow-hidden shadow-[2px_2px_0px_var(--ink)] p-0.5">
               <div
                 className="h-full bg-[var(--accent-teal)] rounded-sm border-r-2 border-[var(--ink)] transition-all duration-500"
                 style={{
-                  width: `${Math.max(3, Math.min(100, Math.round((data.totalXp / (data.totalXp >= 100 ? 300 : 100)) * 100)))}%`,
+                  width: `${Math.max(progression.progressPct > 0 ? 3 : 0, progression.progressPct)}%`,
                 }}
               />
             </div>

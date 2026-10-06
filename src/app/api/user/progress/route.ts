@@ -28,6 +28,22 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { type, domain, level, questionId, xpEarned } = body;
 
+    if (type === "sync") {
+      const { syncUserProgressStats } = await import("@/lib/user/user-progress-service");
+      const updated = await syncUserProgressStats(
+        user.id,
+        {
+          totalXp: body.totalXp,
+          streakDays: body.streakDays,
+          longestStreak: body.longestStreak,
+          lastActiveDate: body.lastActiveDate,
+          activeDates: body.activeDates,
+        },
+        user.email
+      );
+      return NextResponse.json({ success: true, progress: updated });
+    }
+
     if (type === "academy") {
       const updated = await recordUserAcademySolved(
         user.id,

@@ -3,6 +3,7 @@ import {
   updateStreak,
   evaluateBadges,
   analyzeConceptMastery,
+  getCareerProgression,
 } from "../src/lib/gamification/gamification-service";
 import { isLevelUnlocked } from "../src/lib/config/app-config";
 
@@ -106,6 +107,39 @@ const groupByStat = mastery.find((m) => m.concept === "GROUP BY");
 assert(groupByStat?.accuracyPct === 0, "GROUP BY concept accuracy is 0%");
 assert(weakAreas.includes("GROUP BY"), "GROUP BY is identified as a weak area (< 70% accuracy)");
 assert(!weakAreas.includes("SELECT"), "SELECT is not identified as a weak area");
+
+// 6. Career Progression & XP Milestones
+console.log("\n[6] Testing getCareerProgression & calculateCareerRank:");
+const p0 = getCareerProgression(0);
+assert(p0.currentLevel === 1 && p0.currentRank === "Intern (Solo Data Hire)" && p0.nextLevelXp === 500 && p0.nextLevel === 2, "0 XP is Level 1 Intern, next milestone 500 XP");
+
+const p543 = getCareerProgression(543);
+assert(
+  p543.currentLevel === 2 &&
+  p543.currentRank === "Data Analyst" &&
+  p543.nextLevelXp === 2000 &&
+  p543.nextLevel === 3 &&
+  p543.xpToNextMilestone === 1457 &&
+  p543.progressPct === 3,
+  "543 XP is Level 2 Data Analyst progressing to Level 3 (2000 XP milestone, 1457 remaining, 3% progress)"
+);
+
+const p2050 = getCareerProgression(2050);
+assert(p2050.currentLevel === 3 && p2050.currentRank === "Senior Data Analyst" && p2050.nextLevelXp === 5000, "2050 XP is Level 3 Senior Data Analyst, next milestone 5000 XP");
+
+const p5000 = getCareerProgression(5000);
+assert(p5000.currentLevel === 4 && p5000.currentRank === "Data Lead" && p5000.nextLevelXp === 10000, "5000 XP is Level 4 Data Lead, next milestone 10000 XP");
+
+const p10000 = getCareerProgression(10000);
+assert(p10000.currentLevel === 5 && p10000.isMaxLevel && p10000.currentRank === "Head of Data / Chief Analytics Officer", "10000 XP is Max Level 5 Head of Data");
+
+// Test streak calculation on fifth day with account created 5 days ago
+const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+const userDay5 = updateStreak(1, 1, null, {
+  createdAtStr: fiveDaysAgo,
+  totalXp: 543,
+});
+assert(userDay5.currentStreak === 5 && userDay5.longestStreak === 5, "User active on fifth day with 543 XP gets 5 Day Streak");
 
 console.log(`\n========================================`);
 console.log(`Results: ${testsPassed}/${testsRun} tests passed.`);
