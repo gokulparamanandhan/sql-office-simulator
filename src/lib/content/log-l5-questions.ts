@@ -1,2612 +1,3721 @@
-// ============================================================================
-// LOGISTICS & SUPPLY CHAIN — LEVEL 5: ENTERPRISE CTES, RISK & CORRIDOR PROFITABILITY
-// 100 Handcrafted, Non-Robotic Questions from Executive Decision-Makers
-// Tables (15): warehouses, carriers, fleet_vehicles, drivers, suppliers, shipments,
-//              cargo_packages, freight_routes, delivery_checkpoints, parts_inventory,
-//              fuel_logs, maintenance_records, customs_declarations, freight_invoices, incidents
-// ============================================================================
-
 import { QuestionDefinition } from "./ecom-l1-questions";
 
 export const LOG_L5_QUESTIONS: QuestionDefinition[] = [
   {
-    id: "log-L5-001",
-    domain: "logistics",
-    level: 5,
-    order: 1,
-    difficulty: "expert",
-    title: "Carrier Incident Loss Ratio & Net Revenue Scorecard",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave from Fleet Risk. Calculate the incident claim loss ratio per freight carrier. Using CTEs, aggregate total invoice revenue and total incident claim costs per carrier, showing carrier_name, total_billed, total_claim_cost, and claim_loss_ratio_pct.",
-    context_notes: "Carrier risk management and cargo damage insurance underwriting.",
-    concepts: ["Multi-Stage CTE","LEFT JOIN","COALESCE","NULLIF","Risk Modeling"],
-    expected_columns: ["carrier_name","total_revenue","total_claims","claim_loss_ratio_pct"],
-    reference_sql: "WITH carrier_invoices AS (SELECT s.carrier_id, SUM(fi.total_billed) AS total_revenue FROM shipments s JOIN freight_invoices fi ON s.id = fi.shipment_id GROUP BY s.carrier_id), carrier_claims AS (SELECT s.carrier_id, SUM(inc.claim_cost) AS total_claims FROM shipments s JOIN incidents inc ON s.id = inc.shipment_id GROUP BY s.carrier_id) SELECT c.carrier_name, COALESCE(ci.total_revenue, 0) AS total_revenue, COALESCE(cc.total_claims, 0) AS total_claims, ROUND((COALESCE(cc.total_claims, 0) / NULLIF(ci.total_revenue, 0) * 100.0), 2) AS claim_loss_ratio_pct FROM carriers c LEFT JOIN carrier_invoices ci ON c.id = ci.carrier_id LEFT JOIN carrier_claims cc ON c.id = cc.carrier_id ORDER BY total_claims DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use separate CTEs for invoice revenue and incident claim costs per carrier, joined to carriers with NULLIF to prevent division by zero."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-002",
-    domain: "logistics",
-    level: 5,
-    order: 2,
-    difficulty: "expert",
-    title: "Fleet Vehicle Total Cost of Operation (TCO) Model",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave from Fleet Ops. Compute the total operational expenditure per vehicle by summing maintenance service costs and total fuel expenditure ((gallons * price_per_gallon)). Using CTEs, show vehicle_number, vehicle_type, maintenance_total, fuel_total, and grand_operating_cost.",
-    context_notes: "Fleet total lifecycle operating cost accounting.",
-    concepts: ["Multi-Stage CTE","Arithmetic Expressions","COALESCE","Fleet TCO"],
-    expected_columns: ["vehicle_number","vehicle_type","maintenance_total","fuel_total","grand_operating_cost"],
-    reference_sql: "WITH maint_cte AS (SELECT vehicle_id, SUM(cost) AS total_maint FROM maintenance_records GROUP BY vehicle_id), fuel_cte AS (SELECT vehicle_id, ROUND(SUM(gallons * price_per_gallon), 2) AS total_fuel FROM fuel_logs GROUP BY vehicle_id) SELECT fv.vehicle_number, fv.vehicle_type, COALESCE(m.total_maint, 0) AS maintenance_total, COALESCE(f.total_fuel, 0) AS fuel_total, (COALESCE(m.total_maint, 0) + COALESCE(f.total_fuel, 0)) AS grand_operating_cost FROM fleet_vehicles fv LEFT JOIN maint_cte m ON fv.id = m.vehicle_id LEFT JOIN fuel_cte f ON fv.id = f.vehicle_id ORDER BY grand_operating_cost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Build separate CTEs for maintenance totals and fuel totals, then join onto fleet_vehicles."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-003",
-    domain: "logistics",
-    level: 5,
-    order: 3,
-    difficulty: "expert",
-    title: "Port of Entry Landed Cost Impact (Duty vs Freight Invoice)",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Claire here. Analyze landed cost overhead by international port of entry. Using CTEs, summarize total customs duty liabilities and total freight invoice charges per port, displaying port_of_entry, total_duty, total_freight_invoiced, and average duty per shipment.",
-    context_notes: "Trade compliance tariff and gateway transportation cost analysis.",
-    concepts: ["Multi-Stage CTE","Trade Tariffs","NULLIF","COALESCE"],
-    expected_columns: ["port_of_entry","total_duty","total_freight_cost","avg_duty_per_shipment"],
-    reference_sql: "WITH port_duties AS (SELECT port_of_entry, SUM(duty_amount) AS total_duty, COUNT(DISTINCT shipment_id) AS total_shipments FROM customs_declarations GROUP BY port_of_entry), port_invoices AS (SELECT cd.port_of_entry, SUM(fi.total_billed) AS total_freight_cost FROM customs_declarations cd JOIN freight_invoices fi ON cd.shipment_id = fi.shipment_id GROUP BY cd.port_of_entry) SELECT pd.port_of_entry, pd.total_duty, COALESCE(pi.total_freight_cost, 0) AS total_freight_cost, ROUND((pd.total_duty / NULLIF(pd.total_shipments, 0)), 2) AS avg_duty_per_shipment FROM port_duties pd LEFT JOIN port_invoices pi ON pd.port_of_entry = pi.port_of_entry ORDER BY pd.total_duty DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Summarize duties and freight invoices by port_of_entry in separate CTEs."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-004",
-    domain: "logistics",
-    level: 5,
-    order: 4,
-    difficulty: "expert",
-    title: "Warehouse Operational Risk and Cargo Incident Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at terminal dispatch. Identify which origin warehouses suffer the highest cargo incident claims. Use CTEs to summarize total shipments dispatched and total damage claim costs per origin warehouse, calculating claims_per_shipment.",
-    context_notes: "Crossdock loading damage and warehouse packaging QA audits.",
-    concepts: ["CTE","COALESCE","NULLIF","Risk Density"],
-    expected_columns: ["city","total_dispatched","total_claims","claims_per_shipment"],
-    reference_sql: "WITH wh_shipments AS (SELECT warehouse_id, COUNT(id) AS total_dispatched FROM shipments GROUP BY warehouse_id), wh_incidents AS (SELECT s.warehouse_id, SUM(inc.claim_cost) AS total_claims FROM shipments s JOIN incidents inc ON s.id = inc.shipment_id GROUP BY s.warehouse_id) SELECT w.city, COALESCE(ws.total_dispatched, 0) AS total_dispatched, COALESCE(wi.total_claims, 0) AS total_claims, ROUND((COALESCE(wi.total_claims, 0) / NULLIF(ws.total_dispatched, 0)), 2) AS claims_per_shipment FROM warehouses w LEFT JOIN wh_shipments ws ON w.id = ws.warehouse_id LEFT JOIN wh_incidents wi ON w.id = wi.warehouse_id ORDER BY total_claims DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use CTEs for warehouse shipments and warehouse claim costs, joining with warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-005",
-    domain: "logistics",
-    level: 5,
-    order: 5,
-    difficulty: "expert",
-    title: "Global Supply Chain Market Share by Supplier Country",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Claire here. For each supplier country, calculate total spare parts inventory value stocked in our network and calculate the percentage this represents against total worldwide inventory value using CTEs and CROSS JOIN.",
-    context_notes: "Geographic supply chain vulnerability and sourcing diversification.",
-    concepts: ["CTE","CROSS JOIN","Inventory Valuation"],
-    expected_columns: ["country","country_inv_val","country_share_pct"],
-    reference_sql: "WITH global_inv AS (SELECT SUM(quantity_in_stock * unit_cost) AS global_total_value FROM parts_inventory), supplier_country_inv AS (SELECT s.country, SUM(pi.quantity_in_stock * pi.unit_cost) AS country_inv_val FROM suppliers s JOIN warehouses w ON 1=1 JOIN parts_inventory pi ON w.id = pi.warehouse_id GROUP BY s.country) SELECT sci.country, sci.country_inv_val, ROUND((sci.country_inv_val / NULLIF(gi.global_total_value, 0) * 100.0), 2) AS country_share_pct FROM supplier_country_inv sci CROSS JOIN global_inv gi ORDER BY sci.country_inv_val DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Compute total inventory value in a CTE and cross join with country-level inventory sums."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-006",
-    domain: "logistics",
-    level: 5,
-    order: 6,
-    difficulty: "expert",
-    title: "Driver Safety Benchmark vs Fleet Average Incident Cost",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave from Fleet Safety. Evaluate driver risk. For drivers involved in shipment incidents, display full_name, license_number, safety_score, total_claims, and compare with average claims per driver using CTEs.",
-    context_notes: "Driver risk underwriting and preventable accident tracking.",
-    concepts: ["CTE","Window Function in CTE","Safety Analytics"],
-    expected_columns: ["full_name","license_number","safety_score","total_claims","fleet_avg_claim"],
-    reference_sql: "WITH driver_claims AS (SELECT d.id AS driver_id, d.full_name, d.license_number, d.safety_score, SUM(inc.claim_cost) AS total_claims FROM drivers d JOIN shipments s ON d.id = s.carrier_id JOIN incidents inc ON s.id = inc.shipment_id GROUP BY d.id, d.full_name, d.license_number, d.safety_score) SELECT dc.full_name, dc.license_number, dc.safety_score, dc.total_claims, ROUND(AVG(dc.total_claims) OVER (), 2) AS fleet_avg_claim FROM driver_claims dc ORDER BY dc.total_claims DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a CTE to aggregate claims per driver and compute an overall window average."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-007",
-    domain: "logistics",
-    level: 5,
-    order: 7,
-    difficulty: "expert",
-    title: "Freight Route Operating Profitability Model",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at terminal operations. Model profitability per freight corridor. Using CTEs, calculate total invoice revenue earned on shipments traveling each route, minus toll costs. Show route_name, distance_km, toll_costs, and estimated net corridor margin.",
-    context_notes: "Corridor profitability and tollway cost margin optimization.",
-    concepts: ["CTE","Arithmetic Expressions","Profitability Modeling"],
-    expected_columns: ["route_name","distance_km","toll_costs","total_route_billed","net_corridor_margin"],
-    reference_sql: "WITH route_revenue AS (SELECT r.id AS route_id, r.route_name, r.distance_km, r.toll_costs, SUM(fi.total_billed) AS total_route_billed FROM freight_routes r JOIN shipments s ON s.origin_warehouse = s.origin_warehouse JOIN freight_invoices fi ON s.id = fi.shipment_id GROUP BY r.id, r.route_name, r.distance_km, r.toll_costs) SELECT route_name, distance_km, toll_costs, total_route_billed, (total_route_billed - toll_costs) AS net_corridor_margin FROM route_revenue ORDER BY net_corridor_margin DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a CTE joining freight_routes to shipments and freight_invoices."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-008",
-    domain: "logistics",
-    level: 5,
-    order: 8,
-    difficulty: "expert",
-    title: "Crossdock Warehouse Inventory Turnover Ratio",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Claire here. For each warehouse, calculate total parts inventory holding value and total outbound freight weight using CTEs to evaluate warehouse inventory turnover velocity.",
-    context_notes: "Facility density and inventory velocity evaluation.",
-    concepts: ["Multi-Stage CTE","LEFT JOIN","COALESCE","Facility Metrics"],
-    expected_columns: ["city","capacity_sqft","total_parts_value","total_freight_weight"],
-    reference_sql: "WITH wh_parts AS (SELECT warehouse_id, SUM(quantity_in_stock * unit_cost) AS total_parts_value FROM parts_inventory GROUP BY warehouse_id), wh_freight AS (SELECT warehouse_id, SUM(weight_kg) AS total_freight_weight FROM shipments GROUP BY warehouse_id) SELECT w.city, w.capacity_sqft, COALESCE(wp.total_parts_value, 0) AS total_parts_value, COALESCE(wf.total_freight_weight, 0) AS total_freight_weight FROM warehouses w LEFT JOIN wh_parts wp ON w.id = wp.warehouse_id LEFT JOIN wh_freight wf ON w.id = wf.warehouse_id ORDER BY total_freight_weight DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Build separate CTEs for warehouse parts values and outbound freight weights."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-009",
-    domain: "logistics",
-    level: 5,
-    order: 9,
-    difficulty: "expert",
-    title: "High-Frequency Incident Types and Total Financial Severity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave from Fleet Risk. Analyze which incident categories represent our largest balance sheet liability. Using CTEs, calculate incident count, total claim costs, and average cost per claim by incident_type.",
-    context_notes: "Cargo damage root cause categorization and mitigation.",
-    concepts: ["CTE","Risk Analytics","Aggregation"],
-    expected_columns: ["incident_type","incident_count","total_claim_loss","avg_claim_cost"],
-    reference_sql: "WITH incident_stats AS (SELECT incident_type, COUNT(id) AS incident_count, SUM(claim_cost) AS total_claim_loss, ROUND(AVG(claim_cost), 2) AS avg_claim_cost FROM incidents GROUP BY incident_type) SELECT incident_type, incident_count, total_claim_loss, avg_claim_cost FROM incident_stats ORDER BY total_claim_loss DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Group by incident_type within a CTE computing count, sum, and average."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-010",
-    domain: "logistics",
-    level: 5,
-    order: 10,
-    difficulty: "expert",
-    title: "Carrier Outstanding Accounts Receivable Aging vs Delayed Shipments",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at crossdock finance. Find carriers that have pending or overdue invoices on delayed shipments. Using CTEs, list carrier_name, total overdue billing, and delayed shipment count.",
-    context_notes: "Carrier invoice payment withholding during delay dispute resolution.",
-    concepts: ["CTE","Accounts Receivable","Dispute Management"],
-    expected_columns: ["carrier_name","delayed_count","outstanding_billing"],
-    reference_sql: "WITH delayed_carrier_invoices AS (SELECT s.carrier_id, COUNT(DISTINCT s.id) AS delayed_count, SUM(fi.total_billed) AS outstanding_billing FROM shipments s JOIN freight_invoices fi ON s.id = fi.shipment_id WHERE s.status = 'delayed' AND fi.payment_status IN ('pending', 'overdue') GROUP BY s.carrier_id) SELECT c.carrier_name, dci.delayed_count, dci.outstanding_billing FROM carriers c JOIN delayed_carrier_invoices dci ON c.id = dci.carrier_id ORDER BY dci.outstanding_billing DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Isolate delayed shipments with unpaid invoices in a CTE and join to carriers."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-011",
-    domain: "logistics",
-    level: 5,
-    order: 11,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #11: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-012",
-    domain: "logistics",
-    level: 5,
-    order: 12,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #12: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-013",
-    domain: "logistics",
-    level: 5,
-    order: 13,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #13: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-014",
-    domain: "logistics",
-    level: 5,
-    order: 14,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #14: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-015",
-    domain: "logistics",
-    level: 5,
-    order: 15,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #15: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-016",
-    domain: "logistics",
-    level: 5,
-    order: 16,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #16: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-017",
-    domain: "logistics",
-    level: 5,
-    order: 17,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #17: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-018",
-    domain: "logistics",
-    level: 5,
-    order: 18,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #18: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-019",
-    domain: "logistics",
-    level: 5,
-    order: 19,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #19: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-020",
-    domain: "logistics",
-    level: 5,
-    order: 20,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #20: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-021",
-    domain: "logistics",
-    level: 5,
-    order: 21,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #21: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-022",
-    domain: "logistics",
-    level: 5,
-    order: 22,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #22: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-023",
-    domain: "logistics",
-    level: 5,
-    order: 23,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #23: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-024",
-    domain: "logistics",
-    level: 5,
-    order: 24,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #24: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-025",
-    domain: "logistics",
-    level: 5,
-    order: 25,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #25: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-026",
-    domain: "logistics",
-    level: 5,
-    order: 26,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #26: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-027",
-    domain: "logistics",
-    level: 5,
-    order: 27,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #27: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-028",
-    domain: "logistics",
-    level: 5,
-    order: 28,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #28: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-029",
-    domain: "logistics",
-    level: 5,
-    order: 29,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #29: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-030",
-    domain: "logistics",
-    level: 5,
-    order: 30,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #30: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-031",
-    domain: "logistics",
-    level: 5,
-    order: 31,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #31: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-032",
-    domain: "logistics",
-    level: 5,
-    order: 32,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #32: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-033",
-    domain: "logistics",
-    level: 5,
-    order: 33,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #33: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-034",
-    domain: "logistics",
-    level: 5,
-    order: 34,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #34: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-035",
-    domain: "logistics",
-    level: 5,
-    order: 35,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #35: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-036",
-    domain: "logistics",
-    level: 5,
-    order: 36,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #36: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-037",
-    domain: "logistics",
-    level: 5,
-    order: 37,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #37: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-038",
-    domain: "logistics",
-    level: 5,
-    order: 38,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #38: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-039",
-    domain: "logistics",
-    level: 5,
-    order: 39,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #39: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-040",
-    domain: "logistics",
-    level: 5,
-    order: 40,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #40: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-041",
-    domain: "logistics",
-    level: 5,
-    order: 41,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #41: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-042",
-    domain: "logistics",
-    level: 5,
-    order: 42,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #42: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-043",
-    domain: "logistics",
-    level: 5,
-    order: 43,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #43: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-044",
-    domain: "logistics",
-    level: 5,
-    order: 44,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #44: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-045",
-    domain: "logistics",
-    level: 5,
-    order: 45,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #45: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-046",
-    domain: "logistics",
-    level: 5,
-    order: 46,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #46: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-047",
-    domain: "logistics",
-    level: 5,
-    order: 47,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #47: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-048",
-    domain: "logistics",
-    level: 5,
-    order: 48,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #48: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-049",
-    domain: "logistics",
-    level: 5,
-    order: 49,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #49: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-050",
-    domain: "logistics",
-    level: 5,
-    order: 50,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #50: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-051",
-    domain: "logistics",
-    level: 5,
-    order: 51,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #51: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-052",
-    domain: "logistics",
-    level: 5,
-    order: 52,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #52: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-053",
-    domain: "logistics",
-    level: 5,
-    order: 53,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #53: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-054",
-    domain: "logistics",
-    level: 5,
-    order: 54,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #54: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-055",
-    domain: "logistics",
-    level: 5,
-    order: 55,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #55: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-056",
-    domain: "logistics",
-    level: 5,
-    order: 56,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #56: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-057",
-    domain: "logistics",
-    level: 5,
-    order: 57,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #57: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-058",
-    domain: "logistics",
-    level: 5,
-    order: 58,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #58: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-059",
-    domain: "logistics",
-    level: 5,
-    order: 59,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #59: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-060",
-    domain: "logistics",
-    level: 5,
-    order: 60,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #60: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-061",
-    domain: "logistics",
-    level: 5,
-    order: 61,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #61: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-062",
-    domain: "logistics",
-    level: 5,
-    order: 62,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #62: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-063",
-    domain: "logistics",
-    level: 5,
-    order: 63,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #63: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-064",
-    domain: "logistics",
-    level: 5,
-    order: 64,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #64: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-065",
-    domain: "logistics",
-    level: 5,
-    order: 65,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #65: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-066",
-    domain: "logistics",
-    level: 5,
-    order: 66,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #66: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-067",
-    domain: "logistics",
-    level: 5,
-    order: 67,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #67: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-068",
-    domain: "logistics",
-    level: 5,
-    order: 68,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #68: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-069",
-    domain: "logistics",
-    level: 5,
-    order: 69,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #69: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-070",
-    domain: "logistics",
-    level: 5,
-    order: 70,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #70: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-071",
-    domain: "logistics",
-    level: 5,
-    order: 71,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #71: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-072",
-    domain: "logistics",
-    level: 5,
-    order: 72,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #72: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-073",
-    domain: "logistics",
-    level: 5,
-    order: 73,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #73: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-074",
-    domain: "logistics",
-    level: 5,
-    order: 74,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #74: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-075",
-    domain: "logistics",
-    level: 5,
-    order: 75,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #75: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-076",
-    domain: "logistics",
-    level: 5,
-    order: 76,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #76: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-077",
-    domain: "logistics",
-    level: 5,
-    order: 77,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #77: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-078",
-    domain: "logistics",
-    level: 5,
-    order: 78,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #78: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-079",
-    domain: "logistics",
-    level: 5,
-    order: 79,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #79: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-080",
-    domain: "logistics",
-    level: 5,
-    order: 80,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #80: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-081",
-    domain: "logistics",
-    level: 5,
-    order: 81,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #81: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-082",
-    domain: "logistics",
-    level: 5,
-    order: 82,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #82: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-083",
-    domain: "logistics",
-    level: 5,
-    order: 83,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #83: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-084",
-    domain: "logistics",
-    level: 5,
-    order: 84,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #84: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-085",
-    domain: "logistics",
-    level: 5,
-    order: 85,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #85: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-086",
-    domain: "logistics",
-    level: 5,
-    order: 86,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #86: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-087",
-    domain: "logistics",
-    level: 5,
-    order: 87,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #87: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-088",
-    domain: "logistics",
-    level: 5,
-    order: 88,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #88: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-089",
-    domain: "logistics",
-    level: 5,
-    order: 89,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #89: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-090",
-    domain: "logistics",
-    level: 5,
-    order: 90,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #90: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-091",
-    domain: "logistics",
-    level: 5,
-    order: 91,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #91: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-092",
-    domain: "logistics",
-    level: 5,
-    order: 92,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #92: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-093",
-    domain: "logistics",
-    level: 5,
-    order: 93,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #93: Mileage vs Maintenance Outlay",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and maintenance_records. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-094",
-    domain: "logistics",
-    level: 5,
-    order: 94,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #94: Vehicle Mileage vs Fuel Usage",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing fleet_vehicles and fuel_logs. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on fleet_vehicles.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-095",
-    domain: "logistics",
-    level: 5,
-    order: 95,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #95: Warehouse Capacity vs Parts Investment",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing warehouses and parts_inventory. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on warehouses.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-096",
-    domain: "logistics",
-    level: 5,
-    order: 96,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #96: Carrier Rating vs Freight Volume",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing carriers and shipments. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on carriers.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-097",
-    domain: "logistics",
-    level: 5,
-    order: 97,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #97: Customs Duty vs Freight Invoicing",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing customs_declarations and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on customs_declarations.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-098",
-    domain: "logistics",
-    level: 5,
-    order: 98,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #98: Cargo Weight vs Declared Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and cargo_packages. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-099",
-    domain: "logistics",
-    level: 5,
-    order: 99,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #99: Freight Weight vs Invoiced Billing",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and freight_invoices. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
-  },
-  {
-    id: "log-L5-100",
-    domain: "logistics",
-    level: 5,
-    order: 100,
-    difficulty: "expert",
-    title: "Enterprise Logistics Model #100: Shipment Weight vs Incident Cost",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Construct an enterprise supply chain CTE model summarizing shipments and incidents. Aggregate financial and weight metrics per terminal or carrier, returning id, name/city, and calculated totals, ordered by total volume descending.",
-    context_notes: "Enterprise supply chain modeling and capacity planning on shipments.",
-    concepts: ["CTE","Enterprise Modeling","LEFT JOIN","COALESCE"],
-    expected_columns: ["id","city","load_count","aggregate_freight"],
-    reference_sql: "WITH cte1 AS (SELECT warehouse_id, COUNT(*) AS load_count, ROUND(SUM(weight_kg), 2) AS total_freight FROM shipments GROUP BY warehouse_id) SELECT w.id, w.city, COALESCE(c.load_count, 0) AS load_count, COALESCE(c.total_freight, 0) AS aggregate_freight FROM warehouses w LEFT JOIN cte1 c ON w.id = c.warehouse_id ORDER BY aggregate_freight DESC, w.id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use Common Table Expressions (WITH cte1 AS (...)) and join onto warehouses."
-    ],
-    starter_sql: "WITH\n  -- Complete enterprise CTE\nSELECT\nFROM\n;"
+    "id": "log-L5-001",
+    "domain": "logistics",
+    "level": 5,
+    "order": 1,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-002",
+    "domain": "logistics",
+    "level": 5,
+    "order": 2,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-003",
+    "domain": "logistics",
+    "level": 5,
+    "order": 3,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_3 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_3 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_3 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-004",
+    "domain": "logistics",
+    "level": 5,
+    "order": 4,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-005",
+    "domain": "logistics",
+    "level": 5,
+    "order": 5,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_5(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_5(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_5(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_5(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-006",
+    "domain": "logistics",
+    "level": 5,
+    "order": 6,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-007",
+    "domain": "logistics",
+    "level": 5,
+    "order": 7,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-008",
+    "domain": "logistics",
+    "level": 5,
+    "order": 8,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_8 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_8 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-009",
+    "domain": "logistics",
+    "level": 5,
+    "order": 9,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_9 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_9 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_9_low PARTITION OF shipments_part_9 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_9_high PARTITION OF shipments_part_9 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_9 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_9;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-010",
+    "domain": "logistics",
+    "level": 5,
+    "order": 10,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_10() and bind trigger trg_audit_fleet_vehicles_10 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_10(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_10() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_10 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_10(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-011",
+    "domain": "logistics",
+    "level": 5,
+    "order": 11,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-012",
+    "domain": "logistics",
+    "level": 5,
+    "order": 12,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_12 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_12 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_12 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-013",
+    "domain": "logistics",
+    "level": 5,
+    "order": 13,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-014",
+    "domain": "logistics",
+    "level": 5,
+    "order": 14,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-015",
+    "domain": "logistics",
+    "level": 5,
+    "order": 15,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_15 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_15 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_15 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-016",
+    "domain": "logistics",
+    "level": 5,
+    "order": 16,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-017",
+    "domain": "logistics",
+    "level": 5,
+    "order": 17,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_17(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_17(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_17(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_17(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-018",
+    "domain": "logistics",
+    "level": 5,
+    "order": 18,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-019",
+    "domain": "logistics",
+    "level": 5,
+    "order": 19,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-020",
+    "domain": "logistics",
+    "level": 5,
+    "order": 20,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_20 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_20 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-021",
+    "domain": "logistics",
+    "level": 5,
+    "order": 21,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_21 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_21 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_21_low PARTITION OF shipments_part_21 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_21_high PARTITION OF shipments_part_21 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_21 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_21;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-022",
+    "domain": "logistics",
+    "level": 5,
+    "order": 22,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_22() and bind trigger trg_audit_fleet_vehicles_22 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_22(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_22() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_22 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_22(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-023",
+    "domain": "logistics",
+    "level": 5,
+    "order": 23,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-024",
+    "domain": "logistics",
+    "level": 5,
+    "order": 24,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_24 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_24 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_24 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-025",
+    "domain": "logistics",
+    "level": 5,
+    "order": 25,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-026",
+    "domain": "logistics",
+    "level": 5,
+    "order": 26,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-027",
+    "domain": "logistics",
+    "level": 5,
+    "order": 27,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_27 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_27 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_27 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-028",
+    "domain": "logistics",
+    "level": 5,
+    "order": 28,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-029",
+    "domain": "logistics",
+    "level": 5,
+    "order": 29,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_29(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_29(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_29(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_29(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-030",
+    "domain": "logistics",
+    "level": 5,
+    "order": 30,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L5-031",
+    "domain": "logistics",
+    "level": 5,
+    "order": 31,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-032",
+    "domain": "logistics",
+    "level": 5,
+    "order": 32,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_32 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_32 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-033",
+    "domain": "logistics",
+    "level": 5,
+    "order": 33,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_33 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_33 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_33_low PARTITION OF shipments_part_33 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_33_high PARTITION OF shipments_part_33 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_33 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_33;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-034",
+    "domain": "logistics",
+    "level": 5,
+    "order": 34,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_34() and bind trigger trg_audit_fleet_vehicles_34 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_34(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_34() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_34 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_34(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-035",
+    "domain": "logistics",
+    "level": 5,
+    "order": 35,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-036",
+    "domain": "logistics",
+    "level": 5,
+    "order": 36,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_36 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_36 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_36 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-037",
+    "domain": "logistics",
+    "level": 5,
+    "order": 37,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-038",
+    "domain": "logistics",
+    "level": 5,
+    "order": 38,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-039",
+    "domain": "logistics",
+    "level": 5,
+    "order": 39,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_39 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_39 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_39 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-040",
+    "domain": "logistics",
+    "level": 5,
+    "order": 40,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-041",
+    "domain": "logistics",
+    "level": 5,
+    "order": 41,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_41(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_41(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_41(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_41(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-042",
+    "domain": "logistics",
+    "level": 5,
+    "order": 42,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-043",
+    "domain": "logistics",
+    "level": 5,
+    "order": 43,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-044",
+    "domain": "logistics",
+    "level": 5,
+    "order": 44,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_44 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_44 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-045",
+    "domain": "logistics",
+    "level": 5,
+    "order": 45,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_45 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_45 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_45_low PARTITION OF shipments_part_45 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_45_high PARTITION OF shipments_part_45 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_45 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_45;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-046",
+    "domain": "logistics",
+    "level": 5,
+    "order": 46,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_46() and bind trigger trg_audit_fleet_vehicles_46 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_46(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_46() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_46 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_46(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-047",
+    "domain": "logistics",
+    "level": 5,
+    "order": 47,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-048",
+    "domain": "logistics",
+    "level": 5,
+    "order": 48,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_48 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_48 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_48 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-049",
+    "domain": "logistics",
+    "level": 5,
+    "order": 49,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-050",
+    "domain": "logistics",
+    "level": 5,
+    "order": 50,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-051",
+    "domain": "logistics",
+    "level": 5,
+    "order": 51,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_51 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_51 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_51 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-052",
+    "domain": "logistics",
+    "level": 5,
+    "order": 52,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-053",
+    "domain": "logistics",
+    "level": 5,
+    "order": 53,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_53(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_53(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_53(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_53(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-054",
+    "domain": "logistics",
+    "level": 5,
+    "order": 54,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-055",
+    "domain": "logistics",
+    "level": 5,
+    "order": 55,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-056",
+    "domain": "logistics",
+    "level": 5,
+    "order": 56,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_56 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_56 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-057",
+    "domain": "logistics",
+    "level": 5,
+    "order": 57,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_57 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_57 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_57_low PARTITION OF shipments_part_57 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_57_high PARTITION OF shipments_part_57 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_57 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_57;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-058",
+    "domain": "logistics",
+    "level": 5,
+    "order": 58,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_58() and bind trigger trg_audit_fleet_vehicles_58 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_58(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_58() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_58 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_58(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-059",
+    "domain": "logistics",
+    "level": 5,
+    "order": 59,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-060",
+    "domain": "logistics",
+    "level": 5,
+    "order": 60,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_60 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_60 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_60 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-061",
+    "domain": "logistics",
+    "level": 5,
+    "order": 61,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-062",
+    "domain": "logistics",
+    "level": 5,
+    "order": 62,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-063",
+    "domain": "logistics",
+    "level": 5,
+    "order": 63,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_63 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_63 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_63 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-064",
+    "domain": "logistics",
+    "level": 5,
+    "order": 64,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-065",
+    "domain": "logistics",
+    "level": 5,
+    "order": 65,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_65(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_65(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_65(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_65(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-066",
+    "domain": "logistics",
+    "level": 5,
+    "order": 66,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-067",
+    "domain": "logistics",
+    "level": 5,
+    "order": 67,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-068",
+    "domain": "logistics",
+    "level": 5,
+    "order": 68,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_68 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_68 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-069",
+    "domain": "logistics",
+    "level": 5,
+    "order": 69,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_69 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_69 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_69_low PARTITION OF shipments_part_69 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_69_high PARTITION OF shipments_part_69 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_69 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_69;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-070",
+    "domain": "logistics",
+    "level": 5,
+    "order": 70,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_70() and bind trigger trg_audit_fleet_vehicles_70 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_70(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_70() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_70 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_70(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-071",
+    "domain": "logistics",
+    "level": 5,
+    "order": 71,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-072",
+    "domain": "logistics",
+    "level": 5,
+    "order": 72,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_72 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_72 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_72 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-073",
+    "domain": "logistics",
+    "level": 5,
+    "order": 73,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-074",
+    "domain": "logistics",
+    "level": 5,
+    "order": 74,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-075",
+    "domain": "logistics",
+    "level": 5,
+    "order": 75,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_75 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_75 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_75 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-076",
+    "domain": "logistics",
+    "level": 5,
+    "order": 76,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-077",
+    "domain": "logistics",
+    "level": 5,
+    "order": 77,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_77(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_77(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_77(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_77(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-078",
+    "domain": "logistics",
+    "level": 5,
+    "order": 78,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-079",
+    "domain": "logistics",
+    "level": 5,
+    "order": 79,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-080",
+    "domain": "logistics",
+    "level": 5,
+    "order": 80,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_80 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_80 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-081",
+    "domain": "logistics",
+    "level": 5,
+    "order": 81,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_81 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_81 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_81_low PARTITION OF shipments_part_81 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_81_high PARTITION OF shipments_part_81 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_81 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_81;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-082",
+    "domain": "logistics",
+    "level": 5,
+    "order": 82,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_82() and bind trigger trg_audit_fleet_vehicles_82 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_82(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_82() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_82 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_82(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-083",
+    "domain": "logistics",
+    "level": 5,
+    "order": 83,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-084",
+    "domain": "logistics",
+    "level": 5,
+    "order": 84,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_84 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_84 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_84 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-085",
+    "domain": "logistics",
+    "level": 5,
+    "order": 85,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-086",
+    "domain": "logistics",
+    "level": 5,
+    "order": 86,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-087",
+    "domain": "logistics",
+    "level": 5,
+    "order": 87,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_87 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_87 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_87 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-088",
+    "domain": "logistics",
+    "level": 5,
+    "order": 88,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-089",
+    "domain": "logistics",
+    "level": 5,
+    "order": 89,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_89(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_89(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_89(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_89(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-090",
+    "domain": "logistics",
+    "level": 5,
+    "order": 90,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L5-091",
+    "domain": "logistics",
+    "level": 5,
+    "order": 91,
+    "difficulty": "boss",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-092",
+    "domain": "logistics",
+    "level": 5,
+    "order": 92,
+    "difficulty": "boss",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_92 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_92 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-093",
+    "domain": "logistics",
+    "level": 5,
+    "order": 93,
+    "difficulty": "boss",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_93 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_93 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_93_low PARTITION OF shipments_part_93 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_93_high PARTITION OF shipments_part_93 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_93 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_93;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-094",
+    "domain": "logistics",
+    "level": 5,
+    "order": 94,
+    "difficulty": "boss",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_94() and bind trigger trg_audit_fleet_vehicles_94 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_94(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_94() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_94 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_94(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-095",
+    "domain": "logistics",
+    "level": 5,
+    "order": 95,
+    "difficulty": "boss",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-096",
+    "domain": "logistics",
+    "level": 5,
+    "order": 96,
+    "difficulty": "boss",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_96 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_96 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_96 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-097",
+    "domain": "logistics",
+    "level": 5,
+    "order": 97,
+    "difficulty": "boss",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-098",
+    "domain": "logistics",
+    "level": 5,
+    "order": 98,
+    "difficulty": "boss",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-099",
+    "domain": "logistics",
+    "level": 5,
+    "order": 99,
+    "difficulty": "boss",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_99 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_99 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_99 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L5-100",
+    "domain": "logistics",
+    "level": 5,
+    "order": 100,
+    "difficulty": "boss",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 75,
+    "estimated_minutes": 20
   }
 ];

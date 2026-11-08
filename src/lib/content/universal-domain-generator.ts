@@ -1,4 +1,8 @@
 import { QuestionDefinition, ECOM_L1_QUESTIONS } from "./ecom-l1-questions";
+import { ECOM_L2_QUESTIONS } from "./ecom-l2-questions";
+import { ECOM_L3_QUESTIONS } from "./ecom-l3-questions";
+import { ECOM_L4_QUESTIONS } from "./ecom-l4-questions";
+import { ECOM_L5_QUESTIONS } from "./ecom-l5-questions";
 import { REST_L1_QUESTIONS } from "./rest-l1-questions";
 import { REST_L2_QUESTIONS } from "./rest-l2-questions";
 import { REST_L3_QUESTIONS } from "./rest-l3-questions";
@@ -291,8 +295,12 @@ export function generateDomainLevelQuestions(
   const norm = domain.toLowerCase();
 
   // Hand-curated domain/level overrides (authentic stakeholder questions)
-  if ((norm === "ecommerce" || norm === "ecom") && level === 1) {
-    return ECOM_L1_QUESTIONS;
+  if (norm === "ecommerce" || norm === "ecom") {
+    if (level === 1) return ECOM_L1_QUESTIONS;
+    if (level === 2) return ECOM_L2_QUESTIONS;
+    if (level === 3) return ECOM_L3_QUESTIONS;
+    if (level === 4) return ECOM_L4_QUESTIONS;
+    if (level === 5) return ECOM_L5_QUESTIONS;
   }
   if (norm === "restaurants") {
     if (level === 1) return REST_L1_QUESTIONS;

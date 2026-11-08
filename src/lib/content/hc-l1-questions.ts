@@ -7,35 +7,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 1,
     "difficulty": "warm-up",
-    "title": "Active Hospital Departments",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Could you pull me the names and buildings of all our active hospital departments? I need this for the facility signage board — alphabetical by department name.",
-    "context_notes": "SELECT name, building FROM departments ORDER BY name.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "building"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT name, building FROM departments ORDER BY name;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query the departments table.",
-      "Return columns name, building.",
-      "Order alphabetically by name."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Retrieves active medical department locations for directory signage.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-002",
@@ -43,36 +44,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 2,
     "difficulty": "warm-up",
-    "title": "Doctor Directory and Specialties",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "I need a quick doctor contact list — doctor name, medical specialty, and work email, ordered alphabetically by doctor name.",
-    "context_notes": "SELECT name, specialty, email FROM doctors ORDER BY name.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "specialty",
-      "email"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT name, specialty, email FROM doctors ORDER BY name;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query doctors table.",
-      "Select name, specialty, email.",
-      "Sort alphabetically by name."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Generates physician phone and email directory.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-003",
@@ -80,36 +81,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 3,
     "difficulty": "warm-up",
-    "title": "Available Inpatient Rooms",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "The evening admissions desk needs to know which rooms are currently unoccupied — show room number, room type, and daily rate.",
-    "context_notes": "Filter rooms WHERE is_occupied = FALSE.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "room_number",
-      "room_type",
-      "daily_rate"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT room_number, room_type, daily_rate FROM rooms WHERE is_occupied = FALSE ORDER BY room_number;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query rooms table.",
-      "Filter WHERE is_occupied = FALSE.",
-      "Select room_number, room_type, daily_rate."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Identifies ready patient beds for incoming admissions.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-004",
@@ -117,36 +118,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 4,
     "difficulty": "warm-up",
-    "title": "Registered Pediatric Patients",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Our pediatric division is sending wellness checkup flyers: pull all patients born in the year 2010 or later — first name, last name, and date of birth.",
-    "context_notes": "Filter patients WHERE dob >= 2010-01-01.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "dob"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT first_name, last_name, dob FROM patients WHERE dob >= '2010-01-01' ORDER BY dob DESC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table WHERE dob >= 2010-01-01.",
-      "Order descending by dob to list youngest first."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Targets adolescent and pediatric cohort for outreach.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-005",
@@ -154,35 +155,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 5,
     "difficulty": "warm-up",
-    "title": "Cardiology Specialists Roster",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Show me all physicians practicing in Cardiology — doctor name, office phone, and license number.",
-    "context_notes": "Filter doctors WHERE specialty = Cardiology.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "phone",
-      "license_number"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT name, phone, license_number FROM doctors WHERE specialty = 'Cardiology' ORDER BY name;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors table with WHERE specialty = Cardiology.",
-      "Return name, phone, license_number."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Cardiology team contact list for acute cardiac referrals.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-006",
@@ -190,34 +192,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 6,
     "difficulty": "warm-up",
-    "title": "Night Shift Nursing Roster",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Who is on the night shift roster? I need all nurses working the Night shift along with their certification level.",
-    "context_notes": "Filter nurses WHERE shift = Night.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "certification_level"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT name, certification_level FROM nurses WHERE shift = 'Night' ORDER BY name;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query nurses table with WHERE shift = Night.",
-      "Return name, certification_level."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Verifies night coverage and advanced practice credentials.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-007",
@@ -225,36 +229,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 7,
     "difficulty": "warm-up",
-    "title": "Patients Covered by Medicare",
+    "title": "Data Cleansing: Whitespace Normalization with TRIM and UPPER",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Medicare claims audit is coming up: list all patients who use Medicare as their primary insurance provider — first name, last name, and city.",
-    "context_notes": "Filter patients WHERE insurance_provider = Medicare.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Data Quality Ticket: In departments, text fields often contain irregular casing and whitespace. Standardize entries by selecting id and UPPER(TRIM(name)) AS cleaned_name ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "DATA CLEANING",
+      "TRIM",
+      "UPPER"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "city"
+      "id",
+      "cleaned_name"
     ],
-    "reference_sql": "SELECT first_name, last_name, city FROM patients WHERE insurance_provider = 'Medicare' ORDER BY last_name, first_name;",
+    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS cleaned_name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query patients table.",
-      "Filter WHERE insurance_provider = Medicare.",
-      "Sort by last_name, first_name."
+      "Use UPPER(TRIM(name)) AS cleaned_name."
     ],
-    "solution_explanation": "Compiles patient roster for federal billing compliance.",
+    "solution_explanation": "Applies TRIM to strip whitespace and UPPER to standardize casing.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-008",
@@ -262,37 +265,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 8,
     "difficulty": "warm-up",
-    "title": "Completed Clinic Appointments",
+    "title": "Null Handling: Default Imputation with COALESCE",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "For daily encounter billing, pull the first 25 completed appointments — show appointment id, appointment date, appointment type, and consultation fee.",
-    "context_notes": "Filter appointments WHERE status = completed LIMIT 25.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Audit Review: NULL metrics disrupt financial reporting. From lab_tests, select id, test_name, and COALESCE(standard_fee, 0.00) AS safe_metric ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "LIMIT"
+      "NULL HANDLING",
+      "COALESCE",
+      "DATA INTEGRITY"
     ],
     "expected_columns": [
       "id",
-      "appointment_date",
-      "appointment_type",
-      "fee"
+      "test_name",
+      "safe_metric"
     ],
-    "reference_sql": "SELECT id, appointment_date, appointment_type, fee FROM appointments WHERE status = 'completed' ORDER BY appointment_date DESC LIMIT 25;",
+    "reference_sql": "SELECT id, test_name, COALESCE(standard_fee, 0.00) AS safe_metric FROM lab_tests ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE status = completed.",
-      "Sort by appointment_date DESC and LIMIT 25."
+      "Use COALESCE(standard_fee, 0.00) AS safe_metric."
     ],
-    "solution_explanation": "Samples completed clinical visits ready for billing generation.",
+    "solution_explanation": "Substitutes a default numeric value whenever a null occurs.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-009",
@@ -300,35 +302,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 9,
     "difficulty": "warm-up",
-    "title": "Intensive Care Unit (ICU) Beds",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "How many ICU beds do we have and where are they located? Show room number, department id, and daily rate for all ICU rooms.",
-    "context_notes": "Filter rooms WHERE room_type = ICU.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "room_number",
-      "department_id",
-      "daily_rate"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT room_number, department_id, daily_rate FROM rooms WHERE room_type = 'ICU' ORDER BY room_number;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query rooms table with WHERE room_type = ICU.",
-      "Select room_number, department_id, daily_rate."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Critical care bed inventory for surgical bed-planning.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-010",
@@ -336,36 +339,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 10,
     "difficulty": "warm-up",
-    "title": "Universal Donor Blood Type Patients",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Blood bank emergency: pull all patients with blood type O- — show first name, last name, city, and date of birth.",
-    "context_notes": "Filter patients WHERE blood_type = O-.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "city",
-      "dob"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT first_name, last_name, city, dob FROM patients WHERE blood_type = 'O-' ORDER BY last_name, first_name;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table WHERE blood_type = O-.",
-      "Return first_name, last_name, city, dob."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Identifies universal donors for emergency donor outreach.",
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-011",
@@ -373,34 +376,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 11,
     "difficulty": "warm-up",
-    "title": "Nurse Practitioners Roster",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "We are delegating minor clinic procedures: list all nurses with certification level NP (Nurse Practitioner) — name and shift.",
-    "context_notes": "Filter nurses WHERE certification_level = NP.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "shift"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, shift FROM nurses WHERE certification_level = 'NP' ORDER BY name;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query nurses table with WHERE certification_level = NP.",
-      "Return name, shift."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Lists advanced practice nurses authorized to prescribe.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-012",
@@ -408,36 +413,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 12,
     "difficulty": "warm-up",
-    "title": "High-Fee Appointments Over $250",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Find all specialist or surgical appointments where the encounter fee is strictly greater than $250.00.",
-    "context_notes": "Filter appointments WHERE fee > 250.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "appointment_date",
-      "appointment_type",
-      "fee"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, appointment_date, appointment_type, fee FROM appointments WHERE fee > 250.00 ORDER BY fee DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query appointments table with WHERE fee > 250.00.",
-      "Order descending by fee."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Surfaces top-bracket consultation charges.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-013",
@@ -445,34 +450,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 13,
     "difficulty": "warm-up",
-    "title": "Surgical Tower Departments",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Which departments are housed inside the Surgical Tower? Show department name and floor number.",
-    "context_notes": "Filter departments WHERE building = Surgical Tower.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "floor"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, floor FROM departments WHERE building = 'Surgical Tower' ORDER BY floor ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query departments WHERE building = Surgical Tower.",
-      "Order by floor ascending."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Floor breakdown of surgical wing facilities.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-014",
@@ -480,35 +487,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 14,
     "difficulty": "warm-up",
-    "title": "Patients From Brooklyn",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Our Brooklyn satellite health clinic is opening: pull all patients residing in Brooklyn — first name, last name, and insurance provider.",
-    "context_notes": "Filter patients WHERE city = Brooklyn.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "insurance_provider"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT first_name, last_name, insurance_provider FROM patients WHERE city = 'Brooklyn' ORDER BY last_name, first_name;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table with WHERE city = Brooklyn.",
-      "Return first_name, last_name, insurance_provider."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Geographic patient cohort for local clinic recruitment.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-015",
@@ -516,37 +524,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 15,
     "difficulty": "warm-up",
-    "title": "Cancelled and No-Show Clinical Visits",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Clinic utilization audit: pull all appointments that resulted in cancelled or no_show status — show appointment id, date, type, and status.",
-    "context_notes": "Filter appointments WHERE status IN (cancelled, no_show).",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "appointment_date",
-      "appointment_type",
-      "status"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, appointment_date, appointment_type, status FROM appointments WHERE status IN ('cancelled', 'no_show') ORDER BY appointment_date DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE status IN (cancelled, no_show).",
-      "Order chronologically descending."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Tracks clinic schedule slippage and lost clinical capacity.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-016",
@@ -554,35 +561,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 16,
     "difficulty": "warm-up",
-    "title": "Rooms Priced Under $1000 Daily",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Which hospital rooms have a daily charge under $1,000.00? Show room number, room type, and daily rate.",
-    "context_notes": "Filter rooms WHERE daily_rate < 1000.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "room_number",
-      "room_type",
-      "daily_rate"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT room_number, room_type, daily_rate FROM rooms WHERE daily_rate < 1000.00 ORDER BY daily_rate ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query rooms table with WHERE daily_rate < 1000.00.",
-      "Order ascending by daily_rate."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Low-cost step-down room tier for convalescent recovery.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-017",
@@ -590,36 +598,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 17,
     "difficulty": "warm-up",
-    "title": "Emergency Medicine and Surgery Doctors",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Trauma response list: pull all doctors specializing in either Surgery or Emergency Medicine — doctor name, specialty, and phone extension.",
-    "context_notes": "Filter doctors WHERE specialty IN (Surgery, Emergency Medicine).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "specialty",
-      "phone"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, specialty, phone FROM doctors WHERE specialty IN ('Surgery', 'Emergency Medicine') ORDER BY specialty, name;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors WHERE specialty IN (Surgery, Emergency Medicine).",
-      "Return name, specialty, phone."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Trauma team on-call directory.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-018",
@@ -627,34 +635,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 18,
     "difficulty": "warm-up",
-    "title": "Patients With B-Positive Blood Type",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "List all patients with blood type B+ for clinical trial matching — first name, last name, and gender.",
-    "context_notes": "Filter patients WHERE blood_type = B+.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "gender"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT first_name, last_name, gender FROM patients WHERE blood_type = 'B+' ORDER BY last_name, first_name;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table WHERE blood_type = B+."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Clinical trial cohort recruitment based on antigen markers.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-019",
@@ -662,34 +672,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 19,
     "difficulty": "warm-up",
-    "title": "Telehealth Encounters",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "We are evaluating remote care adoption: pull all appointments categorized as Telehealth — id, appointment date, and status.",
-    "context_notes": "Filter appointments WHERE appointment_type = Telehealth.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "appointment_date",
-      "status"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, appointment_date, status FROM appointments WHERE appointment_type = 'Telehealth' ORDER BY appointment_date DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query appointments table with WHERE appointment_type = Telehealth."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Monitors telemedicine adoption and completion rates.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-020",
@@ -697,35 +709,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 20,
     "difficulty": "warm-up",
-    "title": "Nurses Assigned to Department 1",
+    "title": "Relational Cross-Link: departments and doctors",
     "stakeholder": {
       "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Who is on the nursing roster for Department 1 (Cardiology)? Show nurse name, shift, and certification level.",
-    "context_notes": "Filter nurses WHERE department_id = 1.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Compile a relational breakdown connecting departments to doctors. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "shift",
-      "certification_level"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, shift, certification_level FROM nurses WHERE department_id = 1 ORDER BY name;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN doctors t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Query nurses table with WHERE department_id = 1.",
-      "Select name, shift, certification_level."
+      "Join departments and doctors on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Departmental nursing staff roster for Cardiology.",
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-021",
@@ -733,33 +746,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 21,
     "difficulty": "warm-up",
-    "title": "Distinct Insurance Carriers Accepted",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "For the patient registration intake packet, give me a clean list of all unique insurance providers held by our patients.",
-    "context_notes": "SELECT DISTINCT insurance_provider FROM patients.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "DISTINCT"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "insurance_provider"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT DISTINCT insurance_provider FROM patients ORDER BY insurance_provider ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use SELECT DISTINCT insurance_provider from patients.",
-      "Sort alphabetically."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Payer directory for intake registration desk.",
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-022",
@@ -767,36 +782,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 22,
     "difficulty": "warm-up",
-    "title": "Occupied Suite and ICU Beds",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "VIP and critical care occupancy check: show room number, room type, and daily rate for all occupied rooms in ICU or Suite tiers.",
-    "context_notes": "Filter rooms WHERE is_occupied = TRUE AND room_type IN (ICU, Suite).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "AND",
-      "IN"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "room_number",
-      "room_type",
-      "daily_rate"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT room_number, room_type, daily_rate FROM rooms WHERE is_occupied = TRUE AND room_type IN ('ICU', 'Suite') ORDER BY room_number;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter rooms table WHERE is_occupied = TRUE AND room_type IN (ICU, Suite)."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "High-acuity bed occupancy tracking.",
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-023",
@@ -804,36 +818,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 23,
     "difficulty": "warm-up",
-    "title": "Senior Patients Born Before 1960",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Geriatric care registry: pull all senior patients born before 1960 — first name, last name, date of birth, and city.",
-    "context_notes": "Filter patients WHERE dob < 1960-01-01.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "dob",
-      "city"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT first_name, last_name, dob, city FROM patients WHERE dob < '1960-01-01' ORDER BY dob ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients WHERE dob < 1960-01-01.",
-      "Sort ascending by dob (oldest first)."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Identifies senior patient cohort for geriatric care management.",
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-024",
@@ -841,36 +854,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 24,
     "difficulty": "warm-up",
-    "title": "Urgent Care Visit Encounters",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Pull all appointments categorized as Urgent — appointment id, date, fee, and status. Urgent visits first.",
-    "context_notes": "Filter appointments WHERE appointment_type = Urgent.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "appointment_date",
-      "fee",
-      "status"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT id, appointment_date, fee, status FROM appointments WHERE appointment_type = 'Urgent' ORDER BY appointment_date DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE appointment_type = Urgent.",
-      "Order by appointment_date DESC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Reviews immediate triage and urgent care workload.",
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-025",
@@ -878,35 +890,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 25,
     "difficulty": "warm-up",
-    "title": "Doctors With License Prefixes",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "State licensing credentialing: list doctor name, email, and license number for all physicians on staff.",
-    "context_notes": "SELECT name, email, license_number FROM doctors.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "name",
-      "email",
-      "license_number"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT name, email, license_number FROM doctors ORDER BY name ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Select name, email, license_number from doctors.",
-      "Order alphabetically by name."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Physician licensing and medical board credentials audit.",
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
     "xp": 15,
-    "estimated_minutes": 4
+    "estimated_minutes": 5
   },
   {
     "id": "hc-L1-026",
@@ -914,37 +926,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 26,
     "difficulty": "core",
-    "title": "Patient Count by Insurance Carrier",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
       "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Payer mix distribution: how many registered patients do we have with each insurance provider? Largest payer first.",
-    "context_notes": "GROUP BY insurance_provider, COUNT(*).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "insurance_provider",
-      "patient_count"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT insurance_provider, COUNT(*) AS patient_count FROM patients GROUP BY insurance_provider ORDER BY patient_count DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by insurance_provider.",
-      "Count records as patient_count.",
-      "Order descending by patient_count."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Reveals commercial vs government insurance volume.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-027",
@@ -952,33 +962,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 27,
     "difficulty": "core",
-    "title": "Total Appointment Revenue Potential",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "What is the total cumulative sum of all appointment fees scheduled across our hospital clinics?",
-    "context_notes": "SUM(fee) from appointments.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "total_scheduled_fees"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT ROUND(SUM(fee), 2) AS total_scheduled_fees FROM appointments;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Select SUM(fee) from appointments.",
-      "Rounds to 2 decimal places."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Measures gross clinic consultation billing capacity.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-028",
@@ -986,36 +998,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 28,
     "difficulty": "core",
-    "title": "Average Consultation Fee by Appointment Type",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "What is our average fee charged per appointment type (Checkup, Follow-up, Specialist, Telehealth, Urgent)?",
-    "context_notes": "GROUP BY appointment_type, AVG(fee).",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "GROUP BY",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "appointment_type",
-      "avg_fee"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT appointment_type, ROUND(AVG(fee), 2) AS avg_fee FROM appointments GROUP BY appointment_type ORDER BY avg_fee DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by appointment_type.",
-      "Compute AVG(fee) rounded to 2 decimal places."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Analyzes fee schedules across encounter categories.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-029",
@@ -1023,35 +1034,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 29,
     "difficulty": "core",
-    "title": "Hospital Room Occupancy Rate",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "How many rooms are currently occupied versus unoccupied? Show occupancy status and count of rooms.",
-    "context_notes": "GROUP BY is_occupied, COUNT(*).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "is_occupied",
-      "room_count"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT is_occupied, COUNT(*) AS room_count FROM rooms GROUP BY is_occupied ORDER BY is_occupied DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by is_occupied.",
-      "Count rooms in each status."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Monitors live bed utilization across nursing units.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-030",
@@ -1059,36 +1070,35 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 30,
     "difficulty": "core",
-    "title": "Doctors Count by Specialty",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "How is our physician staff distributed across medical specialties? Show specialty and doctor count, most staffed first.",
-    "context_notes": "GROUP BY specialty, COUNT(*).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and doctors using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "specialty",
-      "doctor_count"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT specialty, COUNT(*) AS doctor_count FROM doctors GROUP BY specialty ORDER BY doctor_count DESC, specialty ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM doctors ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group doctors by specialty.",
-      "Count doctors in each specialty."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Specialty coverage and clinical staffing balance.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-031",
@@ -1096,36 +1106,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 31,
     "difficulty": "core",
-    "title": "Appointment Volume by Status",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Break down all appointments by completion status: completed, cancelled, no_show counts.",
-    "context_notes": "GROUP BY status, COUNT(*).",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "status",
-      "appointment_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS appointment_count FROM appointments GROUP BY status ORDER BY appointment_count DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by status.",
-      "Count total appointments per status."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Measures no-show rates vs completed clinical throughput.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-032",
@@ -1133,36 +1143,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 32,
     "difficulty": "core",
-    "title": "Average Daily Rate by Room Type",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "What is the average daily bed charge for each room tier (Standard, ICU, Semi-Private, Suite)?",
-    "context_notes": "GROUP BY room_type, AVG(daily_rate).",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "room_type",
-      "avg_daily_rate"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT room_type, ROUND(AVG(daily_rate), 2) AS avg_daily_rate FROM rooms GROUP BY room_type ORDER BY avg_daily_rate DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by room_type.",
-      "Compute AVG(daily_rate) for each room class."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Room rate fee benchmarking for inpatient stay pricing.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-033",
@@ -1170,35 +1180,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 33,
     "difficulty": "core",
-    "title": "Nursing Staff Distribution: Day vs Night",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Compare nursing headcounts between Day and Night shifts — shift name and total nurse count.",
-    "context_notes": "GROUP BY shift, COUNT(*).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "shift",
-      "nurse_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT shift, COUNT(*) AS nurse_count FROM nurses GROUP BY shift ORDER BY nurse_count DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group nurses by shift.",
-      "Count nurses on Day vs Night."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Validates day vs night staffing coverage ratios.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-034",
@@ -1206,36 +1217,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 34,
     "difficulty": "core",
-    "title": "Patients by Blood Type Distribution",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Blood bank summary: how many registered patients do we have for every blood type? Largest supply group first.",
-    "context_notes": "GROUP BY blood_type, COUNT(*).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "blood_type",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT blood_type, COUNT(*) AS patient_count FROM patients GROUP BY blood_type ORDER BY patient_count DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by blood_type.",
-      "Count total patients per blood group."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Hospital blood bank demographic readiness profile.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-035",
@@ -1243,34 +1254,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 35,
     "difficulty": "core",
-    "title": "Total Completed Appointments Revenue",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "How much revenue has been realized strictly from completed appointments?",
-    "context_notes": "SUM(fee) WHERE status = completed.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM",
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
       "WHERE"
     ],
     "expected_columns": [
-      "completed_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT ROUND(SUM(fee), 2) AS completed_revenue FROM appointments WHERE status = 'completed';",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE status = completed.",
-      "Sum fees into completed_revenue."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Net realized revenue from attended patient encounters.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-036",
@@ -1278,36 +1291,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 36,
     "difficulty": "core",
-    "title": "Patients Count by City of Residence",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Geographic outreach: count how many patients live in each metropolitan city in our catchment area.",
-    "context_notes": "GROUP BY city, COUNT(*).",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "city",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT city, COUNT(*) AS patient_count FROM patients GROUP BY city ORDER BY patient_count DESC, city ASC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by city.",
-      "Count patients per metropolitan city."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Regional patient origin analysis for transport and marketing.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-037",
@@ -1315,35 +1328,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 37,
     "difficulty": "core",
-    "title": "Nurses by Certification Level",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Breakdown of nursing credentials: how many BSN vs NP nurses are on our hospital roster?",
-    "context_notes": "GROUP BY certification_level, COUNT(*).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "certification_level",
-      "nurse_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT certification_level, COUNT(*) AS nurse_count FROM nurses GROUP BY certification_level ORDER BY nurse_count DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group nurses by certification_level.",
-      "Count nurses in each degree tier."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Credentialing and nursing magnet status assessment.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-038",
@@ -1351,34 +1365,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 38,
     "difficulty": "core",
-    "title": "Oldest and Youngest Patient Date of Birth",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Determine our patient age boundaries: what are the earliest and most recent dates of birth in our patient database?",
-    "context_notes": "MIN(dob) and MAX(dob) from patients.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "MIN",
-      "MAX"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "earliest_dob",
-      "latest_dob"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT MIN(dob) AS earliest_dob, MAX(dob) AS latest_dob FROM patients;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Select MIN(dob) and MAX(dob) from patients."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Demographic span from oldest geriatric to youngest patient.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-039",
@@ -1386,36 +1402,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 39,
     "difficulty": "core",
-    "title": "Total Bed Count by Department",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
       "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "How many total inpatient beds are assigned to each department? Show department id and room count.",
-    "context_notes": "GROUP BY department_id, COUNT(*).",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "department_id",
-      "bed_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS bed_count FROM rooms GROUP BY department_id ORDER BY bed_count DESC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by department_id.",
-      "Count beds allocated to each clinical department."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Departmental bed allocation and inpatient capacity.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-040",
@@ -1423,36 +1439,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 40,
     "difficulty": "core",
-    "title": "Average Patient Age Proxy by Insurance Provider",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "For each insurance carrier, calculate the average birth year of their enrolled patients to identify elderly populations.",
-    "context_notes": "GROUP BY insurance_provider, AVG(EXTRACT(YEAR FROM dob)).",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, test_name, and standard_fee from lab_tests where standard_fee is strictly greater than the overall table average. Order descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "GROUP BY",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "insurance_provider",
-      "avg_birth_year"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT insurance_provider, ROUND(AVG(EXTRACT(YEAR FROM dob)), 0)::INT AS avg_birth_year FROM patients GROUP BY insurance_provider ORDER BY avg_birth_year ASC;",
+    "reference_sql": "SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests) ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Extract year from dob.",
-      "Compute average birth year grouped by insurance_provider."
+      "Filter using WHERE standard_fee > (SELECT AVG(standard_fee) FROM lab_tests)."
     ],
-    "solution_explanation": "Payer demographic risk profiling.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-041",
@@ -1460,32 +1476,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 41,
     "difficulty": "core",
-    "title": "Highest Single Consultation Fee Recorded",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "What was the single highest consultation fee recorded in our appointment records?",
-    "context_notes": "MAX(fee) from appointments.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "MAX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "max_fee"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT MAX(fee) AS max_fee FROM appointments;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Select MAX(fee) from appointments."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Identifies maximum billing ticket for outpatient care.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-042",
@@ -1493,36 +1513,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 42,
     "difficulty": "core",
-    "title": "Rooms by Building Floor",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Hospital floor management: how many departments are located on each building floor?",
-    "context_notes": "GROUP BY floor, COUNT(*) on departments.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "floor",
-      "department_count"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT floor, COUNT(*) AS department_count FROM departments GROUP BY floor ORDER BY floor ASC;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group departments by floor.",
-      "Count departments on each floor level."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Vertical building facility utilization.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-043",
@@ -1530,35 +1550,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 43,
     "difficulty": "core",
-    "title": "Gender Breakdown of Registered Patients",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "What is the gender ratio in our active patient population? Show gender and patient count.",
-    "context_notes": "GROUP BY gender, COUNT(*).",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "gender",
-      "count"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT gender, COUNT(*) AS count FROM patients GROUP BY gender ORDER BY count DESC;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by gender.",
-      "Count total patient records per gender."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Patient demographics for clinical research reporting.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-044",
@@ -1566,32 +1587,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 44,
     "difficulty": "core",
-    "title": "Total Potential Daily Revenue from All Rooms",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "If every single bed in the hospital were occupied, what would our total daily room charge revenue be?",
-    "context_notes": "SUM(daily_rate) from rooms.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "max_daily_room_revenue"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT ROUND(SUM(daily_rate), 2) AS max_daily_room_revenue FROM rooms;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Sum daily_rate across all rooms."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "100% capacity inpatient bed charge potential.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-045",
@@ -1599,36 +1624,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 45,
     "difficulty": "core",
-    "title": "Total Appointment Encounters per Doctor ID",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Calculate total appointment encounters booked under each doctor id — busiest doctors first.",
-    "context_notes": "GROUP BY doctor_id, COUNT(*).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "doctor_id",
-      "total_appointments"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT doctor_id, COUNT(*) AS total_appointments FROM appointments GROUP BY doctor_id ORDER BY total_appointments DESC;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by doctor_id.",
-      "Count encounters per doctor."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Physician clinical scheduling and patient panel volume.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-046",
@@ -1636,33 +1661,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 46,
     "difficulty": "core",
-    "title": "Patients Enrolled in 2023",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Count how many new patients registered their primary medical chart with us during calendar year 2023.",
-    "context_notes": "COUNT(*) WHERE created_at BETWEEN 2023-01-01 AND 2023-12-31.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "patients_added_2023"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT COUNT(*) AS patients_added_2023 FROM patients WHERE created_at BETWEEN '2023-01-01' AND '2023-12-31';",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients by created_at in 2023 and count."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Annual patient acquisition growth metric.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-047",
@@ -1670,34 +1698,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 47,
     "difficulty": "core",
-    "title": "Average Appointment Fee for Urgent Visits",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "What is the exact average fee billed specifically for Urgent appointment visits?",
-    "context_notes": "AVG(fee) WHERE appointment_type = Urgent.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "WHERE"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "avg_urgent_fee"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT ROUND(AVG(fee), 2) AS avg_urgent_fee FROM appointments WHERE appointment_type = 'Urgent';",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE appointment_type = Urgent.",
-      "Compute AVG(fee) rounded to 2 decimals."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Urgent care fee schedule benchmark.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-048",
@@ -1705,37 +1735,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 48,
     "difficulty": "core",
-    "title": "Occupied Beds Count by Room Type",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Show the count of currently occupied beds broken down by room tier (ICU, Suite, Standard, Semi-Private).",
-    "context_notes": "Filter is_occupied = TRUE, GROUP BY room_type.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE",
-      "GROUP BY",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "room_type",
-      "occupied_beds"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT room_type, COUNT(*) AS occupied_beds FROM rooms WHERE is_occupied = TRUE GROUP BY room_type ORDER BY occupied_beds DESC;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter rooms WHERE is_occupied = TRUE.",
-      "Group by room_type and count occupied beds."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Active bed occupancy distribution by room category.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-049",
@@ -1743,35 +1772,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 49,
     "difficulty": "core",
-    "title": "Lost Revenue from No-Show and Cancelled Visits",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Calculate the total dollar sum of scheduled fees lost due to cancelled or no_show appointments.",
-    "context_notes": "SUM(fee) WHERE status IN (cancelled, no_show).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM",
-      "WHERE",
-      "IN"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "lost_clinic_revenue"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT ROUND(SUM(fee), 2) AS lost_clinic_revenue FROM appointments WHERE status IN ('cancelled', 'no_show');",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE status IN (cancelled, no_show).",
-      "Sum lost fees."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Financial quantification of clinic schedule abandonment.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-050",
@@ -1779,786 +1809,786 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 50,
     "difficulty": "core",
-    "title": "Doctors Count per Department ID",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "How many physicians are assigned to each department id? Show department id and doctor count.",
-    "context_notes": "GROUP BY department_id on doctors.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Analyze sequential transactions or events in appointments. Using the LAG() window function, retrieve id, fee, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "department_id",
-      "doctor_count"
+      "id",
+      "fee",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS doctor_count FROM doctors GROUP BY department_id ORDER BY doctor_count DESC;",
+    "reference_sql": "SELECT id, fee, LAG(fee) OVER (ORDER BY id ASC) AS prev_amount FROM appointments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group doctors by department_id.",
-      "Count physicians in each department."
+      "Use LAG(fee) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Physician department headcount allocation.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-051",
     "domain": "healthcare",
     "level": 1,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Payers With More Than 15 Patients",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "For commercial contract renewals, identify insurance carriers that represent strictly more than 15 enrolled patients.",
-    "context_notes": "GROUP BY insurance_provider, HAVING COUNT(*) > 15.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "insurance_provider",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT insurance_provider, COUNT(*) AS patient_count FROM patients GROUP BY insurance_provider HAVING COUNT(*) > 15 ORDER BY patient_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by insurance_provider.",
-      "Filter HAVING COUNT(*) > 15."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Isolates key volume payer relationships for rate negotiation.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-052",
     "domain": "healthcare",
     "level": 1,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Physicians With 8+ Scheduled Appointments",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Which doctors have handled at least 8 scheduled patient appointments? Show doctor id and encounter count.",
-    "context_notes": "GROUP BY doctor_id, HAVING COUNT(*) >= 8.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "doctor_id",
-      "encounter_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT doctor_id, COUNT(*) AS encounter_count FROM appointments GROUP BY doctor_id HAVING COUNT(*) >= 8 ORDER BY encounter_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by doctor_id.",
-      "Filter HAVING COUNT(*) >= 8."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Identifies high-volume clinician practices.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-053",
     "domain": "healthcare",
     "level": 1,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Departments With Over 6 Total Rooms",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Which departments have more than 6 assigned hospital rooms? Show department id and bed count.",
-    "context_notes": "GROUP BY department_id, HAVING COUNT(*) > 6.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "department_id",
-      "total_rooms"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS total_rooms FROM rooms GROUP BY department_id HAVING COUNT(*) > 6 ORDER BY total_rooms DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by department_id.",
-      "Filter HAVING COUNT(*) > 6."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Finds our largest inpatient clinical divisions.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-054",
     "domain": "healthcare",
     "level": 1,
     "order": 54,
-    "difficulty": "challenging",
-    "title": "Cities With Over 10 Registered Patients",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Identify urban centers that supply over 10 registered patients to our medical center.",
-    "context_notes": "GROUP BY city, HAVING COUNT(*) > 10.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "city",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT city, COUNT(*) AS patient_count FROM patients GROUP BY city HAVING COUNT(*) > 10 ORDER BY patient_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by city.",
-      "Filter HAVING COUNT(*) > 10."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Pinpoints core regional patient density zones.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-055",
     "domain": "healthcare",
     "level": 1,
     "order": 55,
-    "difficulty": "challenging",
-    "title": "Appointment Types Averaging Over $200",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Which encounter categories command an average fee strictly greater than $200.00?",
-    "context_notes": "GROUP BY appointment_type, HAVING AVG(fee) > 200.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "appointment_type",
-      "avg_fee"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT appointment_type, ROUND(AVG(fee), 2) AS avg_fee FROM appointments GROUP BY appointment_type HAVING AVG(fee) > 200.00 ORDER BY avg_fee DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by appointment_type.",
-      "Filter HAVING AVG(fee) > 200.00."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Identifies premium outpatient consultation tiers.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-056",
     "domain": "healthcare",
     "level": 1,
     "order": 56,
-    "difficulty": "challenging",
-    "title": "Patients With Rare Negative Rh Factor",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
       "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Find all patients with negative Rh blood types (A-, O-, etc.) by searching for a trailing minus sign.",
-    "context_notes": "Filter patients WHERE blood_type LIKE %-.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "LIKE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "blood_type",
-      "city"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT first_name, last_name, blood_type, city FROM patients WHERE blood_type LIKE '%-' ORDER BY blood_type, last_name;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table with WHERE blood_type LIKE %-."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Critical blood bank registry for rare negative Rh blood donors.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-057",
     "domain": "healthcare",
     "level": 1,
     "order": 57,
-    "difficulty": "challenging",
-    "title": "High Cost Rooms With Occupancy Status",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "List all rooms with a daily rate of $1,500 or higher, showing room number, type, daily rate, and whether currently occupied.",
-    "context_notes": "Filter rooms WHERE daily_rate >= 1500.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "room_number",
-      "room_type",
-      "daily_rate",
-      "is_occupied"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT room_number, room_type, daily_rate, is_occupied FROM rooms WHERE daily_rate >= 1500.00 ORDER BY daily_rate DESC, room_number;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter rooms table WHERE daily_rate >= 1500.00.",
-      "Order descending by daily_rate."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Premium VIP and intensive care suite capacity tracking.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-058",
     "domain": "healthcare",
     "level": 1,
     "order": 58,
-    "difficulty": "challenging",
-    "title": "Appointments Scheduled in Morning Hours",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Morning clinic load: find all appointments scheduled before 10:00 AM (hour < 10) with appointment type and fee.",
-    "context_notes": "WHERE EXTRACT(HOUR FROM appointment_date) < 10.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "EXTRACT"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "appointment_date",
-      "appointment_type",
-      "fee"
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT id, appointment_date, appointment_type, fee FROM appointments WHERE EXTRACT(HOUR FROM appointment_date) < 10 ORDER BY appointment_date ASC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Extract hour from appointment_date and filter < 10."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Early-morning clinic arrival flow and phlebotomy prep.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-059",
     "domain": "healthcare",
     "level": 1,
     "order": 59,
-    "difficulty": "challenging",
-    "title": "Doctors With Specific License Number Patterns",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Credential verification: find all physicians whose New York license number ends with an even digit.",
-    "context_notes": "Filter doctors WHERE license_number LIKE %0, %2, etc or regex.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "LIKE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "name",
-      "specialty",
-      "license_number"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT name, specialty, license_number FROM doctors WHERE license_number LIKE '%0' OR license_number LIKE '%2' OR license_number LIKE '%4' OR license_number LIKE '%6' OR license_number LIKE '%8' ORDER BY name;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors with even-ending license numbers."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Randomized sampling for hospital medical executive committee peer review.",
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-060",
     "domain": "healthcare",
     "level": 1,
     "order": 60,
-    "difficulty": "challenging",
-    "title": "Total Patient Cohort Age in Decades",
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Group our patients by birth decade (e.g. 1950s, 1960s, 1970s) and show the count of patients in each generational cohort.",
-    "context_notes": "Calculate decade from EXTRACT(YEAR FROM dob), GROUP BY decade.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, test_name, and standard_fee from lab_tests where standard_fee > 20. Select all columns from staged_records ordered descending by standard_fee. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "birth_decade",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT (FLOOR(EXTRACT(YEAR FROM dob) / 10) * 10)::INT AS birth_decade, COUNT(*) AS patient_count FROM patients GROUP BY (FLOOR(EXTRACT(YEAR FROM dob) / 10) * 10)::INT ORDER BY birth_decade ASC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20) SELECT id, test_name, standard_fee FROM staged_records ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Compute birth decade using FLOOR(year / 10) * 10.",
-      "Group and count patients per generational cohort."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Population health generational cohort modeling.",
-    "xp": 30,
-    "estimated_minutes": 7
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-061",
     "domain": "healthcare",
     "level": 1,
     "order": 61,
-    "difficulty": "challenging",
-    "title": "Nurses Holding Advanced NP Credentials on Night Shifts",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "For overnight clinical escalation protocols, list all Nurse Practitioners (NP) who work the Night shift.",
-    "context_notes": "Filter nurses WHERE certification_level = NP AND shift = Night.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "AND"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "name",
-      "department_id"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT name, department_id FROM nurses WHERE certification_level = 'NP' AND shift = 'Night' ORDER BY name;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter nurses WHERE certification_level = NP AND shift = Night."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Nighttime advanced clinical escalation staffing.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-062",
     "domain": "healthcare",
     "level": 1,
     "order": 62,
-    "difficulty": "challenging",
-    "title": "Appointments Generating Over $2000 by Doctor ID",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Which doctors have generated strictly more than $2,000 in total completed appointment fees?",
-    "context_notes": "Filter status = completed, GROUP BY doctor_id, HAVING SUM(fee) > 2000.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM",
-      "WHERE",
-      "GROUP BY",
-      "HAVING"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "doctor_id",
-      "total_revenue"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT doctor_id, ROUND(SUM(fee), 2) AS total_revenue FROM appointments WHERE status = 'completed' GROUP BY doctor_id HAVING SUM(fee) > 2000.00 ORDER BY total_revenue DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter status = completed.",
-      "Group by doctor_id and check HAVING SUM(fee) > 2000."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Top clinician billing contributors.",
-    "xp": 30,
-    "estimated_minutes": 7
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-063",
     "domain": "healthcare",
     "level": 1,
     "order": 63,
-    "difficulty": "challenging",
-    "title": "Standard Bed Capacity by Department",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Count how many Standard inpatient rooms exist per department id, showing departments with at least 3 standard rooms.",
-    "context_notes": "Filter room_type = Standard, GROUP BY department_id, HAVING COUNT >= 3.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE",
-      "GROUP BY",
-      "HAVING"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "department_id",
-      "standard_room_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS standard_room_count FROM rooms WHERE room_type = 'Standard' GROUP BY department_id HAVING COUNT(*) >= 3 ORDER BY standard_room_count DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter WHERE room_type = Standard.",
-      "Group by department_id and check HAVING COUNT(*) >= 3."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "General medical-surgical bed allotment.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-064",
     "domain": "healthcare",
     "level": 1,
     "order": 64,
-    "difficulty": "challenging",
-    "title": "Patients With Common Family Names",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Identify any patient last names that appear at least 5 times in our master patient index — last name and frequency count.",
-    "context_notes": "GROUP BY last_name, HAVING COUNT(*) >= 5.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "last_name",
-      "family_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT last_name, COUNT(*) AS family_count FROM patients GROUP BY last_name HAVING COUNT(*) >= 5 ORDER BY family_count DESC, last_name ASC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by last_name.",
-      "Filter HAVING COUNT(*) >= 5."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Family registry and chart de-duplication audit.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-065",
     "domain": "healthcare",
     "level": 1,
     "order": 65,
-    "difficulty": "challenging",
-    "title": "Appointments Billed at Non-Standard Fees",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Find appointments where the fee is not an exact round dollar amount (i.e. contains cents).",
-    "context_notes": "Filter appointments WHERE fee != FLOOR(fee).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "Arithmetic"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
       "id",
-      "fee",
-      "appointment_type"
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT id, fee, appointment_type FROM appointments WHERE fee != FLOOR(fee) ORDER BY fee DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE fee != FLOOR(fee).",
-      "Surfaces fees with fractional cents."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Fee schedule override audit.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-066",
     "domain": "healthcare",
     "level": 1,
     "order": 66,
-    "difficulty": "challenging",
-    "title": "Doctors With Specific Medical Specialties",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "List all physicians practicing in Oncology, Neurology, or Pediatrics — doctor name, specialty, and email.",
-    "context_notes": "Filter doctors WHERE specialty IN (Oncology, Neurology, Pediatrics).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "name",
-      "specialty",
-      "email"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT name, specialty, email FROM doctors WHERE specialty IN ('Oncology', 'Neurology', 'Pediatrics') ORDER BY specialty, name;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors table WHERE specialty IN (Oncology, Neurology, Pediatrics)."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Specialty clinic direct referral matrix.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-067",
     "domain": "healthcare",
     "level": 1,
     "order": 67,
-    "difficulty": "challenging",
-    "title": "Payer Revenue Capacity from Completed Appointments",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Calculate average fee and total completed encounter revenue grouped by appointment type.",
-    "context_notes": "Filter status = completed, GROUP BY appointment_type.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "AVG",
-      "SUM",
-      "WHERE",
-      "GROUP BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "appointment_type",
-      "completed_count",
-      "avg_fee",
-      "total_realized_revenue"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT appointment_type, COUNT(*) AS completed_count, ROUND(AVG(fee), 2) AS avg_fee, ROUND(SUM(fee), 2) AS total_realized_revenue FROM appointments WHERE status = 'completed' GROUP BY appointment_type ORDER BY total_realized_revenue DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter appointments WHERE status = completed.",
-      "Aggregate count, avg fee, and sum revenue per appointment type."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Encounter profitability by clinical visit type.",
-    "xp": 30,
-    "estimated_minutes": 7
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-068",
     "domain": "healthcare",
     "level": 1,
     "order": 68,
-    "difficulty": "challenging",
-    "title": "Room Rates Spread: Maximum vs Minimum Daily Rate",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "What is the difference between the most expensive inpatient room and the least expensive room in the hospital?",
-    "context_notes": "MAX(daily_rate) - MIN(daily_rate) from rooms.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "MAX",
-      "MIN",
-      "Arithmetic"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "max_rate",
-      "min_rate",
-      "rate_spread"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT MAX(daily_rate) AS max_rate, MIN(daily_rate) AS min_rate, ROUND(MAX(daily_rate) - MIN(daily_rate), 2) AS rate_spread FROM rooms;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Compute MAX(daily_rate), MIN(daily_rate), and their difference."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Hospital inpatient accommodation price bandwidth.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-069",
     "domain": "healthcare",
     "level": 1,
     "order": 69,
-    "difficulty": "challenging",
-    "title": "Elderly Patient Count by Insurance Carrier",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "For patients born before 1965, count how many belong to each insurance provider.",
-    "context_notes": "Filter dob < 1965-01-01, GROUP BY insurance_provider.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "insurance_provider",
-      "senior_patient_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT insurance_provider, COUNT(*) AS senior_patient_count FROM patients WHERE dob < '1965-01-01' GROUP BY insurance_provider ORDER BY senior_patient_count DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients born before 1965.",
-      "Group by insurance_provider and count."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Senior patient enrollment distribution across health plans.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 6
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-070",
     "domain": "healthcare",
     "level": 1,
     "order": 70,
-    "difficulty": "challenging",
-    "title": "Doctors in Department 3 and 6 Contact Sheet",
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Combined clinic roster: list doctors assigned to departments 3 (Surgery) or 6 (Primary Care) with name, phone, and specialty.",
-    "context_notes": "Filter doctors WHERE department_id IN (3, 6).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Data Engineering Ticket: Build a session staging table named temp_lab_tests_clean to cleanse raw data. Ingest id, UPPER(TRIM(test_name)) AS cleaned_name, and COALESCE(standard_fee, 0.00) AS standardized_amount from lab_tests where test_name IS NOT NULL. Select all columns from temp_lab_tests_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "name",
-      "department_id",
-      "specialty",
-      "phone"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT name, department_id, specialty, phone FROM doctors WHERE department_id IN (3, 6) ORDER BY department_id, name;",
+    "reference_sql": "CREATE TEMP TABLE temp_lab_tests_clean AS SELECT id, UPPER(TRIM(test_name)) AS cleaned_name, COALESCE(standard_fee, 0.00) AS standardized_amount FROM lab_tests WHERE test_name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_lab_tests_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors table WHERE department_id IN (3, 6)."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_lab_tests_clean;"
     ],
-    "solution_explanation": "Surgical and primary care collaborative clinical roster.",
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
     "xp": 25,
-    "estimated_minutes": 5
+    "estimated_minutes": 8
   },
   {
     "id": "hc-L1-071",
@@ -2566,35 +2596,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Occupancy Breakdown: Suites vs Semi-Private",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Compare bed occupancy between Suites and Semi-Private rooms using CASE WHEN inside COUNT.",
-    "context_notes": "COUNT(CASE WHEN is_occupied) for Suites and Semi-Private.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "suite_occupied",
-      "semi_private_occupied"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT SUM(CASE WHEN room_type = 'Suite' AND is_occupied = TRUE THEN 1 ELSE 0 END) AS suite_occupied, SUM(CASE WHEN room_type = 'Semi-Private' AND is_occupied = TRUE THEN 1 ELSE 0 END) AS semi_private_occupied FROM rooms;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use conditional SUM with CASE WHEN for Suite and Semi-Private occupied beds."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Executive bed occupancy comparison across premium tiers.",
-    "xp": 30,
-    "estimated_minutes": 6
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-072",
@@ -2602,36 +2633,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Patients Registered in the First Half of 2023",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Pull all patient records registered between January 1, 2023 and June 30, 2023 — first name, last name, and city.",
-    "context_notes": "Filter patients WHERE created_at BETWEEN 2023-01-01 AND 2023-06-30.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "city",
-      "created_at"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT first_name, last_name, city, created_at FROM patients WHERE created_at BETWEEN '2023-01-01' AND '2023-06-30' ORDER BY created_at ASC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients table WHERE created_at is in H1 2023."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "H1 patient cohort registration tracking.",
-    "xp": 25,
-    "estimated_minutes": 5
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-073",
@@ -2639,37 +2670,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Doctors With Top Consultation Fees Across Encounters",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Find doctors whose average appointment fee strictly exceeds $220.00 across all their scheduled visits.",
-    "context_notes": "GROUP BY doctor_id, HAVING AVG(fee) > 220.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "AVG",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "doctor_id",
-      "avg_fee"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT doctor_id, ROUND(AVG(fee), 2) AS avg_fee FROM appointments GROUP BY doctor_id HAVING AVG(fee) > 220.00 ORDER BY avg_fee DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by doctor_id.",
-      "Filter HAVING AVG(fee) > 220.00."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Identifies premium billing clinical practitioners.",
-    "xp": 30,
-    "estimated_minutes": 6
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-074",
@@ -2677,35 +2707,36 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Emergency Response Department Directory",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Show department name, building, and floor for departments located on floor 1 or floor 4.",
-    "context_notes": "Filter departments WHERE floor IN (1, 4).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "name",
-      "building",
-      "floor"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT name, building, floor FROM departments WHERE floor IN (1, 4) ORDER BY floor, name;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter departments WHERE floor IN (1, 4)."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Ground-floor and top-tier clinical ward directory.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-075",
@@ -2713,846 +2744,766 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Patients With Common Blood Types in Yonkers or Queens",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Find patients in Queens or Yonkers who hold positive blood types (A+, O+, B+, AB+).",
-    "context_notes": "Filter city IN (Queens, Yonkers) AND blood_type LIKE %+.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN",
-      "LIKE"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "city",
-      "blood_type"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT first_name, last_name, city, blood_type FROM patients WHERE city IN ('Queens', 'Yonkers') AND blood_type LIKE '%+' ORDER BY city, last_name;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients WHERE city IN (Queens, Yonkers) AND blood_type LIKE %+."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Regional blood donor outreach campaign.",
-    "xp": 25,
-    "estimated_minutes": 5
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-076",
     "domain": "healthcare",
     "level": 1,
     "order": 76,
-    "difficulty": "boss",
-    "title": "Executive Hospital Facility Scorecard",
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Comprehensive facility snapshot: total departments, total doctors, total nurses, total rooms, and total registered patients.",
-    "context_notes": "Scalar subqueries combining counts from all 5 primary facility tables.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "Subquery"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "total_departments",
-      "total_physicians",
-      "total_nurses",
-      "total_inpatient_beds",
-      "registered_patients"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT (SELECT COUNT(*) FROM departments) AS total_departments, (SELECT COUNT(*) FROM doctors) AS total_physicians, (SELECT COUNT(*) FROM nurses) AS total_nurses, (SELECT COUNT(*) FROM rooms) AS total_inpatient_beds, (SELECT COUNT(*) FROM patients) AS registered_patients;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Scalar subqueries combine master headcount and capacity metrics into one row."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Executive enterprise asset and resource capacity scorecard.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-077",
     "domain": "healthcare",
     "level": 1,
     "order": 77,
-    "difficulty": "boss",
-    "title": "Payer Mix & Revenue Capacity Matrix",
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Comprehensive payer profile: insurance provider, patient count, percentage share of patient base, and alphabetical ordering.",
-    "context_notes": "GROUP BY insurance_provider with percentage calculation.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "insurance_provider",
-      "patient_count",
-      "pct_of_patients"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT insurance_provider, COUNT(*) AS patient_count, ROUND((COUNT(*)::NUMERIC / (SELECT COUNT(*) FROM patients)) * 100, 1) AS pct_of_patients FROM patients GROUP BY insurance_provider ORDER BY patient_count DESC, insurance_provider ASC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by insurance_provider.",
-      "Compute percentage of total patient population."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Corporate payer contract volume and commercial dependency ratio.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-078",
     "domain": "healthcare",
     "level": 1,
     "order": 78,
-    "difficulty": "boss",
-    "title": "Inpatient Bed Utilization & Lost Capacity Cost",
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Inpatient bed audit: count total rooms, occupied rooms, vacant rooms, and the total daily revenue currently uncollected from empty beds.",
-    "context_notes": "Conditional aggregation on rooms table.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "total_rooms",
-      "occupied_rooms",
-      "vacant_rooms",
-      "unrealized_daily_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT COUNT(*) AS total_rooms, SUM(CASE WHEN is_occupied = TRUE THEN 1 ELSE 0 END) AS occupied_rooms, SUM(CASE WHEN is_occupied = FALSE THEN 1 ELSE 0 END) AS vacant_rooms, ROUND(SUM(CASE WHEN is_occupied = FALSE THEN daily_rate ELSE 0 END), 2) AS unrealized_daily_revenue FROM rooms;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Aggregate rooms with conditional sums for occupied vs vacant beds.",
-      "Sum daily_rate for unoccupied rooms to quantify vacancy loss."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Daily bed-occupancy leakage report for hospital administration.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-079",
     "domain": "healthcare",
     "level": 1,
     "order": 79,
-    "difficulty": "boss",
-    "title": "Clinical Appointment Encounter Economics",
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Full appointment economics: total encounters, completed visits, cancelled/no-shows, gross fees, and completed revenue.",
-    "context_notes": "Aggregations on appointments with conditional SUMs.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "total_encounters",
-      "completed_encounters",
-      "lost_encounters",
-      "gross_scheduled_fees",
-      "realized_fees"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT COUNT(*) AS total_encounters, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_encounters, SUM(CASE WHEN status IN ('cancelled', 'no_show') THEN 1 ELSE 0 END) AS lost_encounters, ROUND(SUM(fee), 2) AS gross_scheduled_fees, ROUND(SUM(CASE WHEN status = 'completed' THEN fee ELSE 0 END), 2) AS realized_fees FROM appointments;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Aggregate appointments table with conditional counts and fee totals."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Clinical operations and schedule realization dashboard.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-080",
     "domain": "healthcare",
     "level": 1,
     "order": 80,
-    "difficulty": "boss",
-    "title": "Physician Staffing by Department & Average Floor Level",
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "For each department id on doctors, show doctor count, distinct specialties present, and list in descending order of doctors.",
-    "context_notes": "GROUP BY department_id, COUNT(*), COUNT(DISTINCT specialty).",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) that updates standard_fee by adding p_delta. Execute it with CALL sp_adjust_lab_tests_val(1, 5); then select id, test_name, standard_fee from lab_tests where id = 1.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "COUNT DISTINCT",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "department_id",
-      "doctor_count",
-      "distinct_specialties"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS doctor_count, COUNT(DISTINCT specialty) AS distinct_specialties FROM doctors GROUP BY department_id ORDER BY doctor_count DESC, department_id ASC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_lab_tests_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE lab_tests SET standard_fee = standard_fee + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_lab_tests_val(1, 5); SELECT id, test_name, standard_fee FROM lab_tests WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group doctors by department_id.",
-      "Count total physicians and distinct medical specialties."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Departmental clinical specialization breadth.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-081",
     "domain": "healthcare",
     "level": 1,
     "order": 81,
-    "difficulty": "boss",
-    "title": "Patient Age Demographic Strata Benchmark",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Classify all patients into clinical age groups: Pediatric (<18), Adult (18-64), Geriatric (65+) and count each group.",
-    "context_notes": "CASE WHEN on EXTRACT(YEAR FROM AGE(CURRENT_DATE, dob)).",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "CASE WHEN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "age_strata",
-      "patient_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT CASE WHEN EXTRACT(YEAR FROM dob) >= 2006 THEN 'Pediatric (<18)' WHEN EXTRACT(YEAR FROM dob) >= 1959 THEN 'Adult (18-64)' ELSE 'Geriatric (65+)' END AS age_strata, COUNT(*) AS patient_count FROM patients GROUP BY CASE WHEN EXTRACT(YEAR FROM dob) >= 2006 THEN 'Pediatric (<18)' WHEN EXTRACT(YEAR FROM dob) >= 1959 THEN 'Adult (18-64)' ELSE 'Geriatric (65+)' END ORDER BY patient_count DESC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Classify patients into clinical age cohorts using birth year brackets.",
-      "Group and count patients in each demographic tier."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Clinical epidemiology age distribution breakdown.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-082",
     "domain": "healthcare",
     "level": 1,
     "order": 82,
-    "difficulty": "boss",
-    "title": "Room Tier Rate Economics & Occupancy Matrix",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "For each room tier (Standard, ICU, Semi-Private, Suite): room count, occupied count, avg daily rate, and total daily revenue.",
-    "context_notes": "GROUP BY room_type with multiple conditional aggregates.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "AVG",
-      "SUM",
-      "CASE WHEN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "room_type",
-      "total_beds",
-      "occupied_beds",
-      "avg_daily_rate",
-      "active_daily_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT room_type, COUNT(*) AS total_beds, SUM(CASE WHEN is_occupied = TRUE THEN 1 ELSE 0 END) AS occupied_beds, ROUND(AVG(daily_rate), 2) AS avg_daily_rate, ROUND(SUM(CASE WHEN is_occupied = TRUE THEN daily_rate ELSE 0 END), 2) AS active_daily_revenue FROM rooms GROUP BY room_type ORDER BY active_daily_revenue DESC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by room_type.",
-      "Compute total beds, occupied beds, avg rate, and active revenue."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Inpatient accommodation revenue engine breakdown.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-083",
     "domain": "healthcare",
     "level": 1,
     "order": 83,
-    "difficulty": "boss",
-    "title": "Doctor Workload & Schedule Realization Scorecard",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "For each doctor id, calculate total appointments, completed visits, cancelled/no-show visits, and total realized revenue.",
-    "context_notes": "GROUP BY doctor_id with conditional counts and fee sums.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "doctor_id",
-      "total_booked",
-      "completed_visits",
-      "unattended_visits",
-      "realized_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT doctor_id, COUNT(*) AS total_booked, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_visits, SUM(CASE WHEN status IN ('cancelled', 'no_show') THEN 1 ELSE 0 END) AS unattended_visits, ROUND(SUM(CASE WHEN status = 'completed' THEN fee ELSE 0 END), 2) AS realized_revenue FROM appointments GROUP BY doctor_id ORDER BY realized_revenue DESC LIMIT 10;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by doctor_id.",
-      "Compute completed visits, lost visits, and revenue realized."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Individual physician clinical production scorecard.",
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
     "xp": 45,
-    "estimated_minutes": 11
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-084",
     "domain": "healthcare",
     "level": 1,
     "order": 84,
-    "difficulty": "boss",
-    "title": "Nursing Workforce Deployment Profile",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
       "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Nursing deployment matrix: for each department id, show total nurses, day shift nurses, night shift nurses, and NP count.",
-    "context_notes": "GROUP BY department_id on nurses with conditional sums.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "department_id",
-      "total_nurses",
-      "day_nurses",
-      "night_nurses",
-      "np_count"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS total_nurses, SUM(CASE WHEN shift = 'Day' THEN 1 ELSE 0 END) AS day_nurses, SUM(CASE WHEN shift = 'Night' THEN 1 ELSE 0 END) AS night_nurses, SUM(CASE WHEN certification_level = 'NP' THEN 1 ELSE 0 END) AS np_count FROM nurses GROUP BY department_id ORDER BY total_nurses DESC, department_id ASC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group nurses by department_id.",
-      "Compute shift breakdown and nurse practitioner counts."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Departmental nursing shift coverage and advanced practice density.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-085",
     "domain": "healthcare",
     "level": 1,
     "order": 85,
-    "difficulty": "boss",
-    "title": "Regional Patient Distribution & Top Payer by City",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "For each metropolitan city: patient count, distinct insurance carriers represented, and earliest registered patient date.",
-    "context_notes": "GROUP BY city on patients with multiple aggregates.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "COUNT DISTINCT",
-      "MIN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "city",
-      "patient_count",
-      "distinct_insurers",
-      "earliest_patient_date"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT city, COUNT(*) AS patient_count, COUNT(DISTINCT insurance_provider) AS distinct_insurers, MIN(created_at) AS earliest_patient_date FROM patients GROUP BY city ORDER BY patient_count DESC, city ASC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by city.",
-      "Compute patient count, unique insurance providers, and earliest registration date."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Market penetration and municipal payer diversification.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-086",
     "domain": "healthcare",
     "level": 1,
     "order": 86,
-    "difficulty": "boss",
-    "title": "Clinic Day-of-Week Appointment Distribution",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Identify which day of the week experiences our heaviest appointment load using EXTRACT(DOW).",
-    "context_notes": "GROUP BY EXTRACT(DOW FROM appointment_date).",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "day_of_week_num",
-      "total_visits",
-      "completed_visits"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT EXTRACT(DOW FROM appointment_date)::INT AS day_of_week_num, COUNT(*) AS total_visits, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_visits FROM appointments GROUP BY EXTRACT(DOW FROM appointment_date) ORDER BY total_visits DESC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Extract day of week from appointment_date.",
-      "Compute total and completed appointments per weekday."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Weekly clinic scheduling cadence and peak staffing requirement.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-087",
     "domain": "healthcare",
     "level": 1,
     "order": 87,
-    "difficulty": "boss",
-    "title": "Blood Bank Critical Inventory Roster by Blood Type",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "For each blood type: total registered patients, count of male donors, count of female donors, and percentage of patient body.",
-    "context_notes": "GROUP BY blood_type on patients with conditional sums and percentages.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "blood_type",
-      "donor_count",
-      "male_donors",
-      "female_donors",
-      "pct_of_registry"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT blood_type, COUNT(*) AS donor_count, SUM(CASE WHEN gender = 'Male' THEN 1 ELSE 0 END) AS male_donors, SUM(CASE WHEN gender = 'Female' THEN 1 ELSE 0 END) AS female_donors, ROUND((COUNT(*)::NUMERIC / (SELECT COUNT(*) FROM patients)) * 100, 1) AS pct_of_registry FROM patients GROUP BY blood_type ORDER BY donor_count DESC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group patients by blood_type.",
-      "Breakdown by gender and percentage of total registry."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Emergency blood bank transfusion readiness profile.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-088",
     "domain": "healthcare",
     "level": 1,
     "order": 88,
-    "difficulty": "boss",
-    "title": "Top 5 Highest Revenue Generating Clinical Days",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Which 5 calendar days generated the highest total completed appointment revenue? Show date and daily revenue.",
-    "context_notes": "Filter status = completed, GROUP BY DATE(appointment_date) LIMIT 5.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "SUM",
-      "WHERE",
-      "GROUP BY",
-      "ORDER BY",
-      "LIMIT"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "clinic_date",
-      "daily_completed_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT DATE(appointment_date) AS clinic_date, ROUND(SUM(fee), 2) AS daily_completed_revenue FROM appointments WHERE status = 'completed' GROUP BY DATE(appointment_date) ORDER BY daily_completed_revenue DESC LIMIT 5;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group completed appointments by calendar date.",
-      "Sum fees and return top 5 dates."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Peak outpatient billing collection days.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-089",
     "domain": "healthcare",
     "level": 1,
     "order": 89,
-    "difficulty": "boss",
-    "title": "Physician Email & Domain Governance Audit",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Verify IT security: confirm all doctor emails end with @pulsehealth.org and show doctor count by domain suffix.",
-    "context_notes": "Check email suffix pattern on doctors table.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE",
-      "LIKE"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "valid_domain_doctors"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT COUNT(*) AS valid_domain_doctors FROM doctors WHERE email LIKE '%@pulsehealth.org';",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter doctors WHERE email LIKE %@pulsehealth.org and count."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "IT governance: confirms HIPAA-compliant enterprise email provisioning.",
-    "xp": 25,
-    "estimated_minutes": 5
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-090",
     "domain": "healthcare",
     "level": 1,
     "order": 90,
-    "difficulty": "boss",
-    "title": "Inpatient Room Yield: Revenue Generated per Square Foot Proxy",
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Jordan Chen",
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "For each room type: total rooms, occupied count, occupancy rate %, and total daily revenue.",
-    "context_notes": "GROUP BY room_type with percentage calculation.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Production Ticket: Read latency on lab_tests is increasing. Create an Index named idx_lab_tests_perf ON lab_tests(standard_fee DESC). Then retrieve id, test_name, standard_fee for entries where standard_fee > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "AVG",
-      "CASE WHEN",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "room_type",
-      "total_rooms",
-      "occupied_count",
-      "occupancy_rate_pct",
-      "active_daily_revenue"
+      "id",
+      "test_name",
+      "standard_fee"
     ],
-    "reference_sql": "SELECT room_type, COUNT(*) AS total_rooms, SUM(CASE WHEN is_occupied = TRUE THEN 1 ELSE 0 END) AS occupied_count, ROUND((SUM(CASE WHEN is_occupied = TRUE THEN 1 ELSE 0 END)::NUMERIC / COUNT(*)) * 100, 1) AS occupancy_rate_pct, ROUND(SUM(CASE WHEN is_occupied = TRUE THEN daily_rate ELSE 0 END), 2) AS active_daily_revenue FROM rooms GROUP BY room_type ORDER BY occupancy_rate_pct DESC;",
+    "reference_sql": "CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); SELECT id, test_name, standard_fee FROM lab_tests WHERE standard_fee > 20 ORDER BY standard_fee DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by room_type.",
-      "Compute occupancy percentage and active daily revenue."
+      "Write CREATE INDEX idx_lab_tests_perf ON lab_tests(standard_fee DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Bed capacity yield and utilization report.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-091",
     "domain": "healthcare",
     "level": 1,
     "order": 91,
-    "difficulty": "boss",
-    "title": "High-Acuity Patient Ratio by City",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "For patients with rare blood types (A-, O-, B-), show count by city for regional blood bank prepositioning.",
-    "context_notes": "Filter blood_type LIKE %-, GROUP BY city.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "WHERE",
-      "LIKE",
-      "GROUP BY",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "city",
-      "rare_donor_count"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT city, COUNT(*) AS rare_donor_count FROM patients WHERE blood_type LIKE '%-' GROUP BY city ORDER BY rare_donor_count DESC, city ASC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter patients with negative Rh blood types.",
-      "Group by city and count."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Prepositions emergency blood reserves in regional trauma depots.",
-    "xp": 30,
-    "estimated_minutes": 6
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-092",
     "domain": "healthcare",
     "level": 1,
     "order": 92,
-    "difficulty": "boss",
-    "title": "Appointment Completion Rate by Visit Type",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "For each appointment type, calculate total scheduled visits, completed visits, and completion rate %.",
-    "context_notes": "GROUP BY appointment_type with percentage calculation.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "appointment_type",
-      "total_scheduled",
-      "completed_count",
-      "completion_rate_pct"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT appointment_type, COUNT(*) AS total_scheduled, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count, ROUND((SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END)::NUMERIC / COUNT(*)) * 100, 1) AS completion_rate_pct FROM appointments GROUP BY appointment_type ORDER BY completion_rate_pct DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by appointment_type.",
-      "Compute completion percentage per visit category."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Monitors patient adherence and scheduling leakage by clinic type.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-093",
     "domain": "healthcare",
     "level": 1,
     "order": 93,
-    "difficulty": "boss",
-    "title": "Executive Nursing Coverage Ratio by Department",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Marcus Thorne",
-      "role": "Chief Nursing Officer"
+      "name": "Dr. Evelyn Reed",
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "For each department id present in nurses, calculate total nurses and nurse practitioner ratio.",
-    "context_notes": "GROUP BY department_id with NP percentage.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic",
-      "GROUP BY",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "department_id",
-      "total_nurses",
-      "np_count",
-      "np_ratio_pct"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT department_id, COUNT(*) AS total_nurses, SUM(CASE WHEN certification_level = 'NP' THEN 1 ELSE 0 END) AS np_count, ROUND((SUM(CASE WHEN certification_level = 'NP' THEN 1 ELSE 0 END)::NUMERIC / COUNT(*)) * 100, 1) AS np_ratio_pct FROM nurses GROUP BY department_id ORDER BY np_ratio_pct DESC, total_nurses DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group nurses by department_id.",
-      "Calculate Nurse Practitioner percentage share."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Advanced clinical practice density across nursing units.",
-    "xp": 40,
-    "estimated_minutes": 10
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-094",
     "domain": "healthcare",
     "level": 1,
     "order": 94,
-    "difficulty": "boss",
-    "title": "Average Fee Variance Across Clinician Panels",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
       "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "For doctors with at least 5 appointments, calculate average fee, minimum fee, and maximum fee charged.",
-    "context_notes": "GROUP BY doctor_id, HAVING COUNT(*) >= 5.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "AVG",
-      "MIN",
-      "MAX",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "doctor_id",
-      "visit_count",
-      "avg_fee",
-      "min_fee",
-      "max_fee"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT doctor_id, COUNT(*) AS visit_count, ROUND(AVG(fee), 2) AS avg_fee, MIN(fee) AS min_fee, MAX(fee) AS max_fee FROM appointments GROUP BY doctor_id HAVING COUNT(*) >= 5 ORDER BY avg_fee DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group appointments by doctor_id.",
-      "Filter doctors with at least 5 encounters.",
-      "Compute fee range statistics."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Fee schedule compliance and variance audit per clinician.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-095",
     "domain": "healthcare",
     "level": 1,
     "order": 95,
-    "difficulty": "boss",
-    "title": "Total Patient Population Demographic Balance",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Dr. Sarah Patel",
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "Comprehensive demographic table: count of pediatric patients, adult patients, geriatric patients, and total enrolled.",
-    "context_notes": "Scalar subqueries or conditional sums on patients table.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "pediatric_count",
-      "adult_count",
-      "geriatric_count",
-      "total_patient_body"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT SUM(CASE WHEN EXTRACT(YEAR FROM dob) >= 2006 THEN 1 ELSE 0 END) AS pediatric_count, SUM(CASE WHEN EXTRACT(YEAR FROM dob) BETWEEN 1960 AND 2005 THEN 1 ELSE 0 END) AS adult_count, SUM(CASE WHEN EXTRACT(YEAR FROM dob) < 1960 THEN 1 ELSE 0 END) AS geriatric_count, COUNT(*) AS total_patient_body FROM patients;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Conditional sums classify entire patient census into age bands."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Master epidemiological age census for hospital strategic planning.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "hc-L1-096",
@@ -3560,40 +3511,34 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 96,
     "difficulty": "boss",
-    "title": "Hospital Wing Facility Floor Plan Audit",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Wing architecture breakdown: for each building, calculate total departments housed, floor count span, and department names count.",
-    "context_notes": "GROUP BY building on departments.",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "MIN",
-      "MAX",
-      "GROUP BY",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "building",
-      "departments_count",
-      "lowest_floor",
-      "highest_floor"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT building, COUNT(*) AS departments_count, MIN(floor) AS lowest_floor, MAX(floor) AS highest_floor FROM departments GROUP BY building ORDER BY departments_count DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group departments by building.",
-      "Compute department count and floor span."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Medical campus building and pavilion occupancy layout.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "hc-L1-097",
@@ -3601,38 +3546,34 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 97,
     "difficulty": "boss",
-    "title": "Telehealth vs In-Person Clinical Mix",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
       "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "role": "Chief Medical Officer",
+      "department": "Clinical Governance"
     },
-    "request": "Calculate volume and realized revenue of Telehealth vs In-Person appointments side-by-side using CASE WHEN.",
-    "context_notes": "Conditional sums on appointments table.",
+    "request": "From: Dr. Evelyn Reed (Chief Medical Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "telehealth_visits",
-      "telehealth_revenue",
-      "in_person_visits",
-      "in_person_revenue"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT SUM(CASE WHEN appointment_type = 'Telehealth' THEN 1 ELSE 0 END) AS telehealth_visits, ROUND(SUM(CASE WHEN appointment_type = 'Telehealth' AND status = 'completed' THEN fee ELSE 0 END), 2) AS telehealth_revenue, SUM(CASE WHEN appointment_type != 'Telehealth' THEN 1 ELSE 0 END) AS in_person_visits, ROUND(SUM(CASE WHEN appointment_type != 'Telehealth' AND status = 'completed' THEN fee ELSE 0 END), 2) AS in_person_revenue FROM appointments;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Separate visits and completed revenue for Telehealth vs In-person."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Digital health adoption and revenue realization comparison.",
-    "xp": 40,
-    "estimated_minutes": 9
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "hc-L1-098",
@@ -3640,40 +3581,34 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 98,
     "difficulty": "boss",
-    "title": "Highest Yield Clinical Appointment Type",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
       "name": "Jordan Chen",
-      "role": "Director of Billing"
+      "role": "Director of Revenue Cycle",
+      "department": "Finance & Billing"
     },
-    "request": "Rank appointment types by total revenue realized from completed visits, showing visit type, count, and revenue.",
-    "context_notes": "Filter status = completed, GROUP BY appointment_type, ORDER BY SUM(fee) DESC LIMIT 1.",
+    "request": "From: Jordan Chen (Director of Revenue Cycle)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "WHERE",
-      "GROUP BY",
-      "ORDER BY",
-      "LIMIT"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "appointment_type",
-      "completed_encounters",
-      "total_revenue"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT appointment_type, COUNT(*) AS completed_encounters, ROUND(SUM(fee), 2) AS total_revenue FROM appointments WHERE status = 'completed' GROUP BY appointment_type ORDER BY total_revenue DESC LIMIT 1;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group completed visits by appointment_type.",
-      "Sum fee and return top revenue visit category."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Identifies hospital most lucrative outpatient clinical service line.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "hc-L1-099",
@@ -3681,42 +3616,34 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 99,
     "difficulty": "boss",
-    "title": "Executive Hospital Room Revenue Matrix by Wing",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
       "name": "Dr. Sarah Patel",
-      "role": "Head of Surgery"
+      "role": "Head of Surgical Services",
+      "department": "Surgery"
     },
-    "request": "For each room type: total rooms, daily price range (min to max), and overall average rate.",
-    "context_notes": "GROUP BY room_type on rooms with MIN, MAX, AVG.",
+    "request": "From: Dr. Sarah Patel (Head of Surgical Services)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "MIN",
-      "MAX",
-      "AVG",
-      "GROUP BY",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "room_type",
-      "room_count",
-      "min_daily_rate",
-      "max_daily_rate",
-      "avg_daily_rate"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT room_type, COUNT(*) AS room_count, MIN(daily_rate) AS min_daily_rate, MAX(daily_rate) AS max_daily_rate, ROUND(AVG(daily_rate), 2) AS avg_daily_rate FROM rooms GROUP BY room_type ORDER BY avg_daily_rate DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group rooms by room_type.",
-      "Compute count, min rate, max rate, and avg rate."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Master room charge schedule and tier pricing matrix.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "hc-L1-100",
@@ -3724,39 +3651,33 @@ export const HC_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 100,
     "difficulty": "boss",
-    "title": "The Grand Level 1 Healthcare Executive Operations Dashboard",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Dr. Evelyn Reed",
-      "role": "Chief Medical Officer"
+      "name": "Marcus Thorne",
+      "role": "Chief Nursing Officer",
+      "department": "Nursing Ops"
     },
-    "request": "Final Level 1 Challenge: Consolidated Hospital Health Card — total active departments, total registered patients, total scheduled appointment fees, realized completed revenue, and overall bed occupancy rate %.",
-    "context_notes": "Multi-scalar subquery combining all Level 1 foundational operational metrics. ",
+    "request": "From: Marcus Thorne (Chief Nursing Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering appointments by fee > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
     "concepts": [
-      "SELECT",
-      "COUNT",
-      "SUM",
-      "CASE WHEN",
-      "Arithmetic",
-      "Subquery"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "active_departments",
-      "registered_patients",
-      "total_scheduled_fees",
-      "realized_completed_revenue",
-      "hospital_bed_occupancy_pct"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT (SELECT COUNT(*) FROM departments) AS active_departments, (SELECT COUNT(*) FROM patients) AS registered_patients, (SELECT ROUND(SUM(fee), 2) FROM appointments) AS total_scheduled_fees, (SELECT ROUND(SUM(fee), 2) FROM appointments WHERE status = 'completed') AS realized_completed_revenue, (SELECT ROUND((SUM(CASE WHEN is_occupied = TRUE THEN 1 ELSE 0 END)::NUMERIC / COUNT(*)) * 100, 1) FROM rooms) AS hospital_bed_occupancy_pct;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, fee FROM appointments WHERE fee > 50;",
     "validation": {
       "order_sensitive": false,
       "column_names_sensitive": false,
-      "numeric_tolerance": 0
+      "numeric_tolerance": 0.01
     },
     "hints": [
-      "Scalar subqueries synthesize hospital scale, patient body, clinic billing, and inpatient occupancy."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "The crowning Level 1 executive operational dashboard for the health system.",
-    "xp": 50,
-    "estimated_minutes": 15
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   }
 ];

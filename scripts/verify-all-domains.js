@@ -59,6 +59,28 @@ const domains = [
       "src/lib/content/saas-l4-questions.ts",
       "src/lib/content/saas-l5-questions.ts",
     ]
+  },
+  {
+    name: "E-Commerce & Retail",
+    prefix: "ecom",
+    files: [
+      "src/lib/content/ecom-l1-questions.ts",
+      "src/lib/content/ecom-l2-questions.ts",
+      "src/lib/content/ecom-l3-questions.ts",
+      "src/lib/content/ecom-l4-questions.ts",
+      "src/lib/content/ecom-l5-questions.ts",
+    ]
+  },
+  {
+    name: "Restaurants & Hospitality",
+    prefix: "rest",
+    files: [
+      "src/lib/content/rest-l1-questions.ts",
+      "src/lib/content/rest-l2-questions.ts",
+      "src/lib/content/rest-l3-questions.ts",
+      "src/lib/content/rest-l4-questions.ts",
+      "src/lib/content/rest-l5-questions.ts",
+    ]
   }
 ];
 
@@ -88,12 +110,12 @@ for (const d of domains) {
 }
 
 console.log("\n=================================================");
-console.log(`GRAND TOTAL: ${grandTotal}/2500 questions verified across all 5 domains.`);
+console.log(`GRAND TOTAL: ${grandTotal}/3500 questions verified across all 7 domains.`);
 console.log(`TOTAL ERRORS: ${domainErrors}`);
 console.log("=================================================");
 
-if (domainErrors === 0 && grandTotal === 2500) {
-  console.log("🎉 ALL 2,500 QUESTIONS ACROSS ALL 5 REQUESTED DOMAINS ARE 100% COMPLETE!");
+if (domainErrors === 0 && grandTotal === 3500) {
+  console.log("🎉 ALL 3,500 QUESTIONS ACROSS ALL 7 DOMAINS ARE 100% COMPLETE!");
 } else {
   process.exit(1);
 }

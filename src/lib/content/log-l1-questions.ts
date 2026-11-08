@@ -1,2610 +1,3683 @@
-// ============================================================================
-// LOGISTICS & SUPPLY CHAIN — LEVEL 1: FOUNDATIONS & FLEET INVENTORY
-// 100 Handcrafted, Non-Robotic Questions from Executive Decision-Makers
-// Tables (6): warehouses, carriers, fleet_vehicles, drivers, suppliers, shipments
-// ============================================================================
-
 import { QuestionDefinition } from "./ecom-l1-questions";
 
 export const LOG_L1_QUESTIONS: QuestionDefinition[] = [
   {
-    id: "log-L1-001",
-    domain: "logistics",
-    level: 1,
-    order: 1,
-    difficulty: "warm-up",
-    title: "Regional Distribution Hub Capacities",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Good morning! As part of our network footprint review, please pull all warehouse locations with their square footage and designated facility manager, sorted from highest capacity to lowest.",
-    context_notes: "Reviewing distribution center capacity across logistics nodes.",
-    concepts: ["SELECT","ORDER BY"],
-    expected_columns: ["city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT city, capacity_sqft, manager_name FROM warehouses ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Select city, capacity_sqft, manager_name from warehouses and order by capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-002",
-    domain: "logistics",
-    level: 1,
-    order: 2,
-    difficulty: "warm-up",
-    title: "Active Semi-Truck Fleet Roster",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave here from Fleet Ops. Could you bring up all active semi-trucks in our fleet? Show vehicle_number, max_weight_capacity_kg, and current mileage_km, sorted by mileage descending so we see high-wear units first.",
-    context_notes: "Active heavy transport truck deployment and mileage monitoring.",
-    concepts: ["SELECT","WHERE","AND","ORDER BY"],
-    expected_columns: ["vehicle_number","max_weight_capacity_kg","mileage_km"],
-    reference_sql: "SELECT vehicle_number, max_weight_capacity_kg, mileage_km FROM fleet_vehicles WHERE vehicle_type = 'Semi_Truck' AND status = 'active' ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE vehicle_type = 'Semi_Truck' AND status = 'active'."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-003",
-    domain: "logistics",
-    level: 1,
-    order: 3,
-    difficulty: "warm-up",
-    title: "Top-Tier Freight Carrier Partners",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Claire here. I need a directory of our top-rated freight carriers with a service quality rating of 4.5 or higher. Display carrier_name, service_level, and rating, ordered by rating descending.",
-    context_notes: "Reviewing premium tier freight carrier performance.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["carrier_name","service_level","rating"],
-    reference_sql: "SELECT carrier_name, service_level, rating FROM carriers WHERE rating >= 4.5 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE rating >= 4.5 on the carriers table and order by rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-004",
-    domain: "logistics",
-    level: 1,
-    order: 4,
-    difficulty: "easy",
-    title: "Pending and In-Transit Shipments",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at the terminal crossdock. Pull all shipments currently marked as either 'in_transit' or 'pending'. Display id, origin_warehouse, destination_city, and weight_kg, ordered by weight_kg desc.",
-    context_notes: "Tracking active loads moving through the transit pipeline.",
-    concepts: ["SELECT","WHERE","IN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE status IN ('in_transit', 'pending') ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments using WHERE status IN ('in_transit', 'pending')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-005",
-    domain: "logistics",
-    level: 1,
-    order: 5,
-    difficulty: "easy",
-    title: "Senior Drivers with Stellar Safety Scores",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "We want to award safe driving milestone bonuses. Retrieve all drivers with at least 10 years of commercial driving experience and a safety score of 4.8 or higher. Show full_name, license_number, experience_years, and safety_score.",
-    context_notes: "Safety incentive qualification for veteran commercial drivers.",
-    concepts: ["SELECT","WHERE","AND","ORDER BY"],
-    expected_columns: ["full_name","license_number","experience_years","safety_score"],
-    reference_sql: "SELECT full_name, license_number, experience_years, safety_score FROM drivers WHERE experience_years >= 10 AND safety_score >= 4.8 ORDER BY safety_score DESC, experience_years DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE experience_years >= 10 AND safety_score >= 4.8."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-006",
-    domain: "logistics",
-    level: 1,
-    order: 6,
-    difficulty: "easy",
-    title: "Rapid Lead-Time Global Suppliers",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Identify international parts suppliers capable of fulfilling orders within 10 days. Return supplier_name, country, lead_time_days, and reliability_score, ordered by lead_time_days ascending.",
-    context_notes: "Sourcing quick-turnaround replenishment suppliers.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["supplier_name","country","lead_time_days","reliability_score"],
-    reference_sql: "SELECT supplier_name, country, lead_time_days, reliability_score FROM suppliers WHERE lead_time_days <= 10 ORDER BY lead_time_days ASC, reliability_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers WHERE lead_time_days <= 10."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-007",
-    domain: "logistics",
-    level: 1,
-    order: 7,
-    difficulty: "easy",
-    title: "Heavy Haul Shipments Over 10,000 Kilograms",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "We need an axle-weight compliance check on heavy freight loads. Find all shipments where weight_kg exceeds 10,000 kg. Return id, origin_warehouse, destination_city, weight_kg, and status.",
-    context_notes: "Bridge weight and DOT highway permitting compliance.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg","status"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg, status FROM shipments WHERE weight_kg > 10000.00 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE weight_kg > 10000.00 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-008",
-    domain: "logistics",
-    level: 1,
-    order: 8,
-    difficulty: "easy",
-    title: "Fleet Vehicles in Maintenance or Idle Status",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Please list all fleet vehicles that are currently sidelined — status 'in_maintenance' or 'idle'. Display vehicle_number, vehicle_type, mileage_km, and status, sorted by vehicle_type.",
-    context_notes: "Fleet utilization and service bay staging.",
-    concepts: ["SELECT","WHERE","IN","ORDER BY"],
-    expected_columns: ["vehicle_number","vehicle_type","mileage_km","status"],
-    reference_sql: "SELECT vehicle_number, vehicle_type, mileage_km, status FROM fleet_vehicles WHERE status IN ('in_maintenance', 'idle') ORDER BY vehicle_type ASC, mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE status IN ('in_maintenance', 'idle')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-009",
-    domain: "logistics",
-    level: 1,
-    order: 9,
-    difficulty: "easy",
-    title: "North American Suppliers Footprint",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Pull all parts suppliers located in the United States, Canada, or Mexico. Display supplier_name, country, lead_time_days, and reliability_score, ordered by country.",
-    context_notes: "Nearshoring and USMCA trade corridor vendor sourcing.",
-    concepts: ["SELECT","WHERE","IN","ORDER BY"],
-    expected_columns: ["supplier_name","country","lead_time_days","reliability_score"],
-    reference_sql: "SELECT supplier_name, country, lead_time_days, reliability_score FROM suppliers WHERE country IN ('USA', 'Canada', 'Mexico') ORDER BY country ASC, supplier_name ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE country IN ('USA', 'Canada', 'Mexico')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-010",
-    domain: "logistics",
-    level: 1,
-    order: 10,
-    difficulty: "easy",
-    title: "Shipments Bound for West Coast Hubs",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Which shipments are destined for Seattle, Portland, or San Diego? Show id, destination_city, weight_kg, and status, ordered by destination_city.",
-    context_notes: "Consolidating Pacific freight corridor dispatch.",
-    concepts: ["SELECT","WHERE","IN","ORDER BY"],
-    expected_columns: ["id","destination_city","weight_kg","status"],
-    reference_sql: "SELECT id, destination_city, weight_kg, status FROM shipments WHERE destination_city IN ('Seattle', 'Portland', 'San Diego') ORDER BY destination_city ASC, id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE destination_city IN ('Seattle', 'Portland', 'San Diego')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-011",
-    domain: "logistics",
-    level: 1,
-    order: 11,
-    difficulty: "easy",
-    title: "Refrigerated Reefer Fleet Readiness",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Inspect our cold chain transport fleet. Find all vehicles of type 'Reefer' with mileage below 150,000 km. Display vehicle_number, max_weight_capacity_kg, mileage_km, and status.",
-    context_notes: "Deploying low-mileage refrigerated assets for sensitive pharmaceutical loads.",
-    concepts: ["SELECT","WHERE","AND","ORDER BY"],
-    expected_columns: ["vehicle_number","max_weight_capacity_kg","mileage_km","status"],
-    reference_sql: "SELECT vehicle_number, max_weight_capacity_kg, mileage_km, status FROM fleet_vehicles WHERE vehicle_type = 'Reefer' AND mileage_km < 150000 ORDER BY mileage_km ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter with WHERE vehicle_type = 'Reefer' AND mileage_km < 150000."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-012",
-    domain: "logistics",
-    level: 1,
-    order: 12,
-    difficulty: "warm-up",
-    title: "High-Capacity Warehouses Above 300,000 Sqft",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Which mega-warehouses have a footprint of at least 300,000 sq ft? List city, capacity_sqft, and manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Strategic regional fulfillment node identification.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft >= 300000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE capacity_sqft >= 300000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-013",
-    domain: "logistics",
-    level: 1,
-    order: 13,
-    difficulty: "warm-up",
-    title: "Delayed Shipments Requiring Investigation",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Crossdock alerts report customer delivery delays. Retrieve all shipments where status is 'delayed'. Return id, origin_warehouse, destination_city, and weight_kg.",
-    context_notes: "Root cause analysis on delayed logistics routes.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE status = 'delayed' ORDER BY id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE status = 'delayed'."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-014",
-    domain: "logistics",
-    level: 1,
-    order: 14,
-    difficulty: "warm-up",
-    title: "Commercial Drivers by Seniority",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "List the top 10 most experienced commercial drivers on our payroll. Display full_name, experience_years, safety_score, and license_number, ordered by experience_years descending.",
-    context_notes: "Driver tenure and mentoring program leadership.",
-    concepts: ["SELECT","ORDER BY","LIMIT"],
-    expected_columns: ["full_name","experience_years","safety_score","license_number"],
-    reference_sql: "SELECT full_name, experience_years, safety_score, license_number FROM drivers ORDER BY experience_years DESC LIMIT 10;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use ORDER BY experience_years DESC LIMIT 10."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-015",
-    domain: "logistics",
-    level: 1,
-    order: 15,
-    difficulty: "easy",
-    title: "Carriers Offering Expedited or Next-Day Service",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Find all freight carriers whose service_level includes 'Next-Day' or 'Expedited'. Return carrier_name, service_level, and rating, ordered by carrier_name.",
-    context_notes: "Routing critical expedited rush deliveries.",
-    concepts: ["SELECT","WHERE","LIKE","OR","ORDER BY"],
-    expected_columns: ["carrier_name","service_level","rating"],
-    reference_sql: "SELECT carrier_name, service_level, rating FROM carriers WHERE service_level LIKE '%Next-Day%' OR service_level LIKE '%Expedited%' ORDER BY carrier_name ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE service_level LIKE '%Next-Day%' OR service_level LIKE '%Expedited%'."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-016",
-    domain: "logistics",
-    level: 1,
-    order: 16,
-    difficulty: "easy",
-    title: "Shipments Weighing Between 2,000 and 5,000 Kilograms",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Retrieve all mid-weight shipments (between 2,000 and 5,000 kg inclusive). Show id, origin_warehouse, destination_city, and weight_kg, sorted by weight_kg.",
-    context_notes: "Mid-weight freight consolidation for standard box truck dispatch.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 2000.00 AND 5000.00 ORDER BY weight_kg ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE weight_kg BETWEEN 2000.00 AND 5000.00."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-017",
-    domain: "logistics",
-    level: 1,
-    order: 17,
-    difficulty: "warm-up",
-    title: "Cargo Van Fleet Inventory",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "We are expanding last-mile urban deliveries. Pull all vehicles of type 'Cargo_Van', showing vehicle_number, mileage_km, and status, sorted by mileage_km ascending.",
-    context_notes: "Urban courier van readiness.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["vehicle_number","mileage_km","status"],
-    reference_sql: "SELECT vehicle_number, mileage_km, status FROM fleet_vehicles WHERE vehicle_type = 'Cargo_Van' ORDER BY mileage_km ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE vehicle_type = 'Cargo_Van' ORDER BY mileage_km ASC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-018",
-    domain: "logistics",
-    level: 1,
-    order: 18,
-    difficulty: "easy",
-    title: "Suppliers with Sub-Par Reliability",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Which suppliers have a reliability score below 4.5? List supplier_name, country, lead_time_days, and reliability_score, ordered by reliability_score ascending.",
-    context_notes: "Vendor corrective action and SLA penalty reviews.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["supplier_name","country","lead_time_days","reliability_score"],
-    reference_sql: "SELECT supplier_name, country, lead_time_days, reliability_score FROM suppliers WHERE reliability_score < 4.5 ORDER BY reliability_score ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE reliability_score < 4.5 ORDER BY reliability_score ASC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-019",
-    domain: "logistics",
-    level: 1,
-    order: 19,
-    difficulty: "easy",
-    title: "Delivered Shipments to Major Midwest Hubs",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Fetch all delivered shipments where the destination_city is 'Chicago', 'Detroit', or 'Minneapolis'. Show id, destination_city, weight_kg, and status.",
-    context_notes: "Post-delivery settlement audits for Midwestern terminal routes.",
-    concepts: ["SELECT","WHERE","AND","IN","ORDER BY"],
-    expected_columns: ["id","destination_city","weight_kg","status"],
-    reference_sql: "SELECT id, destination_city, weight_kg, status FROM shipments WHERE status = 'delivered' AND destination_city IN ('Chicago', 'Detroit', 'Minneapolis') ORDER BY id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Combine status = 'delivered' and destination_city IN ('Chicago', 'Detroit', 'Minneapolis')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-020",
-    domain: "logistics",
-    level: 1,
-    order: 20,
-    difficulty: "warm-up",
-    title: "High-Mileage Fleet Replacement Candidates",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave here from Fleet Asset Management. Flag all fleet vehicles that have accumulated more than 250,000 km on the odometer. Display vehicle_number, vehicle_type, mileage_km, and status, ordered by mileage_km descending.",
-    context_notes: "Capital expenditure replacement planning for depreciated trucks.",
-    concepts: ["SELECT","WHERE","ORDER BY"],
-    expected_columns: ["vehicle_number","vehicle_type","mileage_km","status"],
-    reference_sql: "SELECT vehicle_number, vehicle_type, mileage_km, status FROM fleet_vehicles WHERE mileage_km > 250000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km > 250000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-021",
-    domain: "logistics",
-    level: 1,
-    order: 21,
-    difficulty: "easy",
-    title: "Logistics Metric #21: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-022",
-    domain: "logistics",
-    level: 1,
-    order: 22,
-    difficulty: "easy",
-    title: "Logistics Metric #22: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-023",
-    domain: "logistics",
-    level: 1,
-    order: 23,
-    difficulty: "easy",
-    title: "Logistics Metric #23: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-024",
-    domain: "logistics",
-    level: 1,
-    order: 24,
-    difficulty: "easy",
-    title: "Logistics Metric #24: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-025",
-    domain: "logistics",
-    level: 1,
-    order: 25,
-    difficulty: "easy",
-    title: "Logistics Metric #25: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-026",
-    domain: "logistics",
-    level: 1,
-    order: 26,
-    difficulty: "easy",
-    title: "Logistics Metric #26: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-027",
-    domain: "logistics",
-    level: 1,
-    order: 27,
-    difficulty: "easy",
-    title: "Logistics Metric #27: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-028",
-    domain: "logistics",
-    level: 1,
-    order: 28,
-    difficulty: "easy",
-    title: "Logistics Metric #28: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-029",
-    domain: "logistics",
-    level: 1,
-    order: 29,
-    difficulty: "easy",
-    title: "Logistics Metric #29: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-030",
-    domain: "logistics",
-    level: 1,
-    order: 30,
-    difficulty: "easy",
-    title: "Logistics Metric #30: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-031",
-    domain: "logistics",
-    level: 1,
-    order: 31,
-    difficulty: "easy",
-    title: "Logistics Metric #31: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-032",
-    domain: "logistics",
-    level: 1,
-    order: 32,
-    difficulty: "easy",
-    title: "Logistics Metric #32: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-033",
-    domain: "logistics",
-    level: 1,
-    order: 33,
-    difficulty: "easy",
-    title: "Logistics Metric #33: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-034",
-    domain: "logistics",
-    level: 1,
-    order: 34,
-    difficulty: "easy",
-    title: "Logistics Metric #34: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-035",
-    domain: "logistics",
-    level: 1,
-    order: 35,
-    difficulty: "easy",
-    title: "Logistics Metric #35: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-036",
-    domain: "logistics",
-    level: 1,
-    order: 36,
-    difficulty: "easy",
-    title: "Logistics Metric #36: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-037",
-    domain: "logistics",
-    level: 1,
-    order: 37,
-    difficulty: "easy",
-    title: "Logistics Metric #37: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-038",
-    domain: "logistics",
-    level: 1,
-    order: 38,
-    difficulty: "easy",
-    title: "Logistics Metric #38: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-039",
-    domain: "logistics",
-    level: 1,
-    order: 39,
-    difficulty: "easy",
-    title: "Logistics Metric #39: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-040",
-    domain: "logistics",
-    level: 1,
-    order: 40,
-    difficulty: "easy",
-    title: "Logistics Metric #40: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-041",
-    domain: "logistics",
-    level: 1,
-    order: 41,
-    difficulty: "easy",
-    title: "Logistics Metric #41: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-042",
-    domain: "logistics",
-    level: 1,
-    order: 42,
-    difficulty: "easy",
-    title: "Logistics Metric #42: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-043",
-    domain: "logistics",
-    level: 1,
-    order: 43,
-    difficulty: "easy",
-    title: "Logistics Metric #43: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-044",
-    domain: "logistics",
-    level: 1,
-    order: 44,
-    difficulty: "easy",
-    title: "Logistics Metric #44: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-045",
-    domain: "logistics",
-    level: 1,
-    order: 45,
-    difficulty: "easy",
-    title: "Logistics Metric #45: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-046",
-    domain: "logistics",
-    level: 1,
-    order: 46,
-    difficulty: "easy",
-    title: "Logistics Metric #46: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-047",
-    domain: "logistics",
-    level: 1,
-    order: 47,
-    difficulty: "easy",
-    title: "Logistics Metric #47: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-048",
-    domain: "logistics",
-    level: 1,
-    order: 48,
-    difficulty: "easy",
-    title: "Logistics Metric #48: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-049",
-    domain: "logistics",
-    level: 1,
-    order: 49,
-    difficulty: "easy",
-    title: "Logistics Metric #49: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-050",
-    domain: "logistics",
-    level: 1,
-    order: 50,
-    difficulty: "easy",
-    title: "Logistics Metric #50: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-051",
-    domain: "logistics",
-    level: 1,
-    order: 51,
-    difficulty: "easy",
-    title: "Logistics Metric #51: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-052",
-    domain: "logistics",
-    level: 1,
-    order: 52,
-    difficulty: "easy",
-    title: "Logistics Metric #52: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-053",
-    domain: "logistics",
-    level: 1,
-    order: 53,
-    difficulty: "easy",
-    title: "Logistics Metric #53: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-054",
-    domain: "logistics",
-    level: 1,
-    order: 54,
-    difficulty: "easy",
-    title: "Logistics Metric #54: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-055",
-    domain: "logistics",
-    level: 1,
-    order: 55,
-    difficulty: "easy",
-    title: "Logistics Metric #55: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-056",
-    domain: "logistics",
-    level: 1,
-    order: 56,
-    difficulty: "easy",
-    title: "Logistics Metric #56: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-057",
-    domain: "logistics",
-    level: 1,
-    order: 57,
-    difficulty: "easy",
-    title: "Logistics Metric #57: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-058",
-    domain: "logistics",
-    level: 1,
-    order: 58,
-    difficulty: "easy",
-    title: "Logistics Metric #58: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-059",
-    domain: "logistics",
-    level: 1,
-    order: 59,
-    difficulty: "easy",
-    title: "Logistics Metric #59: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-060",
-    domain: "logistics",
-    level: 1,
-    order: 60,
-    difficulty: "easy",
-    title: "Logistics Metric #60: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-061",
-    domain: "logistics",
-    level: 1,
-    order: 61,
-    difficulty: "easy",
-    title: "Logistics Metric #61: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-062",
-    domain: "logistics",
-    level: 1,
-    order: 62,
-    difficulty: "easy",
-    title: "Logistics Metric #62: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-063",
-    domain: "logistics",
-    level: 1,
-    order: 63,
-    difficulty: "easy",
-    title: "Logistics Metric #63: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-064",
-    domain: "logistics",
-    level: 1,
-    order: 64,
-    difficulty: "easy",
-    title: "Logistics Metric #64: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-065",
-    domain: "logistics",
-    level: 1,
-    order: 65,
-    difficulty: "easy",
-    title: "Logistics Metric #65: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-066",
-    domain: "logistics",
-    level: 1,
-    order: 66,
-    difficulty: "easy",
-    title: "Logistics Metric #66: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-067",
-    domain: "logistics",
-    level: 1,
-    order: 67,
-    difficulty: "easy",
-    title: "Logistics Metric #67: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-068",
-    domain: "logistics",
-    level: 1,
-    order: 68,
-    difficulty: "easy",
-    title: "Logistics Metric #68: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-069",
-    domain: "logistics",
-    level: 1,
-    order: 69,
-    difficulty: "easy",
-    title: "Logistics Metric #69: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-070",
-    domain: "logistics",
-    level: 1,
-    order: 70,
-    difficulty: "easy",
-    title: "Logistics Metric #70: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-071",
-    domain: "logistics",
-    level: 1,
-    order: 71,
-    difficulty: "easy",
-    title: "Logistics Metric #71: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-072",
-    domain: "logistics",
-    level: 1,
-    order: 72,
-    difficulty: "easy",
-    title: "Logistics Metric #72: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-073",
-    domain: "logistics",
-    level: 1,
-    order: 73,
-    difficulty: "easy",
-    title: "Logistics Metric #73: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-074",
-    domain: "logistics",
-    level: 1,
-    order: 74,
-    difficulty: "easy",
-    title: "Logistics Metric #74: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-075",
-    domain: "logistics",
-    level: 1,
-    order: 75,
-    difficulty: "easy",
-    title: "Logistics Metric #75: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-076",
-    domain: "logistics",
-    level: 1,
-    order: 76,
-    difficulty: "easy",
-    title: "Logistics Metric #76: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-077",
-    domain: "logistics",
-    level: 1,
-    order: 77,
-    difficulty: "easy",
-    title: "Logistics Metric #77: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-078",
-    domain: "logistics",
-    level: 1,
-    order: 78,
-    difficulty: "easy",
-    title: "Logistics Metric #78: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-079",
-    domain: "logistics",
-    level: 1,
-    order: 79,
-    difficulty: "easy",
-    title: "Logistics Metric #79: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-080",
-    domain: "logistics",
-    level: 1,
-    order: 80,
-    difficulty: "easy",
-    title: "Logistics Metric #80: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-081",
-    domain: "logistics",
-    level: 1,
-    order: 81,
-    difficulty: "easy",
-    title: "Logistics Metric #81: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-082",
-    domain: "logistics",
-    level: 1,
-    order: 82,
-    difficulty: "easy",
-    title: "Logistics Metric #82: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-083",
-    domain: "logistics",
-    level: 1,
-    order: 83,
-    difficulty: "easy",
-    title: "Logistics Metric #83: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-084",
-    domain: "logistics",
-    level: 1,
-    order: 84,
-    difficulty: "easy",
-    title: "Logistics Metric #84: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-085",
-    domain: "logistics",
-    level: 1,
-    order: 85,
-    difficulty: "easy",
-    title: "Logistics Metric #85: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-086",
-    domain: "logistics",
-    level: 1,
-    order: 86,
-    difficulty: "easy",
-    title: "Logistics Metric #86: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-087",
-    domain: "logistics",
-    level: 1,
-    order: 87,
-    difficulty: "easy",
-    title: "Logistics Metric #87: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-088",
-    domain: "logistics",
-    level: 1,
-    order: 88,
-    difficulty: "easy",
-    title: "Logistics Metric #88: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-089",
-    domain: "logistics",
-    level: 1,
-    order: 89,
-    difficulty: "easy",
-    title: "Logistics Metric #89: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-090",
-    domain: "logistics",
-    level: 1,
-    order: 90,
-    difficulty: "easy",
-    title: "Logistics Metric #90: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-091",
-    domain: "logistics",
-    level: 1,
-    order: 91,
-    difficulty: "easy",
-    title: "Logistics Metric #91: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-092",
-    domain: "logistics",
-    level: 1,
-    order: 92,
-    difficulty: "easy",
-    title: "Logistics Metric #92: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-093",
-    domain: "logistics",
-    level: 1,
-    order: 93,
-    difficulty: "easy",
-    title: "Logistics Metric #93: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-094",
-    domain: "logistics",
-    level: 1,
-    order: 94,
-    difficulty: "easy",
-    title: "Logistics Metric #94: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-095",
-    domain: "logistics",
-    level: 1,
-    order: 95,
-    difficulty: "easy",
-    title: "Logistics Metric #95: DRIVERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull commercial drivers with safety score ratings between 4.2 and 4.9 from the drivers table? Display id, full_name, license_number, safety_score, ordered by safety_score descending.",
-    context_notes: "Operational inventory query on drivers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","full_name","license_number","safety_score"],
-    reference_sql: "SELECT id, full_name, license_number, safety_score FROM drivers WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter drivers with WHERE safety_score BETWEEN 4.2 AND 4.9 ORDER BY safety_score DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-096",
-    domain: "logistics",
-    level: 1,
-    order: 96,
-    difficulty: "easy",
-    title: "Logistics Metric #96: SUPPLIERS Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull suppliers with lead times between 7 and 21 days from the suppliers table? Display id, supplier_name, country, lead_time_days, ordered by lead_time_days descending.",
-    context_notes: "Operational inventory query on suppliers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","supplier_name","country","lead_time_days"],
-    reference_sql: "SELECT id, supplier_name, country, lead_time_days FROM suppliers WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter suppliers with WHERE lead_time_days BETWEEN 7 AND 21 ORDER BY lead_time_days DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-097",
-    domain: "logistics",
-    level: 1,
-    order: 97,
-    difficulty: "easy",
-    title: "Logistics Metric #97: SHIPMENTS Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull shipments weighing between 1,000 and 8,000 kg from the shipments table? Display id, origin_warehouse, destination_city, weight_kg, ordered by weight_kg descending.",
-    context_notes: "Operational inventory query on shipments.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","origin_warehouse","destination_city","weight_kg"],
-    reference_sql: "SELECT id, origin_warehouse, destination_city, weight_kg FROM shipments WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter shipments with WHERE weight_kg BETWEEN 1000 AND 8000 ORDER BY weight_kg DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-098",
-    domain: "logistics",
-    level: 1,
-    order: 98,
-    difficulty: "easy",
-    title: "Logistics Metric #98: CARRIERS Query",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Could you pull carriers with performance ratings between 4.0 and 4.8 from the carriers table? Display id, carrier_name, service_level, rating, ordered by rating descending.",
-    context_notes: "Operational inventory query on carriers.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","carrier_name","service_level","rating"],
-    reference_sql: "SELECT id, carrier_name, service_level, rating FROM carriers WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter carriers with WHERE rating BETWEEN 4 AND 4.8 ORDER BY rating DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-099",
-    domain: "logistics",
-    level: 1,
-    order: 99,
-    difficulty: "easy",
-    title: "Logistics Metric #99: FLEET VEHICLES Query",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Could you pull fleet vehicles with odometer reading between 50k and 150k km from the fleet_vehicles table? Display id, vehicle_number, vehicle_type, mileage_km, ordered by mileage_km descending.",
-    context_notes: "Operational inventory query on fleet_vehicles.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","vehicle_number","vehicle_type","mileage_km"],
-    reference_sql: "SELECT id, vehicle_number, vehicle_type, mileage_km FROM fleet_vehicles WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter fleet_vehicles with WHERE mileage_km BETWEEN 50000 AND 150000 ORDER BY mileage_km DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
-  },
-  {
-    id: "log-L1-100",
-    domain: "logistics",
-    level: 1,
-    order: 100,
-    difficulty: "easy",
-    title: "Logistics Metric #100: WAREHOUSES Query",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Could you pull warehouses with square footage between 200k and 400k from the warehouses table? Display id, city, capacity_sqft, manager_name, ordered by capacity_sqft descending.",
-    context_notes: "Operational inventory query on warehouses.",
-    concepts: ["SELECT","WHERE","BETWEEN","ORDER BY"],
-    expected_columns: ["id","city","capacity_sqft","manager_name"],
-    reference_sql: "SELECT id, city, capacity_sqft, manager_name FROM warehouses WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Filter warehouses with WHERE capacity_sqft BETWEEN 200000 AND 400000 ORDER BY capacity_sqft DESC."
-    ],
-    starter_sql: "SELECT\n  -- Complete the query\nFROM \n;"
+    "id": "log-L1-001",
+    "domain": "logistics",
+    "level": 1,
+    "order": 1,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-002",
+    "domain": "logistics",
+    "level": 1,
+    "order": 2,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-003",
+    "domain": "logistics",
+    "level": 1,
+    "order": 3,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-004",
+    "domain": "logistics",
+    "level": 1,
+    "order": 4,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-005",
+    "domain": "logistics",
+    "level": 1,
+    "order": 5,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-006",
+    "domain": "logistics",
+    "level": 1,
+    "order": 6,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-007",
+    "domain": "logistics",
+    "level": 1,
+    "order": 7,
+    "difficulty": "warm-up",
+    "title": "Data Cleansing: Whitespace Normalization with TRIM and UPPER",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: In warehouses, text fields often contain irregular casing and whitespace. Standardize entries by selecting id and UPPER(TRIM(city)) AS cleaned_name ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "DATA CLEANING",
+      "TRIM",
+      "UPPER"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS cleaned_name FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) AS cleaned_name."
+    ],
+    "solution_explanation": "Applies TRIM to strip whitespace and UPPER to standardize casing.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-008",
+    "domain": "logistics",
+    "level": 1,
+    "order": 8,
+    "difficulty": "warm-up",
+    "title": "Null Handling: Default Imputation with COALESCE",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Review: NULL metrics disrupt financial reporting. From fleet_vehicles, select id, vehicle_number, and COALESCE(max_weight_capacity_kg, 0.00) AS safe_metric ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULL HANDLING",
+      "COALESCE",
+      "DATA INTEGRITY"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "safe_metric"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, COALESCE(max_weight_capacity_kg, 0.00) AS safe_metric FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use COALESCE(max_weight_capacity_kg, 0.00) AS safe_metric."
+    ],
+    "solution_explanation": "Substitutes a default numeric value whenever a null occurs.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-009",
+    "domain": "logistics",
+    "level": 1,
+    "order": 9,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-010",
+    "domain": "logistics",
+    "level": 1,
+    "order": 10,
+    "difficulty": "warm-up",
+    "title": "Directory Overview: warehouses Baseline",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Ahead of our quarterly audit, pull our active warehouses entries showing id and city, sorted ascending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SELECT",
+      "ORDER BY",
+      "LIMIT"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT id, city FROM warehouses ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write a SELECT statement specifying id and city.",
+      "Order by id ASC and limit to 20."
+    ],
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-011",
+    "domain": "logistics",
+    "level": 1,
+    "order": 11,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-012",
+    "domain": "logistics",
+    "level": 1,
+    "order": 12,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-013",
+    "domain": "logistics",
+    "level": 1,
+    "order": 13,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-014",
+    "domain": "logistics",
+    "level": 1,
+    "order": 14,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-015",
+    "domain": "logistics",
+    "level": 1,
+    "order": 15,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-016",
+    "domain": "logistics",
+    "level": 1,
+    "order": 16,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-017",
+    "domain": "logistics",
+    "level": 1,
+    "order": 17,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-018",
+    "domain": "logistics",
+    "level": 1,
+    "order": 18,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-019",
+    "domain": "logistics",
+    "level": 1,
+    "order": 19,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-020",
+    "domain": "logistics",
+    "level": 1,
+    "order": 20,
+    "difficulty": "warm-up",
+    "title": "Relational Cross-Link: warehouses and carriers",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compile a relational breakdown connecting warehouses to carriers. Return city and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
+    ],
+    "expected_columns": [
+      "city",
+      "related_count"
+    ],
+    "reference_sql": "SELECT t1.city, COUNT(t2.id) AS related_count FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id GROUP BY t1.city ORDER BY related_count DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Join warehouses and carriers on t1.id = t2.id.",
+      "Group by t1.city and order by related_count DESC."
+    ],
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-021",
+    "domain": "logistics",
+    "level": 1,
+    "order": 21,
+    "difficulty": "warm-up",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-022",
+    "domain": "logistics",
+    "level": 1,
+    "order": 22,
+    "difficulty": "warm-up",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-023",
+    "domain": "logistics",
+    "level": 1,
+    "order": 23,
+    "difficulty": "warm-up",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-024",
+    "domain": "logistics",
+    "level": 1,
+    "order": 24,
+    "difficulty": "warm-up",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-025",
+    "domain": "logistics",
+    "level": 1,
+    "order": 25,
+    "difficulty": "warm-up",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L1-026",
+    "domain": "logistics",
+    "level": 1,
+    "order": 26,
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-027",
+    "domain": "logistics",
+    "level": 1,
+    "order": 27,
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-028",
+    "domain": "logistics",
+    "level": 1,
+    "order": 28,
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-029",
+    "domain": "logistics",
+    "level": 1,
+    "order": 29,
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-030",
+    "domain": "logistics",
+    "level": 1,
+    "order": 30,
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from warehouses and carriers using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
+    ],
+    "expected_columns": [
+      "catalog_name",
+      "category_type"
+    ],
+    "reference_sql": "SELECT city AS catalog_name, 'Primary' AS category_type FROM warehouses UNION ALL SELECT carrier_name AS catalog_name, 'Secondary' AS category_type FROM carriers ORDER BY catalog_name ASC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
+    ],
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-031",
+    "domain": "logistics",
+    "level": 1,
+    "order": 31,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-032",
+    "domain": "logistics",
+    "level": 1,
+    "order": 32,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-033",
+    "domain": "logistics",
+    "level": 1,
+    "order": 33,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-034",
+    "domain": "logistics",
+    "level": 1,
+    "order": 34,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-035",
+    "domain": "logistics",
+    "level": 1,
+    "order": 35,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-036",
+    "domain": "logistics",
+    "level": 1,
+    "order": 36,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-037",
+    "domain": "logistics",
+    "level": 1,
+    "order": 37,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-038",
+    "domain": "logistics",
+    "level": 1,
+    "order": 38,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-039",
+    "domain": "logistics",
+    "level": 1,
+    "order": 39,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-040",
+    "domain": "logistics",
+    "level": 1,
+    "order": 40,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg is strictly greater than the overall table average. Order descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles) ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Filter using WHERE max_weight_capacity_kg > (SELECT AVG(max_weight_capacity_kg) FROM fleet_vehicles)."
+    ],
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-041",
+    "domain": "logistics",
+    "level": 1,
+    "order": 41,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-042",
+    "domain": "logistics",
+    "level": 1,
+    "order": 42,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-043",
+    "domain": "logistics",
+    "level": 1,
+    "order": 43,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-044",
+    "domain": "logistics",
+    "level": 1,
+    "order": 44,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-045",
+    "domain": "logistics",
+    "level": 1,
+    "order": 45,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-046",
+    "domain": "logistics",
+    "level": 1,
+    "order": 46,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-047",
+    "domain": "logistics",
+    "level": 1,
+    "order": 47,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-048",
+    "domain": "logistics",
+    "level": 1,
+    "order": 48,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-049",
+    "domain": "logistics",
+    "level": 1,
+    "order": 49,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-050",
+    "domain": "logistics",
+    "level": 1,
+    "order": 50,
+    "difficulty": "core",
+    "title": "Sequential Delta Analysis with LAG()",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Analyze sequential transactions or events in shipments. Using the LAG() window function, retrieve id, weight_kg, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount."
+    ],
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-051",
+    "domain": "logistics",
+    "level": 1,
+    "order": 51,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-052",
+    "domain": "logistics",
+    "level": 1,
+    "order": 52,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-053",
+    "domain": "logistics",
+    "level": 1,
+    "order": 53,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-054",
+    "domain": "logistics",
+    "level": 1,
+    "order": 54,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-055",
+    "domain": "logistics",
+    "level": 1,
+    "order": 55,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-056",
+    "domain": "logistics",
+    "level": 1,
+    "order": 56,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-057",
+    "domain": "logistics",
+    "level": 1,
+    "order": 57,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-058",
+    "domain": "logistics",
+    "level": 1,
+    "order": 58,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-059",
+    "domain": "logistics",
+    "level": 1,
+    "order": 59,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-060",
+    "domain": "logistics",
+    "level": 1,
+    "order": 60,
+    "difficulty": "core",
+    "title": "Modular Pipeline with WITH (CTE)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, vehicle_number, and max_weight_capacity_kg from fleet_vehicles where max_weight_capacity_kg > 20. Select all columns from staged_records ordered descending by max_weight_capacity_kg. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "WITH staged_records AS (SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20) SELECT id, vehicle_number, max_weight_capacity_kg FROM staged_records ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
+    ],
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-061",
+    "domain": "logistics",
+    "level": 1,
+    "order": 61,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-062",
+    "domain": "logistics",
+    "level": 1,
+    "order": 62,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-063",
+    "domain": "logistics",
+    "level": 1,
+    "order": 63,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-064",
+    "domain": "logistics",
+    "level": 1,
+    "order": 64,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-065",
+    "domain": "logistics",
+    "level": 1,
+    "order": 65,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-066",
+    "domain": "logistics",
+    "level": 1,
+    "order": 66,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-067",
+    "domain": "logistics",
+    "level": 1,
+    "order": 67,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-068",
+    "domain": "logistics",
+    "level": 1,
+    "order": 68,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-069",
+    "domain": "logistics",
+    "level": 1,
+    "order": 69,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-070",
+    "domain": "logistics",
+    "level": 1,
+    "order": 70,
+    "difficulty": "core",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Engineering Ticket: Build a session staging table named temp_fleet_vehicles_clean to cleanse raw data. Ingest id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount from fleet_vehicles where vehicle_number IS NOT NULL. Select all columns from temp_fleet_vehicles_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "standardized_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_clean AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(max_weight_capacity_kg, 0.00) AS standardized_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_fleet_vehicles_clean ORDER BY standardized_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_fleet_vehicles_clean;"
+    ],
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L1-071",
+    "domain": "logistics",
+    "level": 1,
+    "order": 71,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-072",
+    "domain": "logistics",
+    "level": 1,
+    "order": 72,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-073",
+    "domain": "logistics",
+    "level": 1,
+    "order": 73,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-074",
+    "domain": "logistics",
+    "level": 1,
+    "order": 74,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-075",
+    "domain": "logistics",
+    "level": 1,
+    "order": 75,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-076",
+    "domain": "logistics",
+    "level": 1,
+    "order": 76,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-077",
+    "domain": "logistics",
+    "level": 1,
+    "order": 77,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-078",
+    "domain": "logistics",
+    "level": 1,
+    "order": 78,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-079",
+    "domain": "logistics",
+    "level": 1,
+    "order": 79,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-080",
+    "domain": "logistics",
+    "level": 1,
+    "order": 80,
+    "difficulty": "challenging",
+    "title": "Batch Automation with Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) that updates max_weight_capacity_kg by adding p_delta. Execute it with CALL sp_adjust_fleet_vehicles_val(1, 5); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_fleet_vehicles_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_fleet_vehicles_val(1, 5); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
+    ],
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-081",
+    "domain": "logistics",
+    "level": 1,
+    "order": 81,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-082",
+    "domain": "logistics",
+    "level": 1,
+    "order": 82,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-083",
+    "domain": "logistics",
+    "level": 1,
+    "order": 83,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-084",
+    "domain": "logistics",
+    "level": 1,
+    "order": 84,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-085",
+    "domain": "logistics",
+    "level": 1,
+    "order": 85,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-086",
+    "domain": "logistics",
+    "level": 1,
+    "order": 86,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-087",
+    "domain": "logistics",
+    "level": 1,
+    "order": 87,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-088",
+    "domain": "logistics",
+    "level": 1,
+    "order": 88,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-089",
+    "domain": "logistics",
+    "level": 1,
+    "order": 89,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-090",
+    "domain": "logistics",
+    "level": 1,
+    "order": 90,
+    "difficulty": "challenging",
+    "title": "Access Speedup with Database Index",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Production Ticket: Read latency on fleet_vehicles is increasing. Create an Index named idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC). Then retrieve id, vehicle_number, max_weight_capacity_kg for entries where max_weight_capacity_kg > 20 ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE max_weight_capacity_kg > 20 ORDER BY max_weight_capacity_kg DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE INDEX idx_fleet_vehicles_perf ON fleet_vehicles(max_weight_capacity_kg DESC); followed by the SELECT query."
+    ],
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-091",
+    "domain": "logistics",
+    "level": 1,
+    "order": 91,
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-092",
+    "domain": "logistics",
+    "level": 1,
+    "order": 92,
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-093",
+    "domain": "logistics",
+    "level": 1,
+    "order": 93,
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-094",
+    "domain": "logistics",
+    "level": 1,
+    "order": 94,
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-095",
+    "domain": "logistics",
+    "level": 1,
+    "order": 95,
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L1-096",
+    "domain": "logistics",
+    "level": 1,
+    "order": 96,
+    "difficulty": "boss",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L1-097",
+    "domain": "logistics",
+    "level": 1,
+    "order": 97,
+    "difficulty": "boss",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L1-098",
+    "domain": "logistics",
+    "level": 1,
+    "order": 98,
+    "difficulty": "boss",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L1-099",
+    "domain": "logistics",
+    "level": 1,
+    "order": 99,
+    "difficulty": "boss",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L1-100",
+    "domain": "logistics",
+    "level": 1,
+    "order": 100,
+    "difficulty": "boss",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering shipments by weight_kg > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 50;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
+    ],
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   }
 ];

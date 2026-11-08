@@ -55,6 +55,36 @@ async function ensureSchemaSeeded(pg: PGlite, schema: string): Promise<void> {
   }
 }
 
+function prepareQueryForExecution(sql: string): string {
+  const tempMatches = [...sql.matchAll(/CREATE\s+(?:TEMP|TEMPORARY)\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)/gi)];
+  const viewMatches = [...sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+([a-zA-Z0-9_]+)/gi)];
+  const indexMatches = [...sql.matchAll(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)/gi)];
+  const triggerMatches = [...sql.matchAll(/CREATE\s+TRIGGER\s+([a-zA-Z0-9_]+)\s+[\s\S]*?\s+ON\s+([a-zA-Z0-9_]+)/gi)];
+  const procMatches = [...sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?PROCEDURE\s+([a-zA-Z0-9_]+)/gi)];
+  const partMatches = [...sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)\s+(?:PARTITION\s+OF|\([\s\S]*?\)\s*PARTITION\s+BY)/gi)];
+
+  let prep = "";
+  for (const m of tempMatches) {
+    prep += `DROP TABLE IF EXISTS "${m[1]}" CASCADE; `;
+  }
+  for (const m of viewMatches) {
+    prep += `DROP VIEW IF EXISTS "${m[1]}" CASCADE; `;
+  }
+  for (const m of indexMatches) {
+    prep += `DROP INDEX IF EXISTS "${m[1]}"; `;
+  }
+  for (const m of triggerMatches) {
+    prep += `DROP TRIGGER IF EXISTS "${m[1]}" ON "${m[2]}"; `;
+  }
+  for (const m of procMatches) {
+    prep += `DROP PROCEDURE IF EXISTS "${m[1]}"; `;
+  }
+  for (const m of partMatches) {
+    prep += `DROP TABLE IF EXISTS "${m[1]}" CASCADE; `;
+  }
+  return prep + sql;
+}
+
 export async function runSandboxQuery(
   rawSql: string,
   schema: string = "ecom_l1",
@@ -86,21 +116,23 @@ export async function runSandboxQuery(
       );
       const client = await Promise.race([connectPromise, timeoutPromise]);
       try {
-        await client.query("BEGIN TRANSACTION READ ONLY;");
+        await client.query("BEGIN TRANSACTION;");
         await client.query(`SET LOCAL search_path = "${schema}", pg_temp;`);
         await client.query("SET LOCAL statement_timeout = 5000;");
 
-        const res = await client.query(queryToRun);
+        const executableSql = prepareQueryForExecution(queryToRun);
+        const res = await client.query(executableSql);
         await client.query("ROLLBACK;");
 
         const durationMs = Date.now() - startTime;
-        const columns = res.fields ? res.fields.map((f) => f.name) : [];
-        const rows = res.rows ? res.rows.slice(0, maxRows) : [];
+        const lastResult = Array.isArray(res) ? res[res.length - 1] : res;
+        const columns = lastResult.fields ? lastResult.fields.map((f: { name: string }) => f.name) : [];
+        const rows = lastResult.rows ? lastResult.rows.slice(0, maxRows) : [];
 
         return {
           columns,
           rows,
-          rowCount: res.rowCount ?? rows.length,
+          rowCount: lastResult.rowCount ?? rows.length,
           durationMs,
         };
       } finally {
@@ -129,16 +161,27 @@ export async function runSandboxQuery(
     const pg = await getEmbeddedPg();
     await ensureSchemaSeeded(pg, schema);
     await pg.exec(`SET search_path = "${schema}";`);
-    const res = await pg.query(queryToRun);
+
+    const executableSql = prepareQueryForExecution(queryToRun);
+    const execResults = await pg.exec(executableSql);
+
+    // Pick the last result containing fields or the final statement
+    let finalRes = execResults[execResults.length - 1];
+    for (let i = execResults.length - 1; i >= 0; i--) {
+      if (execResults[i].fields && execResults[i].fields.length > 0) {
+        finalRes = execResults[i];
+        break;
+      }
+    }
 
     const durationMs = Date.now() - startTime;
-    const columns = res.fields ? res.fields.map((f: { name: string }) => f.name) : [];
-    const rows = (res.rows as Record<string, unknown>[]).slice(0, maxRows);
+    const columns = finalRes?.fields ? finalRes.fields.map((f: { name: string }) => f.name) : [];
+    const rows = ((finalRes?.rows as Record<string, unknown>[]) || []).slice(0, maxRows);
 
     return {
       columns,
       rows,
-      rowCount: res.rows.length,
+      rowCount: finalRes?.rows?.length ?? rows.length,
       durationMs,
     };
   } catch (embeddedErr: unknown) {

@@ -1,2612 +1,3723 @@
-// ============================================================================
-// SAAS — LEVEL 3: SUBQUERIES, CORRELATED FILTERS & SET OPERATIONS
-// 100 Handcrafted, Non-Robotic Questions from Executive Decision-Makers
-// Tables (12): accounts, pricing_plans, subscriptions, invoices, users, api_keys,
-//              feature_usage, cloud_clusters, support_tickets, integrations,
-//              audit_events, churn_events
-// ============================================================================
-
 import { QuestionDefinition } from "./ecom-l1-questions";
 
 export const SAAS_L3_QUESTIONS: QuestionDefinition[] = [
   {
-    id: "saas-L3-001",
-    domain: "saas",
-    level: 3,
-    order: 1,
-    difficulty: "hard",
-    title: "Accounts Generating Above Industry-Average MRR",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Samira here. Identify high-performing customer accounts whose active MRR exceeds the average MRR of all active accounts in their industry. Show company_name, industry, and mrr, ordered by mrr descending.",
-    context_notes: "Benchmarking top-tier accounts against industry vertical norms.",
-    concepts: ["Correlated Subquery","WHERE","AVG()","JOIN"],
-    expected_columns: ["company_name","industry","mrr"],
-    reference_sql: "SELECT a.company_name, a.industry, s.mrr FROM accounts a JOIN subscriptions s ON a.id = s.account_id WHERE s.status = 'active' AND s.mrr > (SELECT AVG(s2.mrr) FROM subscriptions s2 JOIN accounts a2 ON s2.account_id = a2.id WHERE a2.industry = a.industry AND s2.status = 'active') ORDER BY s.mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a correlated subquery comparing s.mrr to the average MRR of accounts in that same industry."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-002",
-    domain: "saas",
-    level: 3,
-    order: 2,
-    difficulty: "hard",
-    title: "Accounts with Connected Third-Party Integrations (EXISTS)",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Tariq here from Integrations Engineering. Retrieve all active enterprise accounts that have at least one active third-party tool integration. Return id, company_name, and industry using EXISTS.",
-    context_notes: "Ecosystem integration adoption among enterprise clients.",
-    concepts: ["EXISTS","Correlated Subquery","WHERE"],
-    expected_columns: ["id","company_name","industry"],
-    reference_sql: "SELECT a.id, a.company_name, a.industry FROM accounts a WHERE a.tier = 'enterprise' AND EXISTS (SELECT 1 FROM integrations i WHERE i.account_id = a.id AND i.is_active = TRUE) ORDER BY a.company_name ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE a.tier = 'enterprise' AND EXISTS (SELECT 1 FROM integrations i WHERE i.account_id = a.id AND i.is_active = TRUE)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-003",
-    domain: "saas",
-    level: 3,
-    order: 3,
-    difficulty: "hard",
-    title: "Total ARR Lost from High-Impact Churn Events",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Samira here. We need a post-mortem on severe churn. Find all churn events where the lost ARR was higher than the average ARR lost across all churn events. Show account_id, churn_date, arr_lost, and reason, ordered by arr_lost desc.",
-    context_notes: "Major customer churn root cause analysis.",
-    concepts: ["Scalar Subquery","WHERE","AVG()"],
-    expected_columns: ["account_id","churn_date","arr_lost","reason"],
-    reference_sql: "SELECT account_id, churn_date, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-004",
-    domain: "saas",
-    level: 3,
-    order: 4,
-    difficulty: "hard",
-    title: "Accounts with Zero Support Tickets Logged (NOT EXISTS)",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Chloe here. Identify enterprise accounts that have never filed a single support ticket. Return account id, company_name, and industry using NOT EXISTS.",
-    context_notes: "Silent customer health checks to detect disengagement.",
-    concepts: ["NOT EXISTS","Correlated Subquery","WHERE"],
-    expected_columns: ["id","company_name","industry"],
-    reference_sql: "SELECT a.id, a.company_name, a.industry FROM accounts a WHERE a.tier = 'enterprise' AND NOT EXISTS (SELECT 1 FROM support_tickets st WHERE st.account_id = a.id) ORDER BY a.company_name ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE a.tier = 'enterprise' AND NOT EXISTS (SELECT 1 FROM support_tickets st WHERE st.account_id = a.id)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-005",
-    domain: "saas",
-    level: 3,
-    order: 5,
-    difficulty: "hard",
-    title: "Accounts with Both Active Integrations and API Keys (INTERSECT)",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Find all customer account IDs that have active integrations AND have generated at least one API key using INTERSECT. Display account_id.",
-    context_notes: "Developer-led technical product adoption mapping.",
-    concepts: ["INTERSECT","Set Operations","DISTINCT"],
-    expected_columns: ["account_id"],
-    reference_sql: "SELECT DISTINCT account_id FROM integrations WHERE is_active = TRUE INTERSECT SELECT DISTINCT account_id FROM api_keys ORDER BY account_id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use the INTERSECT operator between accounts with integrations and accounts with API keys."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-006",
-    domain: "saas",
-    level: 3,
-    order: 6,
-    difficulty: "hard",
-    title: "Highest MRR Subscription in Each Industry (Derived Table)",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "For each industry, find the maximum active subscription MRR. Join accounts and subscriptions with a derived table to return industry, company_name, and mrr.",
-    context_notes: "Industry flagship contract leadership profiling.",
-    concepts: ["Derived Tables","JOIN","Subqueries"],
-    expected_columns: ["industry","company_name","mrr"],
-    reference_sql: "SELECT a.industry, a.company_name, s.mrr FROM accounts a JOIN subscriptions s ON a.id = s.account_id JOIN (SELECT a2.industry, MAX(s2.mrr) AS max_mrr FROM accounts a2 JOIN subscriptions s2 ON a2.id = s2.account_id WHERE s2.status = 'active' GROUP BY a2.industry) max_ind ON a.industry = max_ind.industry AND s.mrr = max_ind.max_mrr ORDER BY s.mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join against a derived table grouping by industry and taking MAX(mrr)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-007",
-    domain: "saas",
-    level: 3,
-    order: 7,
-    difficulty: "hard",
-    title: "Audit Events Logging User Deletion or Role Changes",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Tariq from Security. Find all audit events where the action took place on accounts having enterprise tier. Show account_id, action, and timestamp, ordered by timestamp descending.",
-    context_notes: "SOC2 compliance auditing of enterprise audit trails.",
-    concepts: ["IN","Subquery","Security Audit"],
-    expected_columns: ["account_id","action","timestamp"],
-    reference_sql: "SELECT ae.account_id, ae.action, ae.timestamp FROM audit_events ae WHERE ae.account_id IN (SELECT id FROM accounts WHERE tier = 'enterprise') ORDER BY ae.timestamp DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use WHERE ae.account_id IN (SELECT id FROM accounts WHERE tier = 'enterprise')."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-008",
-    domain: "saas",
-    level: 3,
-    order: 8,
-    difficulty: "hard",
-    title: "Feature Usage Volume Outliers Above Feature Mean",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Chloe here. Identify feature usage entries where monthly_events is greater than the average monthly events recorded for that specific feature. Show account_id, feature_name, and monthly_events.",
-    context_notes: "Identifying power users and high-intensity workload patterns.",
-    concepts: ["Correlated Subquery","WHERE","AVG()"],
-    expected_columns: ["account_id","feature_name","monthly_events"],
-    reference_sql: "SELECT fu.account_id, fu.feature_name, fu.monthly_events FROM feature_usage fu WHERE fu.monthly_events > (SELECT AVG(fu2.monthly_events) FROM feature_usage fu2 WHERE fu2.feature_name = fu.feature_name) ORDER BY fu.monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a correlated subquery comparing fu.monthly_events to the average for that feature_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-009",
-    domain: "saas",
-    level: 3,
-    order: 9,
-    difficulty: "hard",
-    title: "Active Accounts vs Churned Accounts List (UNION)",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Create a unified company account status roster. Output account id, company_name, and status label ('active' for active subscribers, 'churned' for churn event records) using UNION.",
-    context_notes: "Unified customer account health categorization.",
-    concepts: ["UNION","Set Operations","Customer Health"],
-    expected_columns: ["id","company_name","account_health"],
-    reference_sql: "SELECT a.id, a.company_name, 'active' AS account_health FROM accounts a JOIN subscriptions s ON a.id = s.account_id WHERE s.status = 'active' UNION SELECT a.id, a.company_name, 'churned' AS account_health FROM accounts a JOIN churn_events ce ON a.id = ce.account_id ORDER BY id ASC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Combine active subscriber accounts and churned accounts using UNION."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-010",
-    domain: "saas",
-    level: 3,
-    order: 10,
-    difficulty: "hard",
-    title: "Cloud Clusters Costing More Than Provider Average",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Tariq here. Find all cloud clusters whose monthly hosting cost exceeds the average cost for clusters hosted on that same cloud provider. Display cluster_name, cloud_provider, region, and monthly_cost_usd.",
-    context_notes: "Infrastructure cost anomaly detection.",
-    concepts: ["Correlated Subquery","WHERE","AVG()"],
-    expected_columns: ["cluster_name","cloud_provider","region","monthly_cost_usd"],
-    reference_sql: "SELECT cc.cluster_name, cc.cloud_provider, cc.region, cc.monthly_cost_usd FROM cloud_clusters cc WHERE cc.monthly_cost_usd > (SELECT AVG(cc2.monthly_cost_usd) FROM cloud_clusters cc2 WHERE cc2.cloud_provider = cc.cloud_provider) ORDER BY cc.monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a correlated subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters WHERE cloud_provider = cc.cloud_provider)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-011",
-    domain: "saas",
-    level: 3,
-    order: 11,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #11: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-012",
-    domain: "saas",
-    level: 3,
-    order: 12,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #12: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-013",
-    domain: "saas",
-    level: 3,
-    order: 13,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #13: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-014",
-    domain: "saas",
-    level: 3,
-    order: 14,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #14: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-015",
-    domain: "saas",
-    level: 3,
-    order: 15,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #15: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-016",
-    domain: "saas",
-    level: 3,
-    order: 16,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #16: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-017",
-    domain: "saas",
-    level: 3,
-    order: 17,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #17: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-018",
-    domain: "saas",
-    level: 3,
-    order: 18,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #18: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-019",
-    domain: "saas",
-    level: 3,
-    order: 19,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #19: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-020",
-    domain: "saas",
-    level: 3,
-    order: 20,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #20: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-021",
-    domain: "saas",
-    level: 3,
-    order: 21,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #21: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-022",
-    domain: "saas",
-    level: 3,
-    order: 22,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #22: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-023",
-    domain: "saas",
-    level: 3,
-    order: 23,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #23: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-024",
-    domain: "saas",
-    level: 3,
-    order: 24,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #24: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-025",
-    domain: "saas",
-    level: 3,
-    order: 25,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #25: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-026",
-    domain: "saas",
-    level: 3,
-    order: 26,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #26: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-027",
-    domain: "saas",
-    level: 3,
-    order: 27,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #27: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-028",
-    domain: "saas",
-    level: 3,
-    order: 28,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #28: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-029",
-    domain: "saas",
-    level: 3,
-    order: 29,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #29: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-030",
-    domain: "saas",
-    level: 3,
-    order: 30,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #30: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-031",
-    domain: "saas",
-    level: 3,
-    order: 31,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #31: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-032",
-    domain: "saas",
-    level: 3,
-    order: 32,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #32: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-033",
-    domain: "saas",
-    level: 3,
-    order: 33,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #33: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-034",
-    domain: "saas",
-    level: 3,
-    order: 34,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #34: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-035",
-    domain: "saas",
-    level: 3,
-    order: 35,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #35: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-036",
-    domain: "saas",
-    level: 3,
-    order: 36,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #36: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-037",
-    domain: "saas",
-    level: 3,
-    order: 37,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #37: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-038",
-    domain: "saas",
-    level: 3,
-    order: 38,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #38: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-039",
-    domain: "saas",
-    level: 3,
-    order: 39,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #39: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-040",
-    domain: "saas",
-    level: 3,
-    order: 40,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #40: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-041",
-    domain: "saas",
-    level: 3,
-    order: 41,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #41: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-042",
-    domain: "saas",
-    level: 3,
-    order: 42,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #42: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-043",
-    domain: "saas",
-    level: 3,
-    order: 43,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #43: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-044",
-    domain: "saas",
-    level: 3,
-    order: 44,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #44: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-045",
-    domain: "saas",
-    level: 3,
-    order: 45,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #45: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-046",
-    domain: "saas",
-    level: 3,
-    order: 46,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #46: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-047",
-    domain: "saas",
-    level: 3,
-    order: 47,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #47: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-048",
-    domain: "saas",
-    level: 3,
-    order: 48,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #48: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-049",
-    domain: "saas",
-    level: 3,
-    order: 49,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #49: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-050",
-    domain: "saas",
-    level: 3,
-    order: 50,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #50: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-051",
-    domain: "saas",
-    level: 3,
-    order: 51,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #51: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-052",
-    domain: "saas",
-    level: 3,
-    order: 52,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #52: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-053",
-    domain: "saas",
-    level: 3,
-    order: 53,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #53: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-054",
-    domain: "saas",
-    level: 3,
-    order: 54,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #54: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-055",
-    domain: "saas",
-    level: 3,
-    order: 55,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #55: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-056",
-    domain: "saas",
-    level: 3,
-    order: 56,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #56: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-057",
-    domain: "saas",
-    level: 3,
-    order: 57,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #57: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-058",
-    domain: "saas",
-    level: 3,
-    order: 58,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #58: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-059",
-    domain: "saas",
-    level: 3,
-    order: 59,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #59: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-060",
-    domain: "saas",
-    level: 3,
-    order: 60,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #60: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-061",
-    domain: "saas",
-    level: 3,
-    order: 61,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #61: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-062",
-    domain: "saas",
-    level: 3,
-    order: 62,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #62: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-063",
-    domain: "saas",
-    level: 3,
-    order: 63,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #63: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-064",
-    domain: "saas",
-    level: 3,
-    order: 64,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #64: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-065",
-    domain: "saas",
-    level: 3,
-    order: 65,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #65: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-066",
-    domain: "saas",
-    level: 3,
-    order: 66,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #66: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-067",
-    domain: "saas",
-    level: 3,
-    order: 67,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #67: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-068",
-    domain: "saas",
-    level: 3,
-    order: 68,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #68: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-069",
-    domain: "saas",
-    level: 3,
-    order: 69,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #69: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-070",
-    domain: "saas",
-    level: 3,
-    order: 70,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #70: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-071",
-    domain: "saas",
-    level: 3,
-    order: 71,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #71: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-072",
-    domain: "saas",
-    level: 3,
-    order: 72,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #72: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-073",
-    domain: "saas",
-    level: 3,
-    order: 73,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #73: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-074",
-    domain: "saas",
-    level: 3,
-    order: 74,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #74: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-075",
-    domain: "saas",
-    level: 3,
-    order: 75,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #75: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-076",
-    domain: "saas",
-    level: 3,
-    order: 76,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #76: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-077",
-    domain: "saas",
-    level: 3,
-    order: 77,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #77: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-078",
-    domain: "saas",
-    level: 3,
-    order: 78,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #78: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-079",
-    domain: "saas",
-    level: 3,
-    order: 79,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #79: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-080",
-    domain: "saas",
-    level: 3,
-    order: 80,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #80: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-081",
-    domain: "saas",
-    level: 3,
-    order: 81,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #81: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-082",
-    domain: "saas",
-    level: 3,
-    order: 82,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #82: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-083",
-    domain: "saas",
-    level: 3,
-    order: 83,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #83: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-084",
-    domain: "saas",
-    level: 3,
-    order: 84,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #84: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-085",
-    domain: "saas",
-    level: 3,
-    order: 85,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #85: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-086",
-    domain: "saas",
-    level: 3,
-    order: 86,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #86: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-087",
-    domain: "saas",
-    level: 3,
-    order: 87,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #87: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-088",
-    domain: "saas",
-    level: 3,
-    order: 88,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #88: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-089",
-    domain: "saas",
-    level: 3,
-    order: 89,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #89: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-090",
-    domain: "saas",
-    level: 3,
-    order: 90,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #90: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-091",
-    domain: "saas",
-    level: 3,
-    order: 91,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #91: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-092",
-    domain: "saas",
-    level: 3,
-    order: 92,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #92: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-093",
-    domain: "saas",
-    level: 3,
-    order: 93,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #93: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-094",
-    domain: "saas",
-    level: 3,
-    order: 94,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #94: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-095",
-    domain: "saas",
-    level: 3,
-    order: 95,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #95: Subscription Plan MRR Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from subscriptions where mrr is strictly greater than the overall average mrr. Return id, mrr, and plan, ordered by mrr descending.",
-    context_notes: "Benchmark analysis on subscriptions exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","subscriptions"],
-    expected_columns: ["id","mrr","plan"],
-    reference_sql: "SELECT id, mrr, plan FROM subscriptions WHERE mrr > (SELECT AVG(mrr) FROM subscriptions) ORDER BY mrr DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE mrr > (SELECT AVG(mrr) FROM subscriptions)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-096",
-    domain: "saas",
-    level: 3,
-    order: 96,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #96: Cluster Hosting Cost Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from cloud_clusters where monthly_cost_usd is strictly greater than the overall average monthly_cost_usd. Return id, monthly_cost_usd, and cloud_provider, ordered by monthly_cost_usd descending.",
-    context_notes: "Benchmark analysis on cloud_clusters exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","cloud_clusters"],
-    expected_columns: ["id","monthly_cost_usd","cloud_provider"],
-    reference_sql: "SELECT id, monthly_cost_usd, cloud_provider FROM cloud_clusters WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters) ORDER BY monthly_cost_usd DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_cost_usd > (SELECT AVG(monthly_cost_usd) FROM cloud_clusters)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-097",
-    domain: "saas",
-    level: 3,
-    order: 97,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #97: Ticket Resolution Effort Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from support_tickets where resolution_hours is strictly greater than the overall average resolution_hours. Return id, resolution_hours, and priority, ordered by resolution_hours descending.",
-    context_notes: "Benchmark analysis on support_tickets exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","support_tickets"],
-    expected_columns: ["id","resolution_hours","priority"],
-    reference_sql: "SELECT id, resolution_hours, priority FROM support_tickets WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets) ORDER BY resolution_hours DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE resolution_hours > (SELECT AVG(resolution_hours) FROM support_tickets)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-098",
-    domain: "saas",
-    level: 3,
-    order: 98,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #98: Feature Event Volume Benchmark",
-    stakeholder: {
-      name: "Tariq Mansoor",
-      role: "VP of Engineering & Cloud Ops"
-    },
-    request: "Identify records from feature_usage where monthly_events is strictly greater than the overall average monthly_events. Return id, monthly_events, and feature_name, ordered by monthly_events descending.",
-    context_notes: "Benchmark analysis on feature_usage exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","feature_usage"],
-    expected_columns: ["id","monthly_events","feature_name"],
-    reference_sql: "SELECT id, monthly_events, feature_name FROM feature_usage WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage) ORDER BY monthly_events DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE monthly_events > (SELECT AVG(monthly_events) FROM feature_usage)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-099",
-    domain: "saas",
-    level: 3,
-    order: 99,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #99: Churn ARR Loss Severity Benchmark",
-    stakeholder: {
-      name: "Chloe Vance",
-      role: "Head of Product Analytics & CS"
-    },
-    request: "Identify records from churn_events where arr_lost is strictly greater than the overall average arr_lost. Return id, arr_lost, and reason, ordered by arr_lost descending.",
-    context_notes: "Benchmark analysis on churn_events exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","churn_events"],
-    expected_columns: ["id","arr_lost","reason"],
-    reference_sql: "SELECT id, arr_lost, reason FROM churn_events WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events) ORDER BY arr_lost DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE arr_lost > (SELECT AVG(arr_lost) FROM churn_events)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
-  },
-  {
-    id: "saas-L3-100",
-    domain: "saas",
-    level: 3,
-    order: 100,
-    difficulty: "hard",
-    title: "SaaS Benchmark Query #100: Invoice Billed Amount Benchmark",
-    stakeholder: {
-      name: "Samira Khan",
-      role: "CEO & Founder"
-    },
-    request: "Identify records from invoices where amount is strictly greater than the overall average amount. Return id, amount, and account_id, ordered by amount descending.",
-    context_notes: "Benchmark analysis on invoices exceeding overall mean metrics.",
-    concepts: ["Scalar Subquery","WHERE","AVG()","invoices"],
-    expected_columns: ["id","amount","account_id"],
-    reference_sql: "SELECT id, amount, account_id FROM invoices WHERE amount > (SELECT AVG(amount) FROM invoices) ORDER BY amount DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use a scalar subquery: WHERE amount > (SELECT AVG(amount) FROM invoices)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the subquery or set operation\nFROM \n;"
+    "id": "saas-L3-001",
+    "domain": "saas",
+    "level": 3,
+    "order": 1,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-002",
+    "domain": "saas",
+    "level": 3,
+    "order": 2,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_2 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_2 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_2 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-003",
+    "domain": "saas",
+    "level": 3,
+    "order": 3,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-004",
+    "domain": "saas",
+    "level": 3,
+    "order": 4,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-005",
+    "domain": "saas",
+    "level": 3,
+    "order": 5,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_5 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_5 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_5 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-006",
+    "domain": "saas",
+    "level": 3,
+    "order": 6,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-007",
+    "domain": "saas",
+    "level": 3,
+    "order": 7,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_7(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_7(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_7(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_7(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-008",
+    "domain": "saas",
+    "level": 3,
+    "order": 8,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-009",
+    "domain": "saas",
+    "level": 3,
+    "order": 9,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-010",
+    "domain": "saas",
+    "level": 3,
+    "order": 10,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_10 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_10 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-011",
+    "domain": "saas",
+    "level": 3,
+    "order": 11,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_11_low PARTITION OF invoices_part_11 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_11_high PARTITION OF invoices_part_11 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_11 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_11;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-012",
+    "domain": "saas",
+    "level": 3,
+    "order": 12,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_12() and bind trigger trg_audit_subscriptions_12 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_12(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_12() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_12 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_12(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-013",
+    "domain": "saas",
+    "level": 3,
+    "order": 13,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-014",
+    "domain": "saas",
+    "level": 3,
+    "order": 14,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_14 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_14 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_14 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-015",
+    "domain": "saas",
+    "level": 3,
+    "order": 15,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-016",
+    "domain": "saas",
+    "level": 3,
+    "order": 16,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-017",
+    "domain": "saas",
+    "level": 3,
+    "order": 17,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_17 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_17 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_17 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-018",
+    "domain": "saas",
+    "level": 3,
+    "order": 18,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-019",
+    "domain": "saas",
+    "level": 3,
+    "order": 19,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_19(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_19(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_19(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_19(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-020",
+    "domain": "saas",
+    "level": 3,
+    "order": 20,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-021",
+    "domain": "saas",
+    "level": 3,
+    "order": 21,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-022",
+    "domain": "saas",
+    "level": 3,
+    "order": 22,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_22 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_22 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-023",
+    "domain": "saas",
+    "level": 3,
+    "order": 23,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_23_low PARTITION OF invoices_part_23 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_23_high PARTITION OF invoices_part_23 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_23 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_23;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-024",
+    "domain": "saas",
+    "level": 3,
+    "order": 24,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_24() and bind trigger trg_audit_subscriptions_24 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_24(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_24() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_24 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_24(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-025",
+    "domain": "saas",
+    "level": 3,
+    "order": 25,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-026",
+    "domain": "saas",
+    "level": 3,
+    "order": 26,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_26 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_26 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_26 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-027",
+    "domain": "saas",
+    "level": 3,
+    "order": 27,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-028",
+    "domain": "saas",
+    "level": 3,
+    "order": 28,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-029",
+    "domain": "saas",
+    "level": 3,
+    "order": 29,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_29 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_29 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_29 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-030",
+    "domain": "saas",
+    "level": 3,
+    "order": 30,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-031",
+    "domain": "saas",
+    "level": 3,
+    "order": 31,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_31(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_31(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_31(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_31(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-032",
+    "domain": "saas",
+    "level": 3,
+    "order": 32,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-033",
+    "domain": "saas",
+    "level": 3,
+    "order": 33,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-034",
+    "domain": "saas",
+    "level": 3,
+    "order": 34,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_34 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_34 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-035",
+    "domain": "saas",
+    "level": 3,
+    "order": 35,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_35_low PARTITION OF invoices_part_35 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_35_high PARTITION OF invoices_part_35 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_35 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_35;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-036",
+    "domain": "saas",
+    "level": 3,
+    "order": 36,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_36() and bind trigger trg_audit_subscriptions_36 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_36(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_36() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_36 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_36(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-037",
+    "domain": "saas",
+    "level": 3,
+    "order": 37,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-038",
+    "domain": "saas",
+    "level": 3,
+    "order": 38,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_38 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_38 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_38 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-039",
+    "domain": "saas",
+    "level": 3,
+    "order": 39,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-040",
+    "domain": "saas",
+    "level": 3,
+    "order": 40,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-041",
+    "domain": "saas",
+    "level": 3,
+    "order": 41,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_41 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_41 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_41 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-042",
+    "domain": "saas",
+    "level": 3,
+    "order": 42,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-043",
+    "domain": "saas",
+    "level": 3,
+    "order": 43,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_43(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_43(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_43(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_43(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-044",
+    "domain": "saas",
+    "level": 3,
+    "order": 44,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-045",
+    "domain": "saas",
+    "level": 3,
+    "order": 45,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-046",
+    "domain": "saas",
+    "level": 3,
+    "order": 46,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_46 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_46 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-047",
+    "domain": "saas",
+    "level": 3,
+    "order": 47,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_47_low PARTITION OF invoices_part_47 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_47_high PARTITION OF invoices_part_47 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_47 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_47;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-048",
+    "domain": "saas",
+    "level": 3,
+    "order": 48,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_48() and bind trigger trg_audit_subscriptions_48 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_48(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_48() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_48 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_48(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-049",
+    "domain": "saas",
+    "level": 3,
+    "order": 49,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-050",
+    "domain": "saas",
+    "level": 3,
+    "order": 50,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_50 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_50 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_50 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "saas-L3-051",
+    "domain": "saas",
+    "level": 3,
+    "order": 51,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-052",
+    "domain": "saas",
+    "level": 3,
+    "order": 52,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-053",
+    "domain": "saas",
+    "level": 3,
+    "order": 53,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_53 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_53 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_53 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-054",
+    "domain": "saas",
+    "level": 3,
+    "order": 54,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-055",
+    "domain": "saas",
+    "level": 3,
+    "order": 55,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_55(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_55(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_55(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_55(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-056",
+    "domain": "saas",
+    "level": 3,
+    "order": 56,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-057",
+    "domain": "saas",
+    "level": 3,
+    "order": 57,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-058",
+    "domain": "saas",
+    "level": 3,
+    "order": 58,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_58 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_58 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-059",
+    "domain": "saas",
+    "level": 3,
+    "order": 59,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_59_low PARTITION OF invoices_part_59 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_59_high PARTITION OF invoices_part_59 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_59 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_59;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-060",
+    "domain": "saas",
+    "level": 3,
+    "order": 60,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_60() and bind trigger trg_audit_subscriptions_60 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_60(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_60() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_60 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_60(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-061",
+    "domain": "saas",
+    "level": 3,
+    "order": 61,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-062",
+    "domain": "saas",
+    "level": 3,
+    "order": 62,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_62 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_62 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_62 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-063",
+    "domain": "saas",
+    "level": 3,
+    "order": 63,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-064",
+    "domain": "saas",
+    "level": 3,
+    "order": 64,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-065",
+    "domain": "saas",
+    "level": 3,
+    "order": 65,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_65 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_65 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_65 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-066",
+    "domain": "saas",
+    "level": 3,
+    "order": 66,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-067",
+    "domain": "saas",
+    "level": 3,
+    "order": 67,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_67(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_67(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_67(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_67(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-068",
+    "domain": "saas",
+    "level": 3,
+    "order": 68,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-069",
+    "domain": "saas",
+    "level": 3,
+    "order": 69,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-070",
+    "domain": "saas",
+    "level": 3,
+    "order": 70,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_70 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_70 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-071",
+    "domain": "saas",
+    "level": 3,
+    "order": 71,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_71_low PARTITION OF invoices_part_71 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_71_high PARTITION OF invoices_part_71 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_71 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_71;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-072",
+    "domain": "saas",
+    "level": 3,
+    "order": 72,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_72() and bind trigger trg_audit_subscriptions_72 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_72(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_72() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_72 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_72(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-073",
+    "domain": "saas",
+    "level": 3,
+    "order": 73,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-074",
+    "domain": "saas",
+    "level": 3,
+    "order": 74,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_74 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_74 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_74 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-075",
+    "domain": "saas",
+    "level": 3,
+    "order": 75,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-076",
+    "domain": "saas",
+    "level": 3,
+    "order": 76,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-077",
+    "domain": "saas",
+    "level": 3,
+    "order": 77,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_77 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_77 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_77 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-078",
+    "domain": "saas",
+    "level": 3,
+    "order": 78,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-079",
+    "domain": "saas",
+    "level": 3,
+    "order": 79,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_79(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_79(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_79(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_79(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-080",
+    "domain": "saas",
+    "level": 3,
+    "order": 80,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-081",
+    "domain": "saas",
+    "level": 3,
+    "order": 81,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-082",
+    "domain": "saas",
+    "level": 3,
+    "order": 82,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_82 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_82 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-083",
+    "domain": "saas",
+    "level": 3,
+    "order": 83,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_83_low PARTITION OF invoices_part_83 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_83_high PARTITION OF invoices_part_83 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_83 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_83;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-084",
+    "domain": "saas",
+    "level": 3,
+    "order": 84,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_84() and bind trigger trg_audit_subscriptions_84 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_84(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_84() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_84 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_84(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-085",
+    "domain": "saas",
+    "level": 3,
+    "order": 85,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-086",
+    "domain": "saas",
+    "level": 3,
+    "order": 86,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_86 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_86 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_86 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-087",
+    "domain": "saas",
+    "level": 3,
+    "order": 87,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-088",
+    "domain": "saas",
+    "level": 3,
+    "order": 88,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-089",
+    "domain": "saas",
+    "level": 3,
+    "order": 89,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_89 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_89 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_89 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-090",
+    "domain": "saas",
+    "level": 3,
+    "order": 90,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-091",
+    "domain": "saas",
+    "level": 3,
+    "order": 91,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_91(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_91(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_91(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_91(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-092",
+    "domain": "saas",
+    "level": 3,
+    "order": 92,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-093",
+    "domain": "saas",
+    "level": 3,
+    "order": 93,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "company_name"
+    ],
+    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-094",
+    "domain": "saas",
+    "level": 3,
+    "order": 94,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_94 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "is_paid",
+      "amount"
+    ],
+    "reference_sql": "CREATE INDEX idx_invoices_opt_94 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-095",
+    "domain": "saas",
+    "level": 3,
+    "order": 95,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE invoices_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_95_low PARTITION OF invoices_part_95 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_95_high PARTITION OF invoices_part_95 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_95 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_95;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "saas-L3-096",
+    "domain": "saas",
+    "level": 3,
+    "order": 96,
+    "difficulty": "boss",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_96() and bind trigger trg_audit_subscriptions_96 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_96(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_96() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_96 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_96(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "saas-L3-097",
+    "domain": "saas",
+    "level": 3,
+    "order": 97,
+    "difficulty": "boss",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "saas-L3-098",
+    "domain": "saas",
+    "level": 3,
+    "order": 98,
+    "difficulty": "boss",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
+    },
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_98 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_98 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_98 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "saas-L3-099",
+    "domain": "saas",
+    "level": 3,
+    "order": 99,
+    "difficulty": "boss",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics & CS",
+      "department": "Product"
+    },
+    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "plan",
+      "mrr",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "saas-L3-100",
+    "domain": "saas",
+    "level": 3,
+    "order": 100,
+    "difficulty": "boss",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Samira Khan",
+      "role": "CEO & Co-Founder",
+      "department": "Executive"
+    },
+    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "amount",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 75,
+    "estimated_minutes": 20
   }
 ];

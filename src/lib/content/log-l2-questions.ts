@@ -1,2611 +1,3718 @@
-// ============================================================================
-// LOGISTICS & SUPPLY CHAIN — LEVEL 2: RELATIONAL JOINS & FREIGHT AGGREGATIONS
-// 100 Handcrafted, Non-Robotic Questions from Executive Decision-Makers
-// Tables (9): warehouses, carriers, fleet_vehicles, drivers, suppliers, shipments,
-//             cargo_packages, freight_routes, delivery_checkpoints
-// ============================================================================
-
 import { QuestionDefinition } from "./ecom-l1-questions";
 
 export const LOG_L2_QUESTIONS: QuestionDefinition[] = [
   {
-    id: "log-L2-001",
-    domain: "logistics",
-    level: 2,
-    order: 1,
-    difficulty: "medium",
-    title: "Warehouse Outbound Shipment Volume and Total Freight Weight",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Claire here. Ahead of carrier contract renewals, calculate the total count of shipments and total weight dispatched from each warehouse. Show warehouse city, shipment count as total_shipments, and total weight_kg rounded to 2 decimals, ordered by total weight descending.",
-    context_notes: "Measuring origin facility outbound throughput and dispatch density.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_shipments","total_weight_kg"],
-    reference_sql: "SELECT w.city, COUNT(s.id) AS total_shipments, ROUND(SUM(s.weight_kg), 2) AS total_weight_kg FROM warehouses w JOIN shipments s ON w.id = s.warehouse_id GROUP BY w.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses with shipments on w.id = s.warehouse_id and group by w.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-002",
-    domain: "logistics",
-    level: 2,
-    order: 2,
-    difficulty: "medium",
-    title: "Carrier Freight Volume and Average Load Size",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Dave here from Fleet Ops. For each carrier partner, determine their total shipments hauled and average shipment weight. Display carrier_name, service_level, shipment count as total_loads, and average weight rounded to 2 decimals, ordered by total loads descending.",
-    context_notes: "Carrier fleet allocation and utilization analysis.",
-    concepts: ["INNER JOIN","GROUP BY","AVG()","COUNT()"],
-    expected_columns: ["carrier_name","service_level","total_loads","avg_weight_kg"],
-    reference_sql: "SELECT c.carrier_name, c.service_level, COUNT(s.id) AS total_loads, ROUND(AVG(s.weight_kg), 2) AS avg_weight_kg FROM carriers c JOIN shipments s ON c.id = s.carrier_id GROUP BY c.carrier_name, c.service_level ORDER BY total_loads DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers with shipments and group by carrier_name, service_level."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-003",
-    domain: "logistics",
-    level: 2,
-    order: 3,
-    difficulty: "medium",
-    title: "High-Value Cargo Packages by Destination City",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at the crossdock. We need extra cargo insurance coverage on shipments carrying high-value packages. Join shipments and cargo_packages to find shipments where total declared package value exceeds $20,000. Show shipment id, destination_city, and total declared value, ordered by value descending.",
-    context_notes: "Cargo security and high-value transit liability controls.",
-    concepts: ["INNER JOIN","GROUP BY","HAVING","SUM()"],
-    expected_columns: ["id","destination_city","total_declared_value"],
-    reference_sql: "SELECT s.id, s.destination_city, SUM(cp.declared_value) AS total_declared_value FROM shipments s JOIN cargo_packages cp ON s.id = cp.shipment_id GROUP BY s.id, s.destination_city HAVING SUM(cp.declared_value) > 20000.00 ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages, grouping by shipment id and destination_city with HAVING SUM(cp.declared_value) > 20000."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-004",
-    domain: "logistics",
-    level: 2,
-    order: 4,
-    difficulty: "medium",
-    title: "Hazardous Materials Shipment Manifest",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Identify all shipments that contain hazardous cargo packages. Join shipments and cargo_packages to display shipment id, origin_warehouse, destination_city, and count of hazardous packages, filtering for is_hazardous = TRUE.",
-    context_notes: "HAZMAT regulatory compliance and route planning.",
-    concepts: ["INNER JOIN","WHERE","GROUP BY","COUNT()"],
-    expected_columns: ["id","origin_warehouse","destination_city","hazmat_package_count"],
-    reference_sql: "SELECT s.id, s.origin_warehouse, s.destination_city, COUNT(cp.id) AS hazmat_package_count FROM shipments s JOIN cargo_packages cp ON s.id = cp.shipment_id WHERE cp.is_hazardous = TRUE GROUP BY s.id, s.origin_warehouse, s.destination_city ORDER BY hazmat_package_count DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages with WHERE cp.is_hazardous = TRUE and group by shipment."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-005",
-    domain: "logistics",
-    level: 2,
-    order: 5,
-    difficulty: "medium",
-    title: "Delivery Checkpoints Passed per Shipment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Monitor freight milestone tracking. For each shipment, count how many delivery checkpoints it has logged. Show shipment id, destination_city, status, and checkpoint_count, ordered by checkpoint_count descending.",
-    context_notes: "In-transit tracking visibility and scan scan rate audits.",
-    concepts: ["LEFT JOIN","GROUP BY","COUNT()"],
-    expected_columns: ["id","destination_city","status","checkpoint_count"],
-    reference_sql: "SELECT s.id, s.destination_city, s.status, COUNT(dc.id) AS checkpoint_count FROM shipments s LEFT JOIN delivery_checkpoints dc ON s.id = dc.shipment_id GROUP BY s.id, s.destination_city, s.status ORDER BY checkpoint_count DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Use LEFT JOIN between shipments and delivery_checkpoints, grouping by shipment id, destination_city, status."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-006",
-    domain: "logistics",
-    level: 2,
-    order: 6,
-    difficulty: "warm-up",
-    title: "Freight Route Cost per Transit Hour",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Calculate the toll cost per hour of transit for each freight corridor. Show route_name, distance_km, avg_transit_hours, toll_costs, and (toll_costs / avg_transit_hours) as toll_per_hour rounded to 2 decimals, ordered by toll_per_hour descending.",
-    context_notes: "Route economic efficiency and toll expenditure benchmarking.",
-    concepts: ["SELECT","Arithmetic Expressions","ROUND()","ORDER BY"],
-    expected_columns: ["route_name","distance_km","avg_transit_hours","toll_costs","toll_per_hour"],
-    reference_sql: "SELECT route_name, distance_km, avg_transit_hours, toll_costs, ROUND((toll_costs / avg_transit_hours), 2) AS toll_per_hour FROM freight_routes ORDER BY toll_per_hour DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Divide toll_costs by avg_transit_hours and round to 2 decimals."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-007",
-    domain: "logistics",
-    level: 2,
-    order: 7,
-    difficulty: "medium",
-    title: "Carriers Handling Delayed Shipments",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Find which carriers have experienced shipments marked with 'delayed' status. Show carrier_name, carrier rating, and total delayed shipments count, ordered by delayed count descending.",
-    context_notes: "Carrier SLA accountability and penalty enforcement.",
-    concepts: ["INNER JOIN","WHERE","GROUP BY","COUNT()"],
-    expected_columns: ["carrier_name","rating","delayed_count"],
-    reference_sql: "SELECT c.carrier_name, c.rating, COUNT(s.id) AS delayed_count FROM carriers c JOIN shipments s ON c.id = s.carrier_id WHERE s.status = 'delayed' GROUP BY c.carrier_name, c.rating ORDER BY delayed_count DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments with WHERE s.status = 'delayed' and group by carrier_name, c.rating."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-008",
-    domain: "logistics",
-    level: 2,
-    order: 8,
-    difficulty: "warm-up",
-    title: "Average Package Weight per Shipment",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "Frank at the sorting depot. Calculate the total package count and average cargo package weight for each shipment. Display shipment_id, count of packages as total_packages, and average weight rounded to 2 decimals, ordered by total_packages descending.",
-    context_notes: "Pallet density and sorting facility capacity planning.",
-    concepts: ["GROUP BY","AVG()","COUNT()","ROUND()"],
-    expected_columns: ["shipment_id","total_packages","avg_pkg_weight_kg"],
-    reference_sql: "SELECT shipment_id, COUNT(id) AS total_packages, ROUND(AVG(weight_kg), 2) AS avg_pkg_weight_kg FROM cargo_packages GROUP BY shipment_id ORDER BY total_packages DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Group cargo_packages by shipment_id and compute COUNT(id) and AVG(weight_kg)."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-009",
-    domain: "logistics",
-    level: 2,
-    order: 9,
-    difficulty: "medium",
-    title: "High-Volume Freight Destinations",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "Identify destination cities receiving more than 15,000 kg of cumulative freight. Display destination_city, total shipments, and total weight, ordered by total weight descending.",
-    context_notes: "Targeting high-density metropolitan delivery zones for dedicated fleet routing.",
-    concepts: ["GROUP BY","HAVING","SUM()","COUNT()"],
-    expected_columns: ["destination_city","shipment_count","total_weight"],
-    reference_sql: "SELECT destination_city, COUNT(id) AS shipment_count, ROUND(SUM(weight_kg), 2) AS total_weight FROM shipments GROUP BY destination_city HAVING SUM(weight_kg) > 15000.00 ORDER BY total_weight DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Group shipments by destination_city with HAVING SUM(weight_kg) > 15000.00."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-010",
-    domain: "logistics",
-    level: 2,
-    order: 10,
-    difficulty: "medium",
-    title: "Crossdock Warehouses with Over 5 Active Outbound Loads",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "Find warehouses that have more than 5 outbound shipments currently logged in the system. Show warehouse city, manager_name, and active load count, ordered by load count descending.",
-    context_notes: "Crossdock throughput bottlenecks and dock door congestion.",
-    concepts: ["INNER JOIN","GROUP BY","HAVING","COUNT()"],
-    expected_columns: ["city","manager_name","active_load_count"],
-    reference_sql: "SELECT w.city, w.manager_name, COUNT(s.id) AS active_load_count FROM warehouses w JOIN shipments s ON w.id = s.warehouse_id GROUP BY w.city, w.manager_name HAVING COUNT(s.id) > 5 ORDER BY active_load_count DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses with shipments, grouping by city, manager_name with HAVING COUNT(s.id) > 5."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-011",
-    domain: "logistics",
-    level: 2,
-    order: 11,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #11: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-012",
-    domain: "logistics",
-    level: 2,
-    order: 12,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #12: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-013",
-    domain: "logistics",
-    level: 2,
-    order: 13,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #13: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-014",
-    domain: "logistics",
-    level: 2,
-    order: 14,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #14: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-015",
-    domain: "logistics",
-    level: 2,
-    order: 15,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #15: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-016",
-    domain: "logistics",
-    level: 2,
-    order: 16,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #16: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-017",
-    domain: "logistics",
-    level: 2,
-    order: 17,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #17: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-018",
-    domain: "logistics",
-    level: 2,
-    order: 18,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #18: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-019",
-    domain: "logistics",
-    level: 2,
-    order: 19,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #19: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-020",
-    domain: "logistics",
-    level: 2,
-    order: 20,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #20: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-021",
-    domain: "logistics",
-    level: 2,
-    order: 21,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #21: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-022",
-    domain: "logistics",
-    level: 2,
-    order: 22,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #22: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-023",
-    domain: "logistics",
-    level: 2,
-    order: 23,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #23: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-024",
-    domain: "logistics",
-    level: 2,
-    order: 24,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #24: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-025",
-    domain: "logistics",
-    level: 2,
-    order: 25,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #25: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-026",
-    domain: "logistics",
-    level: 2,
-    order: 26,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #26: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-027",
-    domain: "logistics",
-    level: 2,
-    order: 27,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #27: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-028",
-    domain: "logistics",
-    level: 2,
-    order: 28,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #28: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-029",
-    domain: "logistics",
-    level: 2,
-    order: 29,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #29: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-030",
-    domain: "logistics",
-    level: 2,
-    order: 30,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #30: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-031",
-    domain: "logistics",
-    level: 2,
-    order: 31,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #31: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-032",
-    domain: "logistics",
-    level: 2,
-    order: 32,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #32: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-033",
-    domain: "logistics",
-    level: 2,
-    order: 33,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #33: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-034",
-    domain: "logistics",
-    level: 2,
-    order: 34,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #34: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-035",
-    domain: "logistics",
-    level: 2,
-    order: 35,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #35: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-036",
-    domain: "logistics",
-    level: 2,
-    order: 36,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #36: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-037",
-    domain: "logistics",
-    level: 2,
-    order: 37,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #37: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-038",
-    domain: "logistics",
-    level: 2,
-    order: 38,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #38: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-039",
-    domain: "logistics",
-    level: 2,
-    order: 39,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #39: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-040",
-    domain: "logistics",
-    level: 2,
-    order: 40,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #40: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-041",
-    domain: "logistics",
-    level: 2,
-    order: 41,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #41: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-042",
-    domain: "logistics",
-    level: 2,
-    order: 42,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #42: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-043",
-    domain: "logistics",
-    level: 2,
-    order: 43,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #43: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-044",
-    domain: "logistics",
-    level: 2,
-    order: 44,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #44: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-045",
-    domain: "logistics",
-    level: 2,
-    order: 45,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #45: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-046",
-    domain: "logistics",
-    level: 2,
-    order: 46,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #46: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-047",
-    domain: "logistics",
-    level: 2,
-    order: 47,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #47: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-048",
-    domain: "logistics",
-    level: 2,
-    order: 48,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #48: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-049",
-    domain: "logistics",
-    level: 2,
-    order: 49,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #49: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-050",
-    domain: "logistics",
-    level: 2,
-    order: 50,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #50: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-051",
-    domain: "logistics",
-    level: 2,
-    order: 51,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #51: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-052",
-    domain: "logistics",
-    level: 2,
-    order: 52,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #52: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-053",
-    domain: "logistics",
-    level: 2,
-    order: 53,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #53: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-054",
-    domain: "logistics",
-    level: 2,
-    order: 54,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #54: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-055",
-    domain: "logistics",
-    level: 2,
-    order: 55,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #55: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-056",
-    domain: "logistics",
-    level: 2,
-    order: 56,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #56: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-057",
-    domain: "logistics",
-    level: 2,
-    order: 57,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #57: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-058",
-    domain: "logistics",
-    level: 2,
-    order: 58,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #58: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-059",
-    domain: "logistics",
-    level: 2,
-    order: 59,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #59: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-060",
-    domain: "logistics",
-    level: 2,
-    order: 60,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #60: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-061",
-    domain: "logistics",
-    level: 2,
-    order: 61,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #61: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-062",
-    domain: "logistics",
-    level: 2,
-    order: 62,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #62: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-063",
-    domain: "logistics",
-    level: 2,
-    order: 63,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #63: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-064",
-    domain: "logistics",
-    level: 2,
-    order: 64,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #64: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-065",
-    domain: "logistics",
-    level: 2,
-    order: 65,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #65: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-066",
-    domain: "logistics",
-    level: 2,
-    order: 66,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #66: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-067",
-    domain: "logistics",
-    level: 2,
-    order: 67,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #67: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-068",
-    domain: "logistics",
-    level: 2,
-    order: 68,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #68: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-069",
-    domain: "logistics",
-    level: 2,
-    order: 69,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #69: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-070",
-    domain: "logistics",
-    level: 2,
-    order: 70,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #70: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-071",
-    domain: "logistics",
-    level: 2,
-    order: 71,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #71: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-072",
-    domain: "logistics",
-    level: 2,
-    order: 72,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #72: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-073",
-    domain: "logistics",
-    level: 2,
-    order: 73,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #73: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-074",
-    domain: "logistics",
-    level: 2,
-    order: 74,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #74: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-075",
-    domain: "logistics",
-    level: 2,
-    order: 75,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #75: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-076",
-    domain: "logistics",
-    level: 2,
-    order: 76,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #76: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-077",
-    domain: "logistics",
-    level: 2,
-    order: 77,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #77: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-078",
-    domain: "logistics",
-    level: 2,
-    order: 78,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #78: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-079",
-    domain: "logistics",
-    level: 2,
-    order: 79,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #79: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-080",
-    domain: "logistics",
-    level: 2,
-    order: 80,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #80: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-081",
-    domain: "logistics",
-    level: 2,
-    order: 81,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #81: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-082",
-    domain: "logistics",
-    level: 2,
-    order: 82,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #82: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-083",
-    domain: "logistics",
-    level: 2,
-    order: 83,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #83: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-084",
-    domain: "logistics",
-    level: 2,
-    order: 84,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #84: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-085",
-    domain: "logistics",
-    level: 2,
-    order: 85,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #85: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-086",
-    domain: "logistics",
-    level: 2,
-    order: 86,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #86: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-087",
-    domain: "logistics",
-    level: 2,
-    order: 87,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #87: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-088",
-    domain: "logistics",
-    level: 2,
-    order: 88,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #88: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-089",
-    domain: "logistics",
-    level: 2,
-    order: 89,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #89: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-090",
-    domain: "logistics",
-    level: 2,
-    order: 90,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #90: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-091",
-    domain: "logistics",
-    level: 2,
-    order: 91,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #91: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-092",
-    domain: "logistics",
-    level: 2,
-    order: 92,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #92: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-093",
-    domain: "logistics",
-    level: 2,
-    order: 93,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #93: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-094",
-    domain: "logistics",
-    level: 2,
-    order: 94,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #94: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-095",
-    domain: "logistics",
-    level: 2,
-    order: 95,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #95: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-096",
-    domain: "logistics",
-    level: 2,
-    order: 96,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #96: Warehouse Outbound Weight Throughput",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each city in warehouses, compute total records and aggregate weight_kg from shipments. Show city, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking warehouses and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["city","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.city, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM warehouses a JOIN shipments b ON a.id = b.warehouse_id GROUP BY a.city ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join warehouses to shipments on a.id = b.warehouse_id and group by a.city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-097",
-    domain: "logistics",
-    level: 2,
-    order: 97,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #97: Carrier Freight Capacity Distribution",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each carrier_name in carriers, compute total records and aggregate weight_kg from shipments. Show carrier_name, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking carriers and shipments.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["carrier_name","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.carrier_name, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM carriers a JOIN shipments b ON a.id = b.carrier_id GROUP BY a.carrier_name ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join carriers to shipments on a.id = b.carrier_id and group by a.carrier_name."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-098",
-    domain: "logistics",
-    level: 2,
-    order: 98,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #98: Destination Declared Cargo Value",
-    stakeholder: {
-      name: "Claire Sullivan",
-      role: "Director of Global Supply Chain"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate declared_value from cargo_packages. Show destination_city, total count of items, and sum of declared_value rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_declared_value"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.declared_value), 2) AS total_declared_value FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_declared_value DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-099",
-    domain: "logistics",
-    level: 2,
-    order: 99,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #99: Origin Warehouse Cargo Weight Density",
-    stakeholder: {
-      name: "Frank Miller",
-      role: "Midwest Terminal & Crossdock Manager"
-    },
-    request: "For each origin_warehouse in shipments, compute total records and aggregate weight_kg from cargo_packages. Show origin_warehouse, total count of items, and sum of weight_kg rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and cargo_packages.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["origin_warehouse","total_count","total_weight_kg"],
-    reference_sql: "SELECT a.origin_warehouse, COUNT(b.id) AS total_count, ROUND(SUM(b.weight_kg), 2) AS total_weight_kg FROM shipments a JOIN cargo_packages b ON a.id = b.shipment_id GROUP BY a.origin_warehouse ORDER BY total_weight_kg DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to cargo_packages on a.id = b.shipment_id and group by a.origin_warehouse."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
-  },
-  {
-    id: "log-L2-100",
-    domain: "logistics",
-    level: 2,
-    order: 100,
-    difficulty: "medium",
-    title: "Logistics Relational Metric #100: Destination City Checkpoint Scan Activity",
-    stakeholder: {
-      name: "Dave Miller",
-      role: "VP of Fleet Operations"
-    },
-    request: "For each destination_city in shipments, compute total records and aggregate id from delivery_checkpoints. Show destination_city, total count of items, and sum of id rounded to 2 decimals, ordered by sum descending.",
-    context_notes: "Relational freight analytics linking shipments and delivery_checkpoints.",
-    concepts: ["INNER JOIN","GROUP BY","SUM()","COUNT()"],
-    expected_columns: ["destination_city","total_count","total_id"],
-    reference_sql: "SELECT a.destination_city, COUNT(b.id) AS total_count, ROUND(SUM(b.id), 2) AS total_id FROM shipments a JOIN delivery_checkpoints b ON a.id = b.shipment_id GROUP BY a.destination_city ORDER BY total_id DESC;",
-    validation: {
-      order_sensitive: false,
-      column_names_sensitive: false,
-      numeric_tolerance: 0
-    },
-    hints: [
-      "Join shipments to delivery_checkpoints on a.id = b.shipment_id and group by a.destination_city."
-    ],
-    starter_sql: "SELECT\n  -- Complete the relational query\nFROM \n;"
+    "id": "log-L2-001",
+    "domain": "logistics",
+    "level": 2,
+    "order": 1,
+    "difficulty": "warm-up",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-002",
+    "domain": "logistics",
+    "level": 2,
+    "order": 2,
+    "difficulty": "warm-up",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_2(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_2(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_2(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_2(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-003",
+    "domain": "logistics",
+    "level": 2,
+    "order": 3,
+    "difficulty": "warm-up",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-004",
+    "domain": "logistics",
+    "level": 2,
+    "order": 4,
+    "difficulty": "warm-up",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-005",
+    "domain": "logistics",
+    "level": 2,
+    "order": 5,
+    "difficulty": "warm-up",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_5 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_5 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-006",
+    "domain": "logistics",
+    "level": 2,
+    "order": 6,
+    "difficulty": "warm-up",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_6 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_6 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_6_low PARTITION OF shipments_part_6 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_6_high PARTITION OF shipments_part_6 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_6 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_6;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-007",
+    "domain": "logistics",
+    "level": 2,
+    "order": 7,
+    "difficulty": "warm-up",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_7() and bind trigger trg_audit_fleet_vehicles_7 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_7(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_7() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_7 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_7(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-008",
+    "domain": "logistics",
+    "level": 2,
+    "order": 8,
+    "difficulty": "warm-up",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-009",
+    "domain": "logistics",
+    "level": 2,
+    "order": 9,
+    "difficulty": "warm-up",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_9 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_9 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_9 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-010",
+    "domain": "logistics",
+    "level": 2,
+    "order": 10,
+    "difficulty": "warm-up",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-011",
+    "domain": "logistics",
+    "level": 2,
+    "order": 11,
+    "difficulty": "warm-up",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-012",
+    "domain": "logistics",
+    "level": 2,
+    "order": 12,
+    "difficulty": "warm-up",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_12 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_12 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_12 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-013",
+    "domain": "logistics",
+    "level": 2,
+    "order": 13,
+    "difficulty": "warm-up",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-014",
+    "domain": "logistics",
+    "level": 2,
+    "order": 14,
+    "difficulty": "warm-up",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_14(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_14(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_14(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_14(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-015",
+    "domain": "logistics",
+    "level": 2,
+    "order": 15,
+    "difficulty": "warm-up",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 15,
+    "estimated_minutes": 5
+  },
+  {
+    "id": "log-L2-016",
+    "domain": "logistics",
+    "level": 2,
+    "order": 16,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-017",
+    "domain": "logistics",
+    "level": 2,
+    "order": 17,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_17 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_17 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-018",
+    "domain": "logistics",
+    "level": 2,
+    "order": 18,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_18 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_18 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_18_low PARTITION OF shipments_part_18 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_18_high PARTITION OF shipments_part_18 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_18 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_18;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-019",
+    "domain": "logistics",
+    "level": 2,
+    "order": 19,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_19() and bind trigger trg_audit_fleet_vehicles_19 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_19(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_19() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_19 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_19(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-020",
+    "domain": "logistics",
+    "level": 2,
+    "order": 20,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-021",
+    "domain": "logistics",
+    "level": 2,
+    "order": 21,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_21 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_21 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_21 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-022",
+    "domain": "logistics",
+    "level": 2,
+    "order": 22,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-023",
+    "domain": "logistics",
+    "level": 2,
+    "order": 23,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-024",
+    "domain": "logistics",
+    "level": 2,
+    "order": 24,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_24 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_24 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_24 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-025",
+    "domain": "logistics",
+    "level": 2,
+    "order": 25,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-026",
+    "domain": "logistics",
+    "level": 2,
+    "order": 26,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_26(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_26(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_26(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_26(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-027",
+    "domain": "logistics",
+    "level": 2,
+    "order": 27,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-028",
+    "domain": "logistics",
+    "level": 2,
+    "order": 28,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-029",
+    "domain": "logistics",
+    "level": 2,
+    "order": 29,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_29 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_29 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-030",
+    "domain": "logistics",
+    "level": 2,
+    "order": 30,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_30 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_30 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_30_low PARTITION OF shipments_part_30 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_30_high PARTITION OF shipments_part_30 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_30 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_30;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-031",
+    "domain": "logistics",
+    "level": 2,
+    "order": 31,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_31() and bind trigger trg_audit_fleet_vehicles_31 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_31(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_31() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_31 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_31(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-032",
+    "domain": "logistics",
+    "level": 2,
+    "order": 32,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-033",
+    "domain": "logistics",
+    "level": 2,
+    "order": 33,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_33 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_33 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_33 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-034",
+    "domain": "logistics",
+    "level": 2,
+    "order": 34,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-035",
+    "domain": "logistics",
+    "level": 2,
+    "order": 35,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-036",
+    "domain": "logistics",
+    "level": 2,
+    "order": 36,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_36 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_36 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_36 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-037",
+    "domain": "logistics",
+    "level": 2,
+    "order": 37,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-038",
+    "domain": "logistics",
+    "level": 2,
+    "order": 38,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_38(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_38(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_38(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_38(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-039",
+    "domain": "logistics",
+    "level": 2,
+    "order": 39,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-040",
+    "domain": "logistics",
+    "level": 2,
+    "order": 40,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-041",
+    "domain": "logistics",
+    "level": 2,
+    "order": 41,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_41 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_41 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-042",
+    "domain": "logistics",
+    "level": 2,
+    "order": 42,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_42 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_42 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_42_low PARTITION OF shipments_part_42 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_42_high PARTITION OF shipments_part_42 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_42 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_42;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-043",
+    "domain": "logistics",
+    "level": 2,
+    "order": 43,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_43() and bind trigger trg_audit_fleet_vehicles_43 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_43(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_43() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_43 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_43(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-044",
+    "domain": "logistics",
+    "level": 2,
+    "order": 44,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-045",
+    "domain": "logistics",
+    "level": 2,
+    "order": 45,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_45 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_45 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_45 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-046",
+    "domain": "logistics",
+    "level": 2,
+    "order": 46,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-047",
+    "domain": "logistics",
+    "level": 2,
+    "order": 47,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-048",
+    "domain": "logistics",
+    "level": 2,
+    "order": 48,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_48 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_48 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_48 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-049",
+    "domain": "logistics",
+    "level": 2,
+    "order": 49,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-050",
+    "domain": "logistics",
+    "level": 2,
+    "order": 50,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_50(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_50(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_50(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_50(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-051",
+    "domain": "logistics",
+    "level": 2,
+    "order": 51,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-052",
+    "domain": "logistics",
+    "level": 2,
+    "order": 52,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-053",
+    "domain": "logistics",
+    "level": 2,
+    "order": 53,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_53 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_53 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-054",
+    "domain": "logistics",
+    "level": 2,
+    "order": 54,
+    "difficulty": "core",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_54 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_54 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_54_low PARTITION OF shipments_part_54 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_54_high PARTITION OF shipments_part_54 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_54 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_54;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-055",
+    "domain": "logistics",
+    "level": 2,
+    "order": 55,
+    "difficulty": "core",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_55() and bind trigger trg_audit_fleet_vehicles_55 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_55(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_55() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_55 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_55(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-056",
+    "domain": "logistics",
+    "level": 2,
+    "order": 56,
+    "difficulty": "core",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-057",
+    "domain": "logistics",
+    "level": 2,
+    "order": 57,
+    "difficulty": "core",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_57 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_57 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_57 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-058",
+    "domain": "logistics",
+    "level": 2,
+    "order": 58,
+    "difficulty": "core",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-059",
+    "domain": "logistics",
+    "level": 2,
+    "order": 59,
+    "difficulty": "core",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-060",
+    "domain": "logistics",
+    "level": 2,
+    "order": 60,
+    "difficulty": "core",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_60 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_60 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_60 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-061",
+    "domain": "logistics",
+    "level": 2,
+    "order": 61,
+    "difficulty": "core",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-062",
+    "domain": "logistics",
+    "level": 2,
+    "order": 62,
+    "difficulty": "core",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_62(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_62(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_62(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_62(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-063",
+    "domain": "logistics",
+    "level": 2,
+    "order": 63,
+    "difficulty": "core",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-064",
+    "domain": "logistics",
+    "level": 2,
+    "order": 64,
+    "difficulty": "core",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-065",
+    "domain": "logistics",
+    "level": 2,
+    "order": 65,
+    "difficulty": "core",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_65 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_65 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 25,
+    "estimated_minutes": 8
+  },
+  {
+    "id": "log-L2-066",
+    "domain": "logistics",
+    "level": 2,
+    "order": 66,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_66 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_66 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_66_low PARTITION OF shipments_part_66 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_66_high PARTITION OF shipments_part_66 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_66 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_66;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-067",
+    "domain": "logistics",
+    "level": 2,
+    "order": 67,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_67() and bind trigger trg_audit_fleet_vehicles_67 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_67(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_67() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_67 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_67(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-068",
+    "domain": "logistics",
+    "level": 2,
+    "order": 68,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-069",
+    "domain": "logistics",
+    "level": 2,
+    "order": 69,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_69 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_69 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_69 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-070",
+    "domain": "logistics",
+    "level": 2,
+    "order": 70,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-071",
+    "domain": "logistics",
+    "level": 2,
+    "order": 71,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-072",
+    "domain": "logistics",
+    "level": 2,
+    "order": 72,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_72 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_72 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_72 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-073",
+    "domain": "logistics",
+    "level": 2,
+    "order": 73,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-074",
+    "domain": "logistics",
+    "level": 2,
+    "order": 74,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_74(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_74(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_74(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_74(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-075",
+    "domain": "logistics",
+    "level": 2,
+    "order": 75,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-076",
+    "domain": "logistics",
+    "level": 2,
+    "order": 76,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-077",
+    "domain": "logistics",
+    "level": 2,
+    "order": 77,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_77 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_77 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-078",
+    "domain": "logistics",
+    "level": 2,
+    "order": 78,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_78 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_78 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_78_low PARTITION OF shipments_part_78 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_78_high PARTITION OF shipments_part_78 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_78 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_78;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-079",
+    "domain": "logistics",
+    "level": 2,
+    "order": 79,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_79() and bind trigger trg_audit_fleet_vehicles_79 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_79(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_79() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_79 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_79(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-080",
+    "domain": "logistics",
+    "level": 2,
+    "order": 80,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-081",
+    "domain": "logistics",
+    "level": 2,
+    "order": 81,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_81 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_81 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_81 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-082",
+    "domain": "logistics",
+    "level": 2,
+    "order": 82,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-083",
+    "domain": "logistics",
+    "level": 2,
+    "order": 83,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-084",
+    "domain": "logistics",
+    "level": 2,
+    "order": 84,
+    "difficulty": "challenging",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_84 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_84 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_84 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-085",
+    "domain": "logistics",
+    "level": 2,
+    "order": 85,
+    "difficulty": "challenging",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-086",
+    "domain": "logistics",
+    "level": 2,
+    "order": 86,
+    "difficulty": "challenging",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_86(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_86(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_86(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_86(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-087",
+    "domain": "logistics",
+    "level": 2,
+    "order": 87,
+    "difficulty": "challenging",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-088",
+    "domain": "logistics",
+    "level": 2,
+    "order": 88,
+    "difficulty": "challenging",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-089",
+    "domain": "logistics",
+    "level": 2,
+    "order": 89,
+    "difficulty": "challenging",
+    "title": "Incident Response: High-Cardinality Index Optimization",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_89 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE INDEX",
+      "PERFORMANCE TUNING",
+      "COMPOSITE INDEX"
+    ],
+    "expected_columns": [
+      "id",
+      "destination_city",
+      "weight_kg"
+    ],
+    "reference_sql": "CREATE INDEX idx_shipments_opt_89 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the composite index first, then execute the SELECT query."
+    ],
+    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-090",
+    "domain": "logistics",
+    "level": 2,
+    "order": 90,
+    "difficulty": "challenging",
+    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_90 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
+    "context_notes": "",
+    "concepts": [
+      "PARTITION BY RANGE",
+      "TABLE PARTITIONING",
+      "SCALE ARCHITECTURE"
+    ],
+    "expected_columns": [
+      "id",
+      "status_code",
+      "amount"
+    ],
+    "reference_sql": "CREATE TABLE shipments_part_90 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_90_low PARTITION OF shipments_part_90 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_90_high PARTITION OF shipments_part_90 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_90 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_90;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+    ],
+    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-091",
+    "domain": "logistics",
+    "level": 2,
+    "order": 91,
+    "difficulty": "challenging",
+    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_91() and bind trigger trg_audit_fleet_vehicles_91 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_91(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TRIGGER",
+      "PL/pgSQL",
+      "AUDIT SENTINEL"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_91() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_91 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_91(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+    ],
+    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-092",
+    "domain": "logistics",
+    "level": 2,
+    "order": 92,
+    "difficulty": "challenging",
+    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "NULLIF",
+      "COALESCE",
+      "DATA CLEANING",
+      "ARITHMETIC DEFENSE"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "index_ratio"
+    ],
+    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+    ],
+    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-093",
+    "domain": "logistics",
+    "level": 2,
+    "order": 93,
+    "difficulty": "challenging",
+    "title": "Executive Abstraction Layer: Secure Database View",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_93 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE VIEW",
+      "COALESCE",
+      "SECURITY ABSTRACTION"
+    ],
+    "expected_columns": [
+      "id",
+      "primary_name",
+      "secondary_name"
+    ],
+    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_93 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_93 ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+    ],
+    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-094",
+    "domain": "logistics",
+    "level": 2,
+    "order": 94,
+    "difficulty": "challenging",
+    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "WITH (CTE)",
+      "NTILE(4)",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg",
+      "quartile"
+    ],
+    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+    ],
+    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-095",
+    "domain": "logistics",
+    "level": 2,
+    "order": 95,
+    "difficulty": "challenging",
+    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "LAG()",
+      "LEAD()",
+      "WINDOW FUNCTION"
+    ],
+    "expected_columns": [
+      "id",
+      "weight_kg",
+      "prev_amount",
+      "next_amount"
+    ],
+    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply both LAG() and LEAD() over the same sorted window."
+    ],
+    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "xp": 45,
+    "estimated_minutes": 12
+  },
+  {
+    "id": "log-L2-096",
+    "domain": "logistics",
+    "level": 2,
+    "order": 96,
+    "difficulty": "boss",
+    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_96 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "cleaned_name",
+      "adjusted_amount"
+    ],
+    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_96 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_96 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+    ],
+    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L2-097",
+    "domain": "logistics",
+    "level": 2,
+    "order": 97,
+    "difficulty": "boss",
+    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
+    "context_notes": "",
+    "concepts": [
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
+    ],
+    "expected_columns": [
+      "QUERY PLAN"
+    ],
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Prepend EXPLAIN (FORMAT JSON) to your query."
+    ],
+    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L2-098",
+    "domain": "logistics",
+    "level": 2,
+    "order": 98,
+    "difficulty": "boss",
+    "title": "Operational Automation: Settlement Stored Procedure",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_98(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_98(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
+    "context_notes": "",
+    "concepts": [
+      "CREATE PROCEDURE",
+      "CALL",
+      "TRANSACTIONAL LOGIC"
+    ],
+    "expected_columns": [
+      "id",
+      "vehicle_number",
+      "max_weight_capacity_kg"
+    ],
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_98(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_98(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "validation": {
+      "order_sensitive": false,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+    ],
+    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L2-099",
+    "domain": "logistics",
+    "level": 2,
+    "order": 99,
+    "difficulty": "boss",
+    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "TRIM",
+      "UPPER",
+      "IS NOT NULL",
+      "DATA CLEANING"
+    ],
+    "expected_columns": [
+      "id",
+      "standardized_title",
+      "safe_code"
+    ],
+    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+    ],
+    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "xp": 75,
+    "estimated_minutes": 20
+  },
+  {
+    "id": "log-L2-100",
+    "domain": "logistics",
+    "level": 2,
+    "order": 100,
+    "difficulty": "boss",
+    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
+    "context_notes": "",
+    "concepts": [
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
+    ],
+    "expected_columns": [
+      "id",
+      "city"
+    ],
+    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+    ],
+    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "xp": 75,
+    "estimated_minutes": 20
   }
 ];

@@ -3,33 +3,39 @@ export interface QuestionDefinition {
   domain: string;
   level: number;
   order: number;
-  difficulty: "warm-up" | "core" | "challenging" | "boss" | "easy" | "medium" | "hard" | "advanced" | "expert" | string;
+  difficulty: "warm-up" | "core" | "challenging" | "boss" | string;
   title: string;
   stakeholder: {
     name: string;
     role: string;
-    avatar?: string;
     department?: string;
+    avatar?: string;
   };
   request: string;
   context_notes: string;
   concepts: string[];
   expected_columns: string[];
   reference_sql: string;
+  starter_sql?: string;
+  challenge_type?: "query" | "index_optimization" | "execution_plan" | "stored_procedure" | "trigger" | "partitioning";
   validation: {
     order_sensitive: boolean;
     column_names_sensitive: boolean;
     numeric_tolerance: number;
+    target_table?: string;
+    expected_node_type?: string;
+    test_assertions?: Array<{
+      description: string;
+      assertionSql: string;
+      expectedResult?: "has_rows" | "zero_rows" | "throws_exception";
+    }>;
   };
   hints: string[];
-  starter_sql?: string;
-  solution_explanation?: string;
-  xp?: number;
-  estimated_minutes?: number;
+  solution_explanation: string;
+  xp: number;
+  estimated_minutes: number;
 }
 
-// 100 Automated-Gate Validated Questions for E-Commerce Level 1
-// Generated via Content Pipeline (Spec Section 7.3)
 export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
   {
     "id": "ecom-L1-001",
@@ -37,38 +43,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 1,
     "difficulty": "warm-up",
-    "title": "Electronics Merchandise Catalog",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
       "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Ahead of our quarterly investor presentation, we need to inspect our current electronics merchandise catalog. Could you retrieve our active electronics products, showing what each item is called, its retail price, and warehouse stock units, sorted alphabetically by product name?",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "INNER JOIN",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "price",
-      "stock_quantity"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT p.name, p.price, p.stock_quantity FROM products p JOIN categories c ON p.category_id = c.id WHERE c.name = 'Electronics' ORDER BY p.name ASC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products with categories on category_id = categories.id.",
-      "Filter where c.name = 'Electronics'.",
-      "Order by p.name ASC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Retrieves all electronics products with price and stock levels.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-002",
@@ -76,37 +80,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 2,
     "difficulty": "warm-up",
-    "title": "High-Value Delivered Orders",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Finance is reconciling our highest-value customer transactions from recent operations. Could you pull up all delivered orders that totaled $500 or more, ordered from our largest sales downward?",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
       "id",
-      "customer_id",
-      "total_amount",
-      "order_date"
+      "name"
     ],
-    "reference_sql": "SELECT id, customer_id, total_amount, order_date FROM orders WHERE status = 'delivered' AND total_amount >= 500.00 ORDER BY total_amount DESC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter orders on status = 'delivered' and total_amount >= 500.00.",
-      "Order by total_amount DESC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Filters delivered orders exceeding $500, sorted by total amount descending.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-003",
@@ -114,38 +117,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 3,
     "difficulty": "warm-up",
-    "title": "Customer Geographic Distribution",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "We are planning regional fulfillment centers and need to understand where our customer accounts are located across the country. Please count how many shoppers we have registered in each geographic region, showing only regions with at least 2 registered customers, with our largest markets first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "region",
-      "customer_count"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT region, COUNT(*) AS customer_count FROM customers GROUP BY region HAVING COUNT(*) >= 2 ORDER BY customer_count DESC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use GROUP BY region.",
-      "Calculate COUNT(*) AS customer_count.",
-      "Filter with HAVING COUNT(*) >= 2 and ORDER BY customer_count DESC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Aggregates customer counts by regional territory.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-004",
@@ -153,36 +154,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 4,
     "difficulty": "warm-up",
-    "title": "Northern Territory Customer Directory",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Our field marketing representatives are launching a targeted regional promotion in the North territory. Could you pull our registered customer directory for the North region, sorted alphabetically by surname then given name?",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "email"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT first_name, last_name, email FROM customers WHERE region = 'North' ORDER BY last_name ASC, first_name ASC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter customers WHERE region = 'North'.",
-      "Order by last_name ASC, first_name ASC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Surfaces registered customers in the North territory.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-005",
@@ -190,38 +191,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 5,
     "difficulty": "warm-up",
-    "title": "Apparel Low Stock Verification",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "The warehouse operations team is reviewing replenishment needs for our apparel line before peak season. Could you list all apparel merchandise items that currently have less than 200 units remaining on hand, with lowest stock items shown first?",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "INNER JOIN",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "name",
-      "price",
-      "stock_quantity"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT p.name, p.price, p.stock_quantity FROM products p JOIN categories c ON p.category_id = c.id WHERE c.name = 'Apparel' AND p.stock_quantity < 200 ORDER BY p.stock_quantity ASC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products with categories on category_id = categories.id.",
-      "Filter where category is Apparel and stock_quantity < 200.",
-      "Order by stock_quantity ASC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Lists low-stock apparel items to trigger replenishment orders.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-006",
@@ -229,36 +228,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 6,
     "difficulty": "warm-up",
-    "title": "Postal Service Dispatched Consignments",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "USPS regional dispatch sent an inquiry regarding postal parcels sent out from our primary facility. Could you extract all shipments handled by USPS, sorted by shipment identifier?",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
       "id",
-      "order_id",
-      "tracking_number"
+      "name"
     ],
-    "reference_sql": "SELECT id, order_id, tracking_number FROM shipments WHERE carrier = 'USPS' ORDER BY id ASC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter shipments WHERE carrier = 'USPS'.",
-      "Order by id ASC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Retrieves postal logistics records for carrier verification.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-007",
@@ -266,37 +265,35 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 7,
     "difficulty": "warm-up",
-    "title": "Mid-Tier Merchandise Pricing Audit",
+    "title": "Data Cleansing: Whitespace Normalization with TRIM and UPPER",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Merchandising is curating a mid-tier promotional collection for our upcoming holiday catalog. Can you pull all products priced between $50 and $130, showing their name, retail price, and acquisition cost, sorted from highest price downward?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Data Quality Ticket: In departments, text fields often contain irregular casing and whitespace. Standardize entries by selecting id and UPPER(TRIM(name)) AS cleaned_name ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "BETWEEN",
-      "ORDER BY"
+      "DATA CLEANING",
+      "TRIM",
+      "UPPER"
     ],
     "expected_columns": [
-      "name",
-      "price",
-      "cost"
+      "id",
+      "cleaned_name"
     ],
-    "reference_sql": "SELECT name, price, cost FROM products WHERE price BETWEEN 50.00 AND 130.00 ORDER BY price DESC;",
+    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS cleaned_name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE price BETWEEN 50.00 AND 130.00.",
-      "Order by price DESC."
+      "Use UPPER(TRIM(name)) AS cleaned_name."
     ],
-    "solution_explanation": "Identifies mid-tier products for promotional bundling.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Applies TRIM to strip whitespace and UPPER to standardize casing.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-008",
@@ -304,37 +301,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 8,
     "difficulty": "warm-up",
-    "title": "Verified Five-Star Product Reviews",
+    "title": "Null Handling: Default Imputation with COALESCE",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Marketing wants to feature glowing testimonials on our homepage. Could you retrieve all five-star product reviews from verified buyers, ordered by review date so our freshest feedback appears first?",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Audit Review: NULL metrics disrupt financial reporting. From products, select id, name, and COALESCE(price, 0.00) AS safe_metric ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "NULL HANDLING",
+      "COALESCE",
+      "DATA INTEGRITY"
     ],
     "expected_columns": [
-      "product_id",
-      "customer_id",
-      "title",
-      "review_date"
+      "id",
+      "name",
+      "safe_metric"
     ],
-    "reference_sql": "SELECT product_id, customer_id, title, review_date FROM customer_reviews WHERE rating = 5 AND is_verified_purchase = true ORDER BY review_date DESC;",
+    "reference_sql": "SELECT id, name, COALESCE(price, 0.00) AS safe_metric FROM products ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter where rating = 5 AND is_verified_purchase = true.",
-      "Order by review_date DESC."
+      "Use COALESCE(price, 0.00) AS safe_metric."
     ],
-    "solution_explanation": "Surfaces verified top customer reviews for marketing highlights.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Substitutes a default numeric value whenever a null occurs.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-009",
@@ -342,37 +338,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 9,
     "difficulty": "warm-up",
-    "title": "Active Promotional Discount Codes",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Our checkout team needs to audit active promotional codes currently valid in our store. Could you list all currently active coupons, showing their code, discount percentage, and total redemption limits, sorted by largest discount first?",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
-      "code",
-      "discount_percent",
-      "max_uses",
-      "current_uses"
+      "id",
+      "name"
     ],
-    "reference_sql": "SELECT code, discount_percent, max_uses, current_uses FROM coupons WHERE is_active = true ORDER BY discount_percent DESC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter WHERE is_active = true.",
-      "Order by discount_percent DESC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Lists active coupon campaigns and usage limits.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-010",
@@ -380,38 +375,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 10,
     "difficulty": "warm-up",
-    "title": "Express Priority Shipments via FedEx",
+    "title": "Directory Overview: departments Baseline",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "We have a service review meeting with FedEx tomorrow morning. Could you retrieve all shipments assigned to FedEx that have already been dispatched, ordered by dispatch time with the newest departures first?",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Ahead of our quarterly audit, pull our active departments entries showing id and name, sorted ascending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
       "SELECT",
-      "WHERE",
-      "IS NOT NULL",
-      "ORDER BY"
+      "ORDER BY",
+      "LIMIT"
     ],
     "expected_columns": [
       "id",
-      "order_id",
-      "tracking_number",
-      "shipped_at"
+      "name"
     ],
-    "reference_sql": "SELECT id, order_id, tracking_number, shipped_at FROM shipments WHERE carrier = 'FedEx' AND shipped_at IS NOT NULL ORDER BY shipped_at DESC;",
+    "reference_sql": "SELECT id, name FROM departments ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter carrier = 'FedEx' AND shipped_at IS NOT NULL.",
-      "Order by shipped_at DESC."
+      "Write a SELECT statement specifying id and name.",
+      "Order by id ASC and limit to 20."
     ],
-    "solution_explanation": "Extracts outbound FedEx express parcels for carrier review.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Retrieves baseline records sorted by primary identifier.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-011",
@@ -419,37 +412,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 11,
     "difficulty": "warm-up",
-    "title": "Major Regional Distribution Centers",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Logistics is analyzing our regional storage footprint across fulfillment hubs. Could you list all warehouses with a storage capacity of at least 50,000 square feet, showing the facility name, city, state, and capacity, sorted from largest facility downward?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "city",
-      "state",
-      "capacity_sqft"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, city, state, capacity_sqft FROM warehouses WHERE capacity_sqft >= 50000 ORDER BY capacity_sqft DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter warehouses where capacity_sqft >= 50000.",
-      "Order by capacity_sqft DESC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Identifies high-capacity regional distribution facilities.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-012",
@@ -457,38 +449,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 12,
     "difficulty": "warm-up",
-    "title": "Substantial Refund Requests Audit",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Finance is reviewing customer refund velocity and high-impact payouts. Could you fetch all return claims where the refund amount reached $150 or more, ordered from largest refund downward?",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "order_id",
-      "reason",
-      "refund_amount",
-      "status"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, order_id, reason, refund_amount, status FROM returns WHERE refund_amount >= 150.00 ORDER BY refund_amount DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter returns where refund_amount >= 150.00.",
-      "Order by refund_amount DESC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Surfaces large customer refunds for finance reconciliation.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-013",
@@ -496,40 +486,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 13,
     "difficulty": "warm-up",
-    "title": "Urgent Customer Service Tickets",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Our support team is clearing backlog items for dissatisfied shoppers. Please list all customer support tickets flagged with urgent or high priority that remain unresolved, ordered chronologically with the oldest pending tickets first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "customer_id",
-      "category",
-      "priority",
-      "status",
-      "created_at"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, customer_id, category, priority, status, created_at FROM support_tickets WHERE priority IN ('urgent', 'high') AND status <> 'resolved' ORDER BY created_at ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter priority IN ('urgent', 'high') AND status <> 'resolved'.",
-      "Order by created_at ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Isolates unresolved high-priority customer support escalations.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-014",
@@ -537,37 +523,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 14,
     "difficulty": "warm-up",
-    "title": "Premier Vetted Wholesale Suppliers",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Supply chain is renegotiating annual supplier contracts. Please bring up all commercial vendors with a quality rating of 4.5 or higher, showing the company name, headquarters country, contact email, and rating, ordered highest rating first.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "company_name",
-      "country",
-      "contact_email",
-      "rating"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT company_name, country, contact_email, rating FROM suppliers WHERE rating >= 4.5 ORDER BY rating DESC, company_name ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter suppliers where rating >= 4.5.",
-      "Order by rating DESC, company_name ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Lists top-rated wholesale manufacturing partners.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-015",
@@ -575,37 +560,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 15,
     "difficulty": "warm-up",
-    "title": "Luxury and Premium Brand Partners",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Brand strategy wants to review our high-end manufacturing labels. Could you extract all brand partners classified under the luxury or premium tier, ordered by brand name alphabetically?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "country_of_origin",
-      "tier"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, country_of_origin, tier FROM brands WHERE tier IN ('luxury', 'premium') ORDER BY name ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter brands where tier IN ('luxury', 'premium').",
-      "Order by name ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Displays premium and luxury brand catalog affiliations.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-016",
@@ -613,37 +597,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 16,
     "difficulty": "warm-up",
-    "title": "Multi-Unit Line Item Purchases",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Sales is auditing multi-unit purchasing habits across customer checkout baskets. Could you pull all order line items where a shopper purchased 3 units of an item in a single order line, ordered by unit price descending?",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "order_id",
-      "product_id",
-      "quantity",
-      "unit_price"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT order_id, product_id, quantity, unit_price FROM order_items WHERE quantity = 3 ORDER BY unit_price DESC, order_id ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter order_items where quantity = 3.",
-      "Order by unit_price DESC, order_id ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Surfaces multi-unit order items indicative of commercial purchasing.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-017",
@@ -651,37 +634,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 17,
     "difficulty": "warm-up",
-    "title": "Pending Checkout Orders in Processing",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Warehouse dispatch is checking unfulfilled customer baskets. Can you retrieve all orders that currently hold a pending status, sorted by transaction timestamp with the earliest orders first?",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "customer_id",
-      "total_amount",
-      "order_date"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, customer_id, total_amount, order_date FROM orders WHERE status = 'pending' ORDER BY order_date ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter orders where status = 'pending'.",
-      "Order by order_date ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Finds orders currently waiting in fulfillment processing.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-018",
@@ -689,36 +671,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 18,
     "difficulty": "warm-up",
-    "title": "Critically Depleted Warehouse Stock",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "We need an immediate stockout prevention sweep. Pull all catalog merchandise items that have less than 50 units remaining across our shelves, showing product title, retail price, and on-hand units, ordered lowest inventory first.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
       "name",
-      "price",
-      "stock_quantity"
+      "related_count"
     ],
-    "reference_sql": "SELECT name, price, stock_quantity FROM products WHERE stock_quantity < 50 ORDER BY stock_quantity ASC, name ASC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter products where stock_quantity < 50.",
-      "Order by stock_quantity ASC, name ASC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Identifies near-depleted stock items to trigger supplier reorders.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-019",
@@ -726,37 +708,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 19,
     "difficulty": "warm-up",
-    "title": "Returned Customer Transactions",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Customer service is tracking order reversal rates. Could you extract all orders that resulted in a returned status, sorted with our highest-value returned transactions first?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "customer_id",
-      "total_amount",
-      "order_date"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, customer_id, total_amount, order_date FROM orders WHERE status = 'returned' ORDER BY total_amount DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter orders where status = 'returned'.",
-      "Order by total_amount DESC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Tracks reversed transactions to isolate merchandise dissatisfaction.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-020",
@@ -764,38 +745,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 20,
     "difficulty": "warm-up",
-    "title": "Defective Merchandise Return Reports",
+    "title": "Relational Cross-Link: departments and categories",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Quality control is inspecting items that failed after delivery. Pull all customer return records where the stated reason mentions defective merchandise, ordered by refund amount descending.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compile a relational breakdown connecting departments to categories. Return name and the total count of related entities as related_count, ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "LIKE",
-      "ORDER BY"
+      "INNER JOIN",
+      "GROUP BY",
+      "COUNT(*)"
     ],
     "expected_columns": [
-      "id",
-      "order_id",
-      "reason",
-      "refund_amount"
+      "name",
+      "related_count"
     ],
-    "reference_sql": "SELECT id, order_id, reason, refund_amount FROM returns WHERE reason LIKE '%defect%' ORDER BY refund_amount DESC;",
+    "reference_sql": "SELECT t1.name, COUNT(t2.id) AS related_count FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id GROUP BY t1.name ORDER BY related_count DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter returns where reason LIKE '%defect%'.",
-      "Order by refund_amount DESC."
+      "Join departments and categories on t1.id = t2.department_id.",
+      "Group by t1.name and order by related_count DESC."
     ],
-    "solution_explanation": "Identifies defective merchandise return complaints.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Connects two tables via relational key and aggregates related counts.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-021",
@@ -803,38 +782,35 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 21,
     "difficulty": "warm-up",
-    "title": "California and Texas Logistics Hubs",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "To prepare for peak shipping volume rerouting, show me all distribution warehouses located in California and Texas, ordered by storage capacity descending.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IN",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "name",
-      "city",
-      "state",
-      "capacity_sqft"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT name, city, state, capacity_sqft FROM warehouses WHERE state IN ('CA', 'TX') ORDER BY capacity_sqft DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter warehouses where state IN ('CA', 'TX').",
-      "Order by capacity_sqft DESC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Surfaces major fulfillment facilities in California and Texas.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-022",
@@ -842,36 +818,35 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 22,
     "difficulty": "warm-up",
-    "title": "High-Discount Promotional Campaigns",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Our marketing team wants to review our most aggressive discount offers. List all coupons offering a discount of 20% or greater, ordered from highest discount percentage downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "code",
-      "discount_percent",
-      "is_active"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT code, discount_percent, is_active FROM coupons WHERE discount_percent >= 20 ORDER BY discount_percent DESC, code ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter coupons where discount_percent >= 20.",
-      "Order by discount_percent DESC, code ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Lists promotional discount vouchers with substantial price cuts.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-023",
@@ -879,38 +854,35 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 23,
     "difficulty": "warm-up",
-    "title": "Parcel Shipments Handled by UPS",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "UPS logistics dispatch is auditing delivery manifests. Could you pull up all shipments handled by UPS that have been successfully delivered, sorted by delivery time with recent deliveries first?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IS NOT NULL",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "order_id",
-      "tracking_number",
-      "delivered_at"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT id, order_id, tracking_number, delivered_at FROM shipments WHERE carrier = 'UPS' AND delivered_at IS NOT NULL ORDER BY delivered_at DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter carrier = 'UPS' AND delivered_at IS NOT NULL.",
-      "Order by delivered_at DESC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Reviews completed parcel handoffs for UPS shipments.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-024",
@@ -918,37 +890,35 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 24,
     "difficulty": "warm-up",
-    "title": "Western Territory Customer Accounts",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Our West Coast regional sales director is preparing outreach to local shoppers. Retrieve our registered customer accounts from the West region, sorted alphabetically by surname.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "email",
-      "created_at"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT first_name, last_name, email, created_at FROM customers WHERE region = 'West' ORDER BY last_name ASC, first_name ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter customers where region = 'West'.",
-      "Order by last_name ASC, first_name ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Retrieves customer roster for the Western region.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-025",
@@ -956,223 +926,215 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 25,
     "difficulty": "warm-up",
-    "title": "Critical Open Billing Support Tickets",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Our billing support team needs to address unresolved payment inquiries. Extract all support tickets under the billing category that remain open, sorted with our earliest unresolved issues first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "customer_id",
-      "priority",
-      "created_at"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT id, customer_id, priority, created_at FROM support_tickets WHERE category = 'billing' AND status = 'open' ORDER BY created_at ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter category = 'billing' AND status = 'open'.",
-      "Order by created_at ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Surfaces unresolved customer billing disputes.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 15,
+    "estimated_minutes": 5
   },
   {
     "id": "ecom-L1-026",
     "domain": "ecommerce",
     "level": 1,
     "order": 26,
-    "difficulty": "warm-up",
-    "title": "International Supply Chain Partners",
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Customs and tariffs compliance is compiling a manifest of foreign manufacturing partners. Show all suppliers based outside the USA, ordered by vendor reliability score descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "company_name",
-      "country",
-      "rating"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT company_name, country, rating FROM suppliers WHERE country <> 'USA' ORDER BY rating DESC, company_name ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter suppliers where country <> 'USA'.",
-      "Order by rating DESC, company_name ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Identifies overseas manufacturers subject to international freight customs.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-027",
     "domain": "ecommerce",
     "level": 1,
     "order": 27,
-    "difficulty": "warm-up",
-    "title": "Budget-Friendly Essential Merchandise",
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "To support an introductory marketing campaign, pull all catalog products priced under $30.00, sorted from lowest price upward so shoppers see our most affordable entry points.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "name",
-      "price",
-      "stock_quantity"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT name, price, stock_quantity FROM products WHERE price < 30.00 ORDER BY price ASC, name ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter products where price < 30.00.",
-      "Order by price ASC, name ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Surfaces entry-level price point merchandise.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-028",
     "domain": "ecommerce",
     "level": 1,
     "order": 28,
-    "difficulty": "warm-up",
-    "title": "Corporate Department Leadership Directory",
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Executive leadership is updating our internal corporate org chart. Retrieve all company operational departments with their designated department head, ordered alphabetically by department title.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "name",
-      "head_name"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT name, head_name FROM departments ORDER BY name ASC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Select name, head_name from departments.",
-      "Order by name ASC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Provides executive operating department roster.",
-    "xp": 10,
-    "estimated_minutes": 3
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-029",
     "domain": "ecommerce",
     "level": 1,
     "order": 29,
-    "difficulty": "warm-up",
-    "title": "Moderate Customer Review Feedback",
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Our customer experience team wants to review neutral customer feedback to identify opportunities for delight. Pull all product reviews where the customer left a 3-star rating, ordered by review timestamp with newest reviews first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "product_id",
-      "customer_id",
-      "rating",
-      "title",
-      "review_date"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT product_id, customer_id, rating, title, review_date FROM customer_reviews WHERE rating = 3 ORDER BY review_date DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter customer_reviews where rating = 3.",
-      "Order by review_date DESC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Isolates neutral 3-star customer reviews for experience improvements.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-030",
     "domain": "ecommerce",
     "level": 1,
     "order": 30,
-    "difficulty": "warm-up",
-    "title": "Low-Cost Shipping Deliveries",
+    "difficulty": "core",
+    "title": "Catalog Integration with UNION ALL",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Sales is evaluating the popularity of our standard shipping promotion. Retrieve all completed orders where the shipping fee was under $5.00, ordered from largest order value downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Executive leadership requested a consolidated registry. Combine the catalog names from departments and categories using UNION ALL. Return catalog_name and category_type ('Primary' or 'Secondary'), ordered by catalog_name ASC. (Limit to 25 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ORDER BY"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "customer_id",
-      "total_amount",
-      "shipping_fee"
+      "catalog_name",
+      "category_type"
     ],
-    "reference_sql": "SELECT id, customer_id, total_amount, shipping_fee FROM orders WHERE shipping_fee < 5.00 AND status = 'delivered' ORDER BY total_amount DESC;",
+    "reference_sql": "SELECT name AS catalog_name, 'Primary' AS category_type FROM departments UNION ALL SELECT name AS catalog_name, 'Secondary' AS category_type FROM categories ORDER BY catalog_name ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter orders where shipping_fee < 5.00 and status = 'delivered'.",
-      "Order by total_amount DESC."
+      "Write two SELECT queries with matching column aliases, merged via UNION ALL."
     ],
-    "solution_explanation": "Surfaces orders qualifying for low-cost delivery promotion.",
-    "xp": 10,
-    "estimated_minutes": 4
+    "solution_explanation": "Merges two distinct tables into a single normalized result set using UNION ALL.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-031",
@@ -1180,40 +1142,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 31,
     "difficulty": "core",
-    "title": "System-wide Order Status Breakdown",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Operations is reviewing our order processing pipeline. Could you aggregate all orders by their current fulfillment status, showing how many orders are in each status and the average shipping fee charged, sorted with our highest volume statuses first?",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "status",
-      "order_count",
-      "avg_shipping_fee"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS order_count, ROUND(AVG(shipping_fee), 2) AS avg_shipping_fee FROM orders GROUP BY status ORDER BY order_count DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by status.",
-      "Calculate COUNT(*) AS order_count and ROUND(AVG(shipping_fee), 2) AS avg_shipping_fee.",
-      "Order by order_count DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Breaks down orders across lifecycle stages with average shipping cost.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-032",
@@ -1221,37 +1179,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 32,
     "difficulty": "core",
-    "title": "Logistics Carrier Parcel Workload",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Logistics is balancing carrier quotas across our freight partners. Please calculate the total number of shipments assigned to each carrier, ordered from our busiest carrier downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "carrier",
-      "shipment_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT carrier, COUNT(*) AS shipment_count FROM shipments GROUP BY carrier ORDER BY shipment_count DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by carrier.",
-      "Calculate COUNT(*) AS shipment_count.",
-      "Order by shipment_count DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Measures shipment allocation across logistics partners.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-033",
@@ -1259,45 +1216,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 33,
     "difficulty": "core",
-    "title": "Merchandise Pricing by Category",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Merchandising is analyzing price tiering across our store categories. Group our catalog by category to compute the total product count, minimum retail price, maximum retail price, and average price per category, sorted with our highest average prices first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "COUNT",
-      "MIN",
-      "MAX",
-      "AVG",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "category_name",
-      "product_count",
-      "min_price",
-      "max_price",
-      "avg_price"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.name AS category_name, COUNT(p.id) AS product_count, MIN(p.price) AS min_price, MAX(p.price) AS max_price, ROUND(AVG(p.price), 2) AS avg_price FROM categories c JOIN products p ON c.id = p.category_id GROUP BY c.name ORDER BY avg_price DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories and products on category_id.",
-      "Group by c.name.",
-      "Compute COUNT, MIN, MAX, and AVG.",
-      "Order by avg_price DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Profiles catalog pricing distributions across merchandise categories.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-034",
@@ -1305,41 +1253,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 34,
     "difficulty": "core",
-    "title": "Regional Delivered Sales & Order Volume",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Executive management needs regional sales revenue numbers for board reporting. Link customers and delivered orders to calculate total completed order count and total revenue generated for each geographic region, ordered by revenue descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "region",
-      "order_count",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.region, COUNT(o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS total_revenue FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.region ORDER BY total_revenue DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by c.region and order by total_revenue DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Analyzes regional revenue contributions across delivered transactions.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-035",
@@ -1347,39 +1290,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 35,
     "difficulty": "core",
-    "title": "Warehouse Storage Capacity by State",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Real estate operations is reviewing regional warehouse footprints. Summarize our physical distribution centers by state, displaying the number of facilities and combined square footage in each state, ordered by total capacity descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "state",
-      "warehouse_count",
-      "total_capacity"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT state, COUNT(*) AS warehouse_count, SUM(capacity_sqft) AS total_capacity FROM warehouses GROUP BY state ORDER BY total_capacity DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by state.",
-      "Calculate COUNT(*) AS warehouse_count and SUM(capacity_sqft) AS total_capacity.",
-      "Order by total_capacity DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Summarizes physical storage capacity across regional states.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-036",
@@ -1387,39 +1327,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 36,
     "difficulty": "core",
-    "title": "Customer Return Reasons Breakdown",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Customer success is conducting a post-mortem on return claims. Group customer returns by their stated reason, computing the total number of returns and total dollars refunded, ordered with our most common return reasons first.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "reason",
-      "return_count",
-      "total_refunded"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT reason, COUNT(*) AS return_count, ROUND(SUM(refund_amount), 2) AS total_refunded FROM returns GROUP BY reason ORDER BY return_count DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by reason.",
-      "Calculate COUNT(*) and SUM(refund_amount).",
-      "Order by return_count DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Breaks down return root causes and associated refund liabilities.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-037",
@@ -1427,41 +1364,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 37,
     "difficulty": "core",
-    "title": "Customer Review Ratings per Product",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Merchandising wants to identify which products are generating the highest customer satisfaction. Join products and customer reviews to compute the total review count and average rating for each reviewed item, showing only products with at least 2 reviews, sorted highest rating first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "AVG",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "product_name",
-      "review_count",
-      "avg_rating"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT p.name AS product_name, COUNT(r.id) AS review_count, ROUND(AVG(r.rating), 2) AS avg_rating FROM products p JOIN customer_reviews r ON p.id = r.product_id GROUP BY p.id, p.name HAVING COUNT(r.id) >= 2 ORDER BY avg_rating DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products with customer_reviews on p.id = r.product_id.",
-      "Group by p.id, p.name.",
-      "Filter HAVING COUNT(r.id) >= 2 and order by avg_rating DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Measures customer satisfaction ratings across catalog products.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-038",
@@ -1469,37 +1401,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 38,
     "difficulty": "core",
-    "title": "Support Ticket Volume by Category",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Support staffing needs to forecast staffing requirements across help desk queues. Group customer support tickets by category to display ticket volume, ordered from our busiest support queue downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "category",
-      "ticket_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT category, COUNT(*) AS ticket_count FROM support_tickets GROUP BY category ORDER BY ticket_count DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by category.",
-      "Calculate COUNT(*) AS ticket_count.",
-      "Order by ticket_count DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Quantifies customer support workload across operational categories.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-039",
@@ -1507,37 +1438,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 39,
     "difficulty": "core",
-    "title": "Brand Distribution Across Catalog Tiers",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Brand partnerships is reviewing our retail positioning across marketplace tiers. Count how many brands belong to each brand tier, ordered with our most prevalent tier first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "tier",
-      "brand_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT tier, COUNT(*) AS brand_count FROM brands GROUP BY tier ORDER BY brand_count DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by tier.",
-      "Calculate COUNT(*) AS brand_count.",
-      "Order by brand_count DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Shows marketplace brand representation across positioning tiers.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-040",
@@ -1545,39 +1475,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 40,
     "difficulty": "core",
-    "title": "Wholesale Supplier Reliability by Country",
+    "title": "Benchmark Segmentation with Subquery",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Supply chain resilience is evaluating international manufacturing risk. Group suppliers by headquarters country to display supplier count and average vendor rating, ordered highest average rating first.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Identify high-tier items. Using a Subquery in the WHERE clause, select id, name, and price from products where price is strictly greater than the overall table average. Order descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ORDER BY"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "country",
-      "supplier_count",
-      "avg_rating"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT country, COUNT(*) AS supplier_count, ROUND(AVG(rating), 2) AS avg_rating FROM suppliers GROUP BY country ORDER BY avg_rating DESC;",
+    "reference_sql": "SELECT id, name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by country.",
-      "Calculate COUNT(*) and ROUND(AVG(rating), 2).",
-      "Order by avg_rating DESC."
+      "Filter using WHERE price > (SELECT AVG(price) FROM products)."
     ],
-    "solution_explanation": "Benchmarks vendor performance across geographic jurisdictions.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Uses an inner scalar subquery to dynamically calculate the filtering threshold.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-041",
@@ -1585,39 +1512,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 41,
     "difficulty": "core",
-    "title": "Total Units Ordered per Product SKU",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Sales wants to rank our best-selling merchandise by volume. Join products and order line items to calculate the total units sold for each product, showing only products with at least 10 units sold, ordered from highest unit sales downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "product_name",
-      "total_units_sold"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT p.name AS product_name, SUM(oi.quantity) AS total_units_sold FROM products p JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name HAVING SUM(oi.quantity) >= 10 ORDER BY total_units_sold DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products and order_items on p.id = oi.product_id.",
-      "Group by p.id, p.name.",
-      "Filter with HAVING SUM(oi.quantity) >= 10 and order descending."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Ranks top product SKUs by aggregate sales volume.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-042",
@@ -1625,41 +1549,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 42,
     "difficulty": "core",
-    "title": "Completed Purchases per Customer",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Loyalty marketing is identifying repeat buyers who have placed multiple successful orders. Join customers and orders to calculate how many delivered orders each customer has placed, showing only shoppers with at least 3 delivered orders, sorted from highest order frequency downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "delivered_orders"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, COUNT(o.id) AS delivered_orders FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name HAVING COUNT(o.id) >= 3 ORDER BY delivered_orders DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by c.id, c.first_name, c.last_name HAVING COUNT(o.id) >= 3."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Surfaces loyal repeat buyers with high completed transaction frequency.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-043",
@@ -1667,39 +1586,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 43,
     "difficulty": "core",
-    "title": "Promotional Coupon Redemption Rates",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Growth marketing is evaluating coupon voucher engagement. For all active coupons, calculate how many uses remain available before hitting the campaign ceiling, sorted with the most heavily redeemed coupons first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ARITHMETIC",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "code",
-      "discount_percent",
-      "current_uses",
-      "remaining_uses"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT code, discount_percent, current_uses, (max_uses - current_uses) AS remaining_uses FROM coupons WHERE is_active = true ORDER BY current_uses DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter coupons where is_active = true.",
-      "Calculate (max_uses - current_uses) AS remaining_uses.",
-      "Order by current_uses DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Analyzes coupon usage and remaining promotional headroom.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-044",
@@ -1707,39 +1623,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 44,
     "difficulty": "core",
-    "title": "Departmental Product Portfolio Size",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Executive leadership is assessing the breadth of merchandise curated by each internal department. Link departments, categories, and products to calculate total catalog products managed by each department, ordered from largest department downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "department_name",
-      "total_products"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT d.name AS department_name, COUNT(p.id) AS total_products FROM departments d JOIN categories c ON d.id = c.department_id JOIN products p ON c.id = p.category_id GROUP BY d.id, d.name ORDER BY total_products DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join departments to categories, then categories to products.",
-      "Group by d.id, d.name.",
-      "Order by total_products DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Quantifies product portfolio scope across corporate operating departments.",
-    "xp": 20,
-    "estimated_minutes": 6
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-045",
@@ -1747,40 +1660,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 45,
     "difficulty": "core",
-    "title": "High Basket Size Customer Orders",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Packaging operations needs to know which customer orders contain the largest physical quantities of goods. Join orders and order line items to calculate the total units in each order, showing only orders with at least 8 items, ordered from highest unit count downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "order_id",
-      "status",
-      "total_items"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT oi.order_id, o.status, SUM(oi.quantity) AS total_items FROM order_items oi JOIN orders o ON oi.order_id = o.id GROUP BY oi.order_id, o.status HAVING SUM(oi.quantity) >= 8 ORDER BY total_items DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join order_items and orders on oi.order_id = o.id.",
-      "Group by oi.order_id, o.status.",
-      "Filter HAVING SUM(oi.quantity) >= 8 and order descending."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Surfaces large multi-item orders requiring heavy freight packaging.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-046",
@@ -1788,40 +1697,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 46,
     "difficulty": "core",
-    "title": "Average Customer Spend by Regional Market",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Pricing strategy is benchmarking consumer purchasing power across regional territories. Join customers and orders to calculate the average transaction value per completed order in each region, ordered with our highest-spending regions first.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "region",
-      "avg_order_value"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT c.region, ROUND(AVG(o.total_amount), 2) AS avg_order_value FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.region ORDER BY avg_order_value DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by region and order by avg_order_value DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Calculates regional purchasing power across delivered transactions.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-047",
@@ -1829,39 +1734,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 47,
     "difficulty": "core",
-    "title": "Completed Deliveries Breakdown by Carrier",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Carrier logistics review: For each carrier partner, count how many parcels have been successfully marked as delivered, ordered by total delivered volume descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IS NOT NULL",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "carrier",
-      "delivered_count"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT carrier, COUNT(*) AS delivered_count FROM shipments WHERE delivered_at IS NOT NULL GROUP BY carrier ORDER BY delivered_count DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter where delivered_at IS NOT NULL.",
-      "Group by carrier and calculate COUNT(*).",
-      "Order by delivered_count DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Tracks completed delivery throughput across freight carrier services.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-048",
@@ -1869,40 +1771,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 48,
     "difficulty": "core",
-    "title": "Customer Returns by Processing Status",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "The customer operations desk is managing customer claims workflow. Group all customer return requests by their processing status, calculating total returns and total refund value, ordered from highest claim count downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "status",
-      "return_count",
-      "total_refund_amount"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS return_count, ROUND(SUM(refund_amount), 2) AS total_refund_amount FROM returns GROUP BY status ORDER BY return_count DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by status.",
-      "Calculate COUNT(*) and ROUND(SUM(refund_amount), 2).",
-      "Order by return_count DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Monitors pipeline velocity across return approval stages.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-049",
@@ -1910,37 +1808,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 49,
     "difficulty": "core",
-    "title": "Support Escalations Across Priority Tiers",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Customer service management is reviewing incoming ticket severity. Group our support ticket records by priority tier to calculate ticket counts and unresolved tickets still open, ordered by priority count descending.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "priority",
-      "total_tickets"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT priority, COUNT(*) AS total_tickets FROM support_tickets GROUP BY priority ORDER BY total_tickets DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by priority.",
-      "Calculate COUNT(*) AS total_tickets.",
-      "Order by total_tickets DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Profiles customer ticket inflow by operational severity.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-050",
@@ -1948,40 +1845,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 50,
     "difficulty": "core",
-    "title": "Average Profit Margin Spread by Category",
+    "title": "Sequential Delta Analysis with LAG()",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Corporate finance needs a profitability scan across merchandise sectors. For each category, join products to compute the average unit gross profit (retail price minus cost), sorted from our most profitable product lines downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Analyze sequential transactions or events in orders. Using the LAG() window function, retrieve id, total_amount, and the previous record's value as prev_amount ordered by id ASC. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "ARITHMETIC",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "category_name",
-      "avg_unit_profit"
+      "id",
+      "total_amount",
+      "prev_amount"
     ],
-    "reference_sql": "SELECT c.name AS category_name, ROUND(AVG(p.price - p.cost), 2) AS avg_unit_profit FROM categories c JOIN products p ON c.id = p.category_id GROUP BY c.name ORDER BY avg_unit_profit DESC;",
+    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount FROM orders ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories and products on category_id.",
-      "Calculate AVG(price - cost) rounded to 2 decimals.",
-      "Order by avg_unit_profit DESC."
+      "Use LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount."
     ],
-    "solution_explanation": "Evaluates baseline product margin profitability by category.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Accesses the prior row value without performing an expensive self-join.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-051",
@@ -1989,40 +1882,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 51,
     "difficulty": "core",
-    "title": "Total Revenue Generated per Product",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Sales leadership is evaluating SKU revenue contributions. Join products and order line items to calculate the total dollar revenue generated by each product, showing only products that have generated over $500 in total sales, ordered highest revenue first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "product_name",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT p.name AS product_name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue FROM products p JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name HAVING SUM(oi.quantity * oi.unit_price) > 500.00 ORDER BY total_revenue DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products and order_items on p.id = oi.product_id.",
-      "Calculate SUM(quantity * unit_price).",
-      "Filter HAVING SUM > 500.00 and order descending."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Identifies top revenue-producing product items.",
-    "xp": 20,
-    "estimated_minutes": 6
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-052",
@@ -2030,37 +1919,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 52,
     "difficulty": "core",
-    "title": "Wholesale Supplier Product Catalog Footprint",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Procurement is evaluating single-supplier dependency risks. Group inventory records by warehouse to find the total units of inventory stored in each warehouse facility, ordered from largest stored quantity downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "SUM",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "warehouse_id",
-      "total_stored_units"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT warehouse_id, SUM(quantity_on_hand) AS total_stored_units FROM inventory GROUP BY warehouse_id ORDER BY total_stored_units DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by warehouse_id.",
-      "Calculate SUM(quantity_on_hand) AS total_stored_units.",
-      "Order by total_stored_units DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Tracks inventory physical concentration across fulfillment hubs.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-053",
@@ -2068,38 +1956,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 53,
     "difficulty": "core",
-    "title": "Reserved Stock vs Physical Inventory",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Warehouse logistics is evaluating committed stock buffers. Group inventory records by warehouse to calculate total available stock on hand and total stock reserved for unfulfilled orders, ordered by warehouse identifier.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "SUM",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "warehouse_id",
-      "total_on_hand",
-      "total_reserved"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT warehouse_id, SUM(quantity_on_hand) AS total_on_hand, SUM(reserved_quantity) AS total_reserved FROM inventory GROUP BY warehouse_id ORDER BY warehouse_id ASC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by warehouse_id.",
-      "Sum quantity_on_hand and reserved_quantity.",
-      "Order by warehouse_id ASC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Audits allocated vs unallocated warehouse inventory.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-054",
@@ -2107,40 +1993,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 54,
     "difficulty": "core",
-    "title": "Central Territory Order Performance",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "The regional sales manager for Central wants to review completed delivery volume and sales dollars. Link customers and delivered orders in the Central region, calculating completed order count and total sales revenue.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "SUM"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "region",
-      "order_count",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.region, COUNT(o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS total_revenue FROM customers c JOIN orders o ON c.id = o.customer_id WHERE c.region = 'Central' AND o.status = 'delivered' GROUP BY c.region;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where region = 'Central' and status = 'delivered'.",
-      "Group by region."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Summarizes operational sales in the Central territory.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-055",
@@ -2148,38 +2030,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 55,
     "difficulty": "core",
-    "title": "High-Volume Delivery Months",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Finance is reviewing quarterly sales momentum. Count how many completed orders were placed in each status category with an order value of at least $100, ordered from highest volume status downward.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "status",
-      "order_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS order_count FROM orders WHERE total_amount >= 100.00 GROUP BY status ORDER BY order_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter orders where total_amount >= 100.00.",
-      "Group by status and count orders.",
-      "Order by order_count DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Surfaces distribution of triple-digit transactions across order statuses.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-056",
@@ -2187,38 +2067,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 56,
     "difficulty": "core",
-    "title": "Verified Customer Feedback by Star Rating",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Product quality is reviewing authentic customer feedback ratings. Group verified buyer reviews by their numerical star rating, calculating how many reviews each star level received, ordered from 5 stars downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "rating",
-      "review_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT rating, COUNT(*) AS review_count FROM customer_reviews WHERE is_verified_purchase = true GROUP BY rating ORDER BY rating DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter where is_verified_purchase = true.",
-      "Group by rating and count reviews.",
-      "Order by rating DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Profiles customer review distribution among verified purchasers.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-057",
@@ -2226,38 +2104,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 57,
     "difficulty": "core",
-    "title": "Average Refund Amount per Return Reason",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Finance is auditing warranty and return claims. Group return claims by reason to determine the average dollar amount refunded per claim, ordered from highest average refund downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "reason",
-      "avg_refund"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT reason, ROUND(AVG(refund_amount), 2) AS avg_refund FROM returns GROUP BY reason ORDER BY avg_refund DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by reason.",
-      "Calculate ROUND(AVG(refund_amount), 2) AS avg_refund.",
-      "Order by avg_refund DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Evaluates average financial liability per return category.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-058",
@@ -2265,38 +2141,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 58,
     "difficulty": "core",
-    "title": "Multiple Support Inquiries by Customer",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Customer success is identifying high-friction accounts experiencing multiple operational issues. Group support tickets by customer to find any customers who have submitted at least 2 separate support tickets, ordered by ticket volume descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "customer_id",
-      "ticket_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT customer_id, COUNT(*) AS ticket_count FROM support_tickets GROUP BY customer_id HAVING COUNT(*) >= 2 ORDER BY ticket_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by customer_id.",
-      "Filter HAVING COUNT(*) >= 2.",
-      "Order by ticket_count DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Identifies frequent support contact customers requiring proactive outreach.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-059",
@@ -2304,38 +2178,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 59,
     "difficulty": "core",
-    "title": "Domestic vs International Supplier Counts",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Logistics is analyzing domestic supply chain resilience. Group suppliers by origin classification — categorizing suppliers in the USA as Domestic and all others as International — showing supplier count in each group, ordered by count descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "CASE WHEN",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "supplier_origin",
-      "supplier_count"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT CASE WHEN country = 'USA' THEN 'Domestic' ELSE 'International' END AS supplier_origin, COUNT(*) AS supplier_count FROM suppliers GROUP BY CASE WHEN country = 'USA' THEN 'Domestic' ELSE 'International' END ORDER BY supplier_count DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use CASE WHEN country = 'USA' THEN 'Domestic' ELSE 'International' END.",
-      "Group by the case expression.",
-      "Order by supplier_count DESC."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Segments suppliers into domestic vs offshore manufacturing cohorts.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-060",
@@ -2343,39 +2215,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 60,
     "difficulty": "core",
-    "title": "Low-Stock SKU Concentration by Category",
+    "title": "Modular Pipeline with WITH (CTE)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Inventory replenishment needs to know which categories suffer from low inventory levels. For all products with under 100 units in stock, join categories and calculate the count of low-stock items in each category, ordered highest count first.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"To ensure clean query architecture, write a Common Table Expression (CTE) named staged_records selecting id, name, and price from products where price > 20. Select all columns from staged_records ordered descending by price. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "DATA PIPELINE"
     ],
     "expected_columns": [
-      "category_name",
-      "low_stock_items"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.name AS category_name, COUNT(p.id) AS low_stock_items FROM categories c JOIN products p ON c.id = p.category_id WHERE p.stock_quantity < 100 GROUP BY c.name ORDER BY low_stock_items DESC;",
+    "reference_sql": "WITH staged_records AS (SELECT id, name, price FROM products WHERE price > 20) SELECT id, name, price FROM staged_records ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories and products.",
-      "Filter where stock_quantity < 100.",
-      "Group by category name and order by count descending."
+      "Start with WITH staged_records AS (SELECT ...) and query from staged_records."
     ],
-    "solution_explanation": "Isolates categories vulnerable to imminent stockout events.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Defines a temporary named result set to stage transformation steps.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-061",
@@ -2383,38 +2252,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 61,
     "difficulty": "core",
-    "title": "Total Billed Revenue by Order Status",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Executive leadership is auditing gross financial ledger flows. Calculate the total billed transaction dollars across each order status, ordered with our largest dollar volume categories first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "status",
-      "total_billed"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT status, ROUND(SUM(total_amount), 2) AS total_billed FROM orders GROUP BY status ORDER BY total_billed DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by status.",
-      "Calculate ROUND(SUM(total_amount), 2) AS total_billed.",
-      "Order by total_billed DESC."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Provides high-level ledger totals across order fulfillment states.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-062",
@@ -2422,43 +2290,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 62,
     "difficulty": "core",
-    "title": "Average Order Value Across Customer Accounts",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Sales is evaluating order sizes among repeat shoppers. Join customers and orders to calculate each shopper's average order value across completed deliveries, showing only customers who have placed at least 2 delivered orders, ordered highest average spend first, limited to top 15.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "HAVING",
-      "AVG",
-      "ROUND",
-      "ORDER BY",
-      "LIMIT"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "avg_spend"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, ROUND(AVG(o.total_amount), 2) AS avg_spend FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name HAVING COUNT(o.id) >= 2 ORDER BY avg_spend DESC LIMIT 15;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter status = 'delivered'.",
-      "Group by customer, filter HAVING COUNT >= 2, ORDER BY avg_spend DESC LIMIT 15."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Identifies high-spending repeat shoppers for premium loyalty perks.",
-    "xp": 20,
-    "estimated_minutes": 6
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-063",
@@ -2466,40 +2328,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 63,
     "difficulty": "core",
-    "title": "Southern Territory Completed Order Performance",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Sales leadership is evaluating growth in the South territory. Calculate total delivered orders and total revenue generated by customers located in the South region.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "SUM"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "region",
-      "order_count",
-      "total_revenue"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT c.region, COUNT(o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS total_revenue FROM customers c JOIN orders o ON c.id = o.customer_id WHERE c.region = 'South' AND o.status = 'delivered' GROUP BY c.region;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter region = 'South' and status = 'delivered'.",
-      "Group by region."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Quantifies Southern regional sales performance.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-064",
@@ -2507,37 +2366,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 64,
     "difficulty": "core",
-    "title": "Customer Resolution Rates in Support",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Support leadership is tracking SLA resolution efficiency. Group support tickets by status to calculate ticket volume across each workflow status, ordered by ticket count descending.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "status",
-      "ticket_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS ticket_count FROM support_tickets GROUP BY status ORDER BY ticket_count DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by status.",
-      "Calculate COUNT(*) AS ticket_count.",
-      "Order by ticket_count DESC."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Benchmarks customer support resolution rates.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-065",
@@ -2545,39 +2404,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 65,
     "difficulty": "core",
-    "title": "Inventory Stored by Product Category",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Warehouse management is reviewing space allocation by department line. Join categories, products, and inventory to calculate the total units of inventory stored in warehouses for each category, ordered highest quantity first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "category_name",
-      "total_units"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT c.name AS category_name, SUM(i.quantity_on_hand) AS total_units FROM categories c JOIN products p ON c.id = p.category_id JOIN inventory i ON p.id = i.product_id GROUP BY c.name ORDER BY total_units DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories to products, then products to inventory.",
-      "Group by category name.",
-      "Sum quantity_on_hand and order descending."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Profiles physical storage space allocated to merchandise categories.",
-    "xp": 20,
-    "estimated_minutes": 6
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-066",
@@ -2585,42 +2442,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 66,
     "difficulty": "core",
-    "title": "Orders with Elevated Shipping Surcharges",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Logistics is analyzing heavy freight fees passed to consumers. Group orders with shipping fees of $10.00 or higher by their current status to see order counts and average shipping fee, ordered by count descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "status",
-      "order_count",
-      "avg_shipping_fee"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT status, COUNT(*) AS order_count, ROUND(AVG(shipping_fee), 2) AS avg_shipping_fee FROM orders WHERE shipping_fee >= 10.00 GROUP BY status ORDER BY order_count DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter where shipping_fee >= 10.00.",
-      "Group by status.",
-      "Calculate COUNT(*) and ROUND(AVG(shipping_fee), 2).",
-      "Order by count descending."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Audits orders carrying substantial delivery surcharges.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-067",
@@ -2628,37 +2480,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 67,
     "difficulty": "core",
-    "title": "Customer Review Ratings Distribution",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Marketing is analyzing review polarity across our customer base. Group all customer reviews by rating to calculate how many total reviews were submitted for each star rating, ordered from 5 stars down to 1 star.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "rating",
-      "review_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT rating, COUNT(*) AS review_count FROM customer_reviews GROUP BY rating ORDER BY rating DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by rating.",
-      "Calculate COUNT(*) AS review_count.",
-      "Order by rating DESC."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Visualizes overall customer feedback rating curves.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-068",
@@ -2666,40 +2518,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 68,
     "difficulty": "core",
-    "title": "Multi-Line Customer Orders",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Merchandising wants to see orders containing diverse items. Group order line items by order to calculate the number of distinct products purchased in each order, showing only orders with at least 3 distinct products, ordered highest product variety first, limited to top 15.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "DISTINCT",
-      "ORDER BY",
-      "LIMIT"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "order_id",
-      "distinct_products"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT order_id, COUNT(DISTINCT product_id) AS distinct_products FROM order_items GROUP BY order_id HAVING COUNT(DISTINCT product_id) >= 3 ORDER BY distinct_products DESC LIMIT 15;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group order_items by order_id.",
-      "Filter with HAVING COUNT(DISTINCT product_id) >= 3.",
-      "Order by distinct_products DESC LIMIT 15."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Isolates diverse basket transactions indicating broad shopper interest.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-069",
@@ -2707,40 +2556,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 69,
     "difficulty": "core",
-    "title": "Eastern Territory Completed Sales",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Our East Coast regional team is auditing order delivery performance. Join customers and orders to calculate completed order volume and total collected revenue for customers in the East region.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "SUM"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "region",
-      "order_count",
-      "total_revenue"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT c.region, COUNT(o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS total_revenue FROM customers c JOIN orders o ON c.id = o.customer_id WHERE c.region = 'East' AND o.status = 'delivered' GROUP BY c.region;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter region = 'East' and status = 'delivered'.",
-      "Group by region."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Quantifies Eastern regional completed revenue totals.",
-    "xp": 20,
-    "estimated_minutes": 5
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-070",
@@ -2748,37 +2594,37 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 70,
     "difficulty": "core",
-    "title": "Customer Registrations by Regional Market",
+    "title": "ETL Data Cleansing Pipeline with Temporary Table (CTAS)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Growth strategy is planning regional acquisition budgets. Count the total registered customers in each geographic region, ordered from our largest user base downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Data Engineering Ticket: Build a session staging table named temp_products_clean to cleanse raw data. Ingest id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(price, 0.00) AS standardized_amount from products where name IS NOT NULL. Select all columns from temp_products_clean ordered descending by standardized_amount. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE TEMP TABLE",
+      "COALESCE",
+      "TRIM",
+      "DATA CLEANING"
     ],
     "expected_columns": [
-      "region",
-      "customer_count"
+      "id",
+      "cleaned_name",
+      "standardized_amount"
     ],
-    "reference_sql": "SELECT region, COUNT(*) AS customer_count FROM customers GROUP BY region ORDER BY customer_count DESC;",
+    "reference_sql": "CREATE TEMP TABLE temp_products_clean AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(price, 0.00) AS standardized_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, standardized_amount FROM temp_products_clean ORDER BY standardized_amount DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group by region.",
-      "Calculate COUNT(*) AS customer_count.",
-      "Order by customer_count DESC."
+      "Run CREATE TEMP TABLE ... AS SELECT ...; followed by SELECT ... FROM temp_products_clean;"
     ],
-    "solution_explanation": "Measures regional customer adoption across territorial markets.",
-    "xp": 20,
-    "estimated_minutes": 4
+    "solution_explanation": "Stages intermediate data in session-scoped temporary storage while cleaning nulls and whitespace.",
+    "xp": 25,
+    "estimated_minutes": 8
   },
   {
     "id": "ecom-L1-071",
@@ -2786,42 +2632,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 71,
     "difficulty": "challenging",
-    "title": "VIP High-Spend Customer Cohort",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Marketing is launching an exclusive concierge reward tier for our top patrons. Join customers and completed delivered orders to identify all customers who have accumulated more than $400 in total completed purchases, showing their names, email, and cumulative spend, ordered from highest spend downward.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "email",
-      "total_spent"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, c.email, ROUND(SUM(o.total_amount), 2) AS total_spent FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name, c.email HAVING SUM(o.total_amount) > 400.00 ORDER BY total_spent DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by customer id and details, filter HAVING SUM > 400.00, order descending."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Surfaces high-value customer accounts for VIP retention campaigns.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-072",
@@ -2829,42 +2669,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 72,
     "difficulty": "challenging",
-    "title": "High Gross Margin Merchandise SKUs",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Executive management is reviewing unit gross profitability across our product catalog. Calculate each item's unit profit in dollars (retail price minus cost) and profit margin percentage (profit divided by price), showing products with a margin of at least 50%, ordered highest dollar profit first, limited to top 15.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "ARITHMETIC",
-      "ROUND",
-      "ORDER BY",
-      "LIMIT"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
+      "id",
       "name",
-      "price",
-      "cost",
-      "unit_profit",
-      "margin_pct"
+      "price"
     ],
-    "reference_sql": "SELECT name, price, cost, (price - cost) AS unit_profit, ROUND(((price - cost) / price) * 100, 2) AS margin_pct FROM products WHERE ((price - cost) / price) >= 0.50 ORDER BY unit_profit DESC LIMIT 15;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Calculate (price - cost) AS unit_profit.",
-      "Calculate ROUND(((price - cost) / price) * 100, 2) AS margin_pct.",
-      "Filter where margin >= 0.50, order by unit_profit DESC LIMIT 15."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Identifies high-margin products that generate substantial gross profit.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-073",
@@ -2872,41 +2706,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Department Revenue & Unit Sales Contribution",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
       "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Corporate finance needs an end-to-end performance audit across operating departments. Link departments, categories, products, and order items to calculate total units sold and total dollar revenue generated by each department, ordered from highest revenue downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "4-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "department_name",
-      "units_sold",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT d.name AS department_name, SUM(oi.quantity) AS units_sold, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue FROM departments d JOIN categories c ON d.id = c.department_id JOIN products p ON c.id = p.category_id JOIN order_items oi ON p.id = oi.product_id GROUP BY d.id, d.name ORDER BY total_revenue DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join departments -> categories -> products -> order_items.",
-      "Group by d.id, d.name.",
-      "Calculate SUM(quantity) and SUM(quantity * unit_price).",
-      "Order by total_revenue DESC."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Calculates departmental enterprise sales revenue across retail divisions.",
-    "xp": 35,
-    "estimated_minutes": 9
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-074",
@@ -2914,41 +2743,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Carrier Shipping Performance on Large Orders",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Logistics is analyzing carrier handling of our highest-value orders. Join shipments and orders for all delivered orders of $300 or greater to calculate shipment volume and average shipping fee per carrier, ordered by shipment count descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "carrier",
-      "shipment_count",
-      "avg_shipping_fee"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT s.carrier, COUNT(s.id) AS shipment_count, ROUND(AVG(o.shipping_fee), 2) AS avg_shipping_fee FROM shipments s JOIN orders o ON s.order_id = o.id WHERE o.status = 'delivered' AND o.total_amount >= 300.00 GROUP BY s.carrier ORDER BY shipment_count DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join shipments and orders on s.order_id = o.id.",
-      "Filter where status = 'delivered' and total_amount >= 300.00.",
-      "Group by carrier and order descending."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Examines carrier assignment on premium high-value customer orders.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-075",
@@ -2956,44 +2780,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Top-Rated Products with Substantial Reviews",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Marketing wants to launch an 'Editor's Choice' badge on our best-reviewed catalog items. Join products, categories, and customer reviews to find all items that have an average customer rating of at least 4.0 across at least 2 reviews, showing product title, category, review count, and average rating, ordered highest rating first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "product_name",
-      "category_name",
-      "review_count",
-      "avg_rating"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT p.name AS product_name, c.name AS category_name, COUNT(r.id) AS review_count, ROUND(AVG(r.rating), 2) AS avg_rating FROM products p JOIN categories c ON p.category_id = c.id JOIN customer_reviews r ON p.id = r.product_id GROUP BY p.id, p.name, c.name HAVING COUNT(r.id) >= 2 AND AVG(r.rating) >= 4.0 ORDER BY avg_rating DESC, review_count DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products with categories and customer_reviews.",
-      "Group by product and category.",
-      "Filter HAVING COUNT(r.id) >= 2 AND AVG(r.rating) >= 4.0.",
-      "Order by avg_rating DESC."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Highlights proven crowd-favorite merchandise with strong customer ratings.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-076",
@@ -3001,42 +2817,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Merchandise Return Liability by Category",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
       "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Quality control is assessing which product sectors suffer from the highest refund exposure. Link categories, products, order items, orders, and returns to calculate total refund claims and total dollar refund volume per category, ordered highest refund amount first.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "MULTI-TABLE JOIN",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "category_name",
-      "return_count",
-      "total_refunded"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.name AS category_name, COUNT(DISTINCT ret.id) AS return_count, ROUND(SUM(ret.refund_amount), 2) AS total_refunded FROM categories c JOIN products p ON c.id = p.category_id JOIN order_items oi ON p.id = oi.product_id JOIN orders o ON oi.order_id = o.id JOIN returns ret ON o.id = ret.order_id GROUP BY c.name ORDER BY total_refunded DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories -> products -> order_items -> orders -> returns.",
-      "Group by category name.",
-      "Calculate COUNT(DISTINCT ret.id) and SUM(refund_amount).",
-      "Order by total_refunded DESC."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Measures warranty and return financial liabilities across catalog categories.",
-    "xp": 35,
-    "estimated_minutes": 9
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-077",
@@ -3044,40 +2854,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Customer Support Escalations on High-Value Shoppers",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Customer success is conducting VIP service recovery. Join customers, support tickets, and orders to locate customers who have filed support tickets and also placed high-value orders ($250+), displaying customer names, ticket category, priority, and order spend, ordered highest spend first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "WHERE",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "category",
-      "priority",
-      "total_amount"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, st.category, st.priority, o.total_amount FROM customers c JOIN support_tickets st ON c.id = st.customer_id JOIN orders o ON c.id = o.customer_id WHERE o.total_amount >= 250.00 ORDER BY o.total_amount DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers with support_tickets and orders.",
-      "Filter where total_amount >= 250.00.",
-      "Order by total_amount DESC."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Cross-references support inquiries against premium customer purchase history.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-078",
@@ -3085,41 +2891,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Total Warehouse Stock Valuation",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Accounting is preparing our physical inventory balance sheet. Join warehouses, inventory, and products to calculate the total units stored and total cost value of goods held in each warehouse facility, ordered from highest value facility downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "warehouse_name",
-      "total_units",
-      "total_inventory_cost"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT w.name AS warehouse_name, SUM(i.quantity_on_hand) AS total_units, ROUND(SUM(i.quantity_on_hand * p.cost), 2) AS total_inventory_cost FROM warehouses w JOIN inventory i ON w.id = i.warehouse_id JOIN products p ON i.product_id = p.id GROUP BY w.id, w.name ORDER BY total_inventory_cost DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join warehouses -> inventory -> products.",
-      "Group by w.id, w.name.",
-      "Sum quantity_on_hand and sum(quantity_on_hand * cost).",
-      "Order by total_inventory_cost DESC."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Computes balance sheet asset valuation for physical inventory across regional hubs.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-079",
@@ -3127,43 +2928,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Frequent Shoppers with High Cumulative Spend",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Marketing wants to identify our top customer cohort for annual rewards. Join customers and completed orders to locate all customers who have placed at least 3 delivered orders AND accumulated over $600 in total sales, ordered by spend descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "WHERE",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "delivered_orders",
-      "total_spend"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, COUNT(o.id) AS delivered_orders, ROUND(SUM(o.total_amount), 2) AS total_spend FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name HAVING COUNT(o.id) >= 3 AND SUM(o.total_amount) > 600.00 ORDER BY total_spend DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by customer, filter HAVING count >= 3 and sum > 600.00, order by spend desc."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Isolates the highest-tier patron cohort combining frequency and volume.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-080",
@@ -3171,42 +2965,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 80,
     "difficulty": "challenging",
-    "title": "High-Volume Best-Selling Product SKUs",
+    "title": "Batch Automation with Stored Procedure",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Merchandising needs our all-star merchandise list for banner ads. Join products, categories, and order line items to calculate total units sold and total line sales revenue for each product, showing only products with at least 15 units sold, ordered highest revenue first.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Operations requires an automated batch adjustment routine. Create a Stored Procedure named sp_adjust_products_val(p_id INT, p_delta NUMERIC) that updates price by adding p_delta. Execute it with CALL sp_adjust_products_val(1, 5); then select id, name, price from products where id = 1.\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE PROCEDURE",
+      "CALL",
+      "PL/pgSQL"
     ],
     "expected_columns": [
-      "product_name",
-      "category_name",
-      "total_units_sold",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT p.name AS product_name, c.name AS category_name, SUM(oi.quantity) AS total_units_sold, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue FROM products p JOIN categories c ON p.category_id = c.id JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name, c.name HAVING SUM(oi.quantity) >= 15 ORDER BY total_revenue DESC;",
+    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_adjust_products_val(p_id INT, p_delta NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_delta WHERE id = p_id; END; $$; CALL sp_adjust_products_val(1, 5); SELECT id, name, price FROM products WHERE id = 1;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products with categories and order_items.",
-      "Group by product and category.",
-      "Filter HAVING sum quantity >= 15 and order by revenue desc."
+      "Define CREATE OR REPLACE PROCEDURE ... LANGUAGE plpgsql AS $$ ... $$; then CALL it."
     ],
-    "solution_explanation": "Ranks premier high-velocity revenue generating merchandise items.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Encapsulates transactional mutation inside a compiled PostgreSQL stored procedure.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-081",
@@ -3214,39 +3002,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Regional Product Sales Distribution",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Territory planners need to see where customer demand concentrates geographically. Link customers, orders, and order items to find total units purchased by customers in each geographic region, ordered highest unit volume first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "WHERE",
-      "GROUP BY",
-      "SUM",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "region",
-      "total_units"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.region, SUM(oi.quantity) AS total_units FROM customers c JOIN orders o ON c.id = o.customer_id JOIN order_items oi ON o.id = oi.order_id WHERE o.status = 'delivered' GROUP BY c.region ORDER BY total_units DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers -> orders -> order_items.",
-      "Filter where status = 'delivered'.",
-      "Group by region and sum units ordered."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Quantifies physical unit demand across geographic territories.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-082",
@@ -3254,38 +3039,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Active Supplier Catalog Depth and Reliability",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Vendor management is reviewing supplier partnerships. Join suppliers and products to calculate how many distinct products each vendor manufactures and their vendor rating, ordered by product count descending, then rating descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "company_name",
-      "rating",
-      "catalog_items"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT s.company_name, s.rating, COUNT(p.id) AS catalog_items FROM suppliers s JOIN products p ON s.id = p.category_id GROUP BY s.id, s.company_name, s.rating ORDER BY catalog_items DESC, s.rating DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join suppliers and products.",
-      "Group by supplier id, company_name, rating.",
-      "Count products and order descending."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Measures supplier catalog footprint and reliability scores.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-083",
@@ -3293,44 +3076,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Price Spread and Margin Ratios by Department",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Finance is reviewing pricing consistency across corporate departments. Link departments, categories, and products to calculate the lowest price, highest price, and average price per unit across each department, ordered by average price descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "MIN",
-      "MAX",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "department_name",
-      "min_price",
-      "max_price",
-      "avg_price"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT d.name AS department_name, MIN(p.price) AS min_price, MAX(p.price) AS max_price, ROUND(AVG(p.price), 2) AS avg_price FROM departments d JOIN categories c ON d.id = c.department_id JOIN products p ON c.id = p.category_id GROUP BY d.id, d.name ORDER BY avg_price DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join departments -> categories -> products.",
-      "Group by department name.",
-      "Compute MIN, MAX, and AVG of price.",
-      "Order by avg_price DESC."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Profiles pricing spread and catalog positioning across operating departments.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-084",
@@ -3338,39 +3113,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Shipments Assigned to High-Value Orders",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Logistics is conducting premium order tracking. Join shipments and orders to locate all shipments dispatched for customer orders that reached $350 or more, ordered from highest order value downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "WHERE",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
       "id",
-      "order_id",
-      "carrier",
-      "tracking_number",
-      "total_amount"
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT s.id, s.order_id, s.carrier, s.tracking_number, o.total_amount FROM shipments s JOIN orders o ON s.order_id = o.id WHERE o.total_amount >= 350.00 ORDER BY o.total_amount DESC, s.id ASC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join shipments and orders on s.order_id = o.id.",
-      "Filter where o.total_amount >= 350.00.",
-      "Order by o.total_amount DESC, s.id ASC."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Tracks carrier parcel dispatches assigned to premium customer orders.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-085",
@@ -3378,38 +3150,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Top Selling Products Free of Return Complaints",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Product quality wants to celebrate flawlessly manufactured items. Find product line sales for items that have generated at least 8 units sold, ordered highest sales volume first.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "SUM",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "product_name",
-      "units_sold"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT p.name AS product_name, SUM(oi.quantity) AS units_sold FROM products p JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name HAVING SUM(oi.quantity) >= 8 ORDER BY units_sold DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join products and order_items.",
-      "Group by product id and name.",
-      "Filter HAVING sum quantity >= 8 and order descending."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Surfaces high-volume catalog merchandise with flawless customer adoption.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-086",
@@ -3417,37 +3187,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 86,
     "difficulty": "challenging",
-    "title": "Customer Support Volume by Priority and Region",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Operations is reviewing regional customer friction. Join customers and support tickets to calculate total support inquiries submitted across each region, ordered with our highest ticket volume territories first.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "region",
-      "total_tickets"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT c.region, COUNT(st.id) AS total_tickets FROM customers c JOIN support_tickets st ON c.id = st.customer_id GROUP BY c.region ORDER BY total_tickets DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and support_tickets on c.id = st.customer_id.",
-      "Group by region and count tickets.",
-      "Order by total_tickets DESC."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Measures customer service workload distribution across geographic markets.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-087",
@@ -3455,39 +3224,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 87,
     "difficulty": "challenging",
-    "title": "Average Delivery Transit Duration by Carrier",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
       "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Logistics is reviewing on-time delivery service level agreements. For all shipments that have both dispatch and delivery timestamps, calculate total fulfilled shipments per carrier, ordered by volume descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "SELECT",
-      "WHERE",
-      "IS NOT NULL",
-      "GROUP BY",
-      "COUNT",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "carrier",
-      "fulfilled_shipments"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT carrier, COUNT(*) AS fulfilled_shipments FROM shipments WHERE shipped_at IS NOT NULL AND delivered_at IS NOT NULL GROUP BY carrier ORDER BY fulfilled_shipments DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Filter where shipped_at and delivered_at are both not null.",
-      "Group by carrier and count shipments.",
-      "Order by volume descending."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Measures completed door-to-door transit volume across carrier partners.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-088",
@@ -3495,42 +3261,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 88,
     "difficulty": "challenging",
-    "title": "Luxury and Premium Brand Sales Volume",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Executive leadership is assessing the financial traction of our high-end brand partnerships. Join brands, products, and order items to calculate total units sold and total gross revenue generated by brand partners classified as luxury or premium, ordered by total revenue descending.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "3-WAY JOIN",
-      "WHERE",
-      "GROUP BY",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "brand_name",
-      "tier",
-      "units_sold",
-      "total_revenue"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT b.name AS brand_name, b.tier, SUM(oi.quantity) AS units_sold, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue FROM brands b JOIN products p ON b.id = p.category_id JOIN order_items oi ON p.id = oi.product_id WHERE b.tier IN ('luxury', 'premium') GROUP BY b.id, b.name, b.tier ORDER BY total_revenue DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join brands to products, then products to order_items.",
-      "Filter WHERE tier in luxury or premium.",
-      "Group by brand name and tier, calculate revenue, order descending."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Tracks revenue throughput for high-margin prestige brands.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-089",
@@ -3538,38 +3298,36 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 89,
     "difficulty": "challenging",
-    "title": "Defective Merchandise Return Impact on Orders",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Quality control is cross-referencing customer refunds against initial transaction values. Join orders and customer returns where the stated reason is defective merchandise, displaying order id, initial order amount, and refund amount, ordered by refund amount descending.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "WHERE",
-      "LIKE",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "order_id",
-      "total_amount",
-      "refund_amount"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT o.id AS order_id, o.total_amount, ret.refund_amount FROM orders o JOIN returns ret ON o.id = ret.order_id WHERE ret.reason LIKE '%defect%' ORDER BY ret.refund_amount DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join orders and returns on o.id = ret.order_id.",
-      "Filter where reason LIKE '%defect%'.",
-      "Order by refund_amount DESC."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Cross-references refund claims directly against original order values.",
-    "xp": 35,
-    "estimated_minutes": 7
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-090",
@@ -3577,85 +3335,70 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 90,
     "difficulty": "challenging",
-    "title": "Total Inventory Reserved Across Warehouse Facilities",
+    "title": "Access Speedup with Database Index",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Logistics is reviewing warehouse buffer allocations across distribution facilities. Join warehouses and inventory to calculate total on-hand inventory units and total reserved inventory units for each warehouse facility, ordered by reserved units descending.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Production Ticket: Read latency on products is increasing. Create an Index named idx_products_perf ON products(price DESC). Then retrieve id, name, price for entries where price > 20 ordered descending. (Limit to 20 records).\"",
     "context_notes": "",
     "concepts": [
-      "INNER JOIN",
-      "GROUP BY",
-      "SUM",
-      "ORDER BY"
+      "CREATE INDEX",
+      "QUERY OPTIMIZATION",
+      "B-TREE"
     ],
     "expected_columns": [
-      "warehouse_name",
-      "total_on_hand",
-      "total_reserved"
+      "id",
+      "name",
+      "price"
     ],
-    "reference_sql": "SELECT w.name AS warehouse_name, SUM(i.quantity_on_hand) AS total_on_hand, SUM(i.reserved_quantity) AS total_reserved FROM warehouses w JOIN inventory i ON w.id = i.warehouse_id GROUP BY w.id, w.name ORDER BY total_reserved DESC;",
+    "reference_sql": "CREATE INDEX idx_products_perf ON products(price DESC); SELECT id, name, price FROM products WHERE price > 20 ORDER BY price DESC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join warehouses and inventory on w.id = i.warehouse_id.",
-      "Group by warehouse id and name.",
-      "Sum quantity_on_hand and reserved_quantity, order by reserved descending."
+      "Write CREATE INDEX idx_products_perf ON products(price DESC); followed by the SELECT query."
     ],
-    "solution_explanation": "Examines stock commitment ratios across physical fulfillment centers.",
-    "xp": 35,
-    "estimated_minutes": 8
+    "solution_explanation": "Constructs a high-performance B-Tree index to eliminate sequential scans.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-091",
     "domain": "ecommerce",
     "level": 1,
     "order": 91,
-    "difficulty": "boss",
-    "title": "Boss Audit #1: Executive Revenue Leaderboard",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Board presentation deliverable: We need an authoritative executive revenue leaderboard of our top 10 lifetime customers. Join customer accounts and completed delivered orders to compute each shopper's total orders placed, cumulative revenue collected, and average order value, ordered with our biggest patrons first, limited to the top 10.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "WHERE",
-      "GROUP BY",
-      "DISTINCT",
-      "SUM",
-      "AVG",
-      "ROUND",
-      "ORDER BY",
-      "LIMIT"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "region",
-      "orders_placed",
-      "total_revenue",
-      "avg_order_value"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, c.region, COUNT(DISTINCT o.id) AS orders_placed, ROUND(SUM(o.total_amount), 2) AS total_revenue, ROUND(AVG(o.total_amount), 2) AS avg_order_value FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name, c.region ORDER BY total_revenue DESC LIMIT 10;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Calculate COUNT(DISTINCT o.id), SUM(total_amount), and AVG(total_amount).",
-      "Order by total_revenue DESC LIMIT 10."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Generates the definitive executive lifetime patron leaderboard.",
-    "xp": 60,
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
     "estimated_minutes": 12
   },
   {
@@ -3663,88 +3406,69 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "domain": "ecommerce",
     "level": 1,
     "order": 92,
-    "difficulty": "boss",
-    "title": "Boss Audit #2: Department Profitability & Gross Margin Matrix",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Executive financial analysis: I need a cross-divisional profitability scorecard for our board audit. Join departments, categories, products, and order items to calculate total units sold, gross sales revenue, estimated wholesale cost of goods sold, and total net gross profit for each department, ordered from highest gross profit downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "4-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "ARITHMETIC",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "department_name",
-      "units_sold",
-      "gross_revenue",
-      "cost_of_goods",
-      "net_gross_profit"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT d.name AS department_name, SUM(oi.quantity) AS units_sold, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue, ROUND(SUM(oi.quantity * p.cost), 2) AS cost_of_goods, ROUND(SUM(oi.quantity * (oi.unit_price - p.cost)), 2) AS net_gross_profit FROM departments d JOIN categories c ON d.id = c.department_id JOIN products p ON c.id = p.category_id JOIN order_items oi ON p.id = oi.product_id GROUP BY d.id, d.name ORDER BY net_gross_profit DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join departments -> categories -> products -> order_items.",
-      "Group by d.id, d.name.",
-      "Compute SUM(quantity), SUM(quantity * unit_price), SUM(quantity * cost), and SUM(quantity * (unit_price - cost)).",
-      "Order by net_gross_profit DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Constructs full departmental margin and profitability reconciliation.",
-    "xp": 60,
-    "estimated_minutes": 15
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-093",
     "domain": "ecommerce",
     "level": 1,
     "order": 93,
-    "difficulty": "boss",
-    "title": "Boss Audit #3: Carrier Logistics SLA & Fulfillment Velocity",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Carrier contract renegotiation: Liam here. We need a comprehensive logistics scorecard evaluating our delivery partners. For each freight carrier, compute total shipments handled, count of successfully delivered parcels, and average shipping fee billed, ordered from our largest carrier partner downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "INNER JOIN",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "carrier",
-      "total_shipments",
-      "delivered_count",
-      "avg_shipping_fee"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT s.carrier, COUNT(s.id) AS total_shipments, COUNT(s.delivered_at) AS delivered_count, ROUND(AVG(o.shipping_fee), 2) AS avg_shipping_fee FROM shipments s JOIN orders o ON s.order_id = o.id GROUP BY s.carrier ORDER BY total_shipments DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join shipments and orders on s.order_id = o.id.",
-      "Group by carrier.",
-      "Calculate COUNT(s.id), COUNT(s.delivered_at), and ROUND(AVG(o.shipping_fee), 2).",
-      "Order by total_shipments DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Audits delivery fulfillment throughput and shipping fees per carrier.",
-    "xp": 60,
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
     "estimated_minutes": 12
   },
   {
@@ -3752,88 +3476,70 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "domain": "ecommerce",
     "level": 1,
     "order": 94,
-    "difficulty": "boss",
-    "title": "Boss Audit #4: Inventory Capital Exposure & Stagnant Stock",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Operations Manager"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Executive supply audit: We need to quantify company capital tied up on warehouse shelves. Join categories, products, and inventory to calculate total warehouse stock on hand, total reserved inventory, and total asset valuation (quantity on hand multiplied by cost) for each category, ordered highest capital exposure first.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "ARITHMETIC",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "category_name",
-      "total_stock_on_hand",
-      "total_reserved",
-      "total_asset_value"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.name AS category_name, SUM(i.quantity_on_hand) AS total_stock_on_hand, SUM(i.reserved_quantity) AS total_reserved, ROUND(SUM(i.quantity_on_hand * p.cost), 2) AS total_asset_value FROM categories c JOIN products p ON c.id = p.category_id JOIN inventory i ON p.id = i.product_id GROUP BY c.name ORDER BY total_asset_value DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories -> products -> inventory.",
-      "Group by category name.",
-      "Calculate SUM(quantity_on_hand), SUM(reserved_quantity), and SUM(quantity_on_hand * cost).",
-      "Order by total_asset_value DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Computes warehouse capital tie-up across merchandise categories.",
-    "xp": 60,
-    "estimated_minutes": 14
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-095",
     "domain": "ecommerce",
     "level": 1,
     "order": 95,
-    "difficulty": "boss",
-    "title": "Boss Audit #5: Regional Market Penetration & Value Matrix",
+    "difficulty": "challenging",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Territory expansion briefing: Rachel here. We need a holistic market penetration matrix across our 5 operating regions. Join customers and orders to calculate total registered shoppers, total completed delivered orders, and total net revenue collected per region, ordered by revenue descending.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "GROUP BY",
-      "DISTINCT",
-      "COUNT",
-      "SUM",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "region",
-      "customer_count",
-      "delivered_orders",
-      "regional_revenue"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.region, COUNT(DISTINCT c.id) AS customer_count, COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.id END) AS delivered_orders, ROUND(SUM(CASE WHEN o.status = 'delivered' THEN o.total_amount ELSE 0 END), 2) AS regional_revenue FROM customers c LEFT JOIN orders o ON c.id = o.customer_id GROUP BY c.region ORDER BY regional_revenue DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers left join orders.",
-      "Group by region.",
-      "Calculate COUNT(DISTINCT c.id), count of delivered orders, and sum of delivered revenue.",
-      "Order by regional_revenue DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Benchmarks regional market share and revenue throughput across territories.",
-    "xp": 60,
-    "estimated_minutes": 15
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "ecom-L1-096",
@@ -3841,48 +3547,34 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 96,
     "difficulty": "boss",
-    "title": "Boss Audit #6: Repeat Buyer Lifetime Retention Cohort",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Growth"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "Investor deck analysis: We need to demonstrate strong shopper retention. Join customers and delivered orders to identify repeat patrons who have placed 3 or more separate delivered orders, displaying their names, region, total orders placed, cumulative spend, and average basket size, ordered by cumulative spend descending, limited to top 10.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "WHERE",
-      "GROUP BY",
-      "HAVING",
-      "COUNT",
-      "SUM",
-      "AVG",
-      "ROUND",
-      "ORDER BY",
-      "LIMIT"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "first_name",
-      "last_name",
-      "region",
-      "delivered_orders",
-      "cumulative_spend",
-      "avg_basket_size"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.first_name, c.last_name, c.region, COUNT(o.id) AS delivered_orders, ROUND(SUM(o.total_amount), 2) AS cumulative_spend, ROUND(AVG(o.total_amount), 2) AS avg_basket_size FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.id, c.first_name, c.last_name, c.region HAVING COUNT(o.id) >= 3 ORDER BY cumulative_spend DESC LIMIT 10;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders.",
-      "Filter where status = 'delivered'.",
-      "Group by customer details, filter HAVING COUNT >= 3.",
-      "Order by cumulative_spend DESC LIMIT 10."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Proves customer retention and high-frequency repeat purchasing power.",
-    "xp": 60,
-    "estimated_minutes": 14
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "ecom-L1-097",
@@ -3890,43 +3582,34 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 97,
     "difficulty": "boss",
-    "title": "Boss Audit #7: Commercial Brand Tier Financial Performance",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
       "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "role": "Chief Executive Officer",
+      "department": "Executive"
     },
-    "request": "Marketplace positioning review: Alex here. We need to evaluate which brand tiers generate the most sales. Join brands, products, and order line items to calculate total units sold, gross merchandise revenue, and average selling price across brand positioning tiers, ordered from highest gross revenue downward.",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "3-WAY JOIN",
-      "GROUP BY",
-      "SUM",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "tier",
-      "units_sold",
-      "gross_revenue",
-      "avg_selling_price"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT b.tier, SUM(oi.quantity) AS units_sold, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS gross_revenue, ROUND(AVG(oi.unit_price), 2) AS avg_selling_price FROM brands b JOIN products p ON b.id = p.category_id JOIN order_items oi ON p.id = oi.product_id GROUP BY b.tier ORDER BY gross_revenue DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join brands -> products -> order_items.",
-      "Group by brand tier.",
-      "Compute SUM(quantity), SUM(quantity * unit_price), and AVG(unit_price).",
-      "Order by gross_revenue DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Benchmarks sales volume and price elasticity across brand tiers.",
-    "xp": 60,
-    "estimated_minutes": 13
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "ecom-L1-098",
@@ -3934,44 +3617,34 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 98,
     "difficulty": "boss",
-    "title": "Boss Audit #8: Returns & Customer Dissatisfaction Exposure",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Rachel Green",
+      "role": "VP of Sales & Marketing",
+      "department": "Sales"
     },
-    "request": "Risk mitigation meeting: Marcus here. We must present our full returns exposure to the executive committee. Group return records by reason to calculate total refund claims, total refunded capital, average refund per incident, and minimum/maximum refund values, ordered from highest total refunded amount downward.",
+    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "AVG",
-      "MIN",
-      "MAX",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "reason",
-      "claim_count",
-      "total_refunded",
-      "avg_refund",
-      "max_refund"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT reason, COUNT(*) AS claim_count, ROUND(SUM(refund_amount), 2) AS total_refunded, ROUND(AVG(refund_amount), 2) AS avg_refund, MAX(refund_amount) AS max_refund FROM returns GROUP BY reason ORDER BY total_refunded DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Group returns by reason.",
-      "Calculate COUNT(*), SUM(refund_amount), AVG(refund_amount), and MAX(refund_amount).",
-      "Order by total_refunded DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Quantifies warranty loss exposure and claim severity per return reason.",
-    "xp": 60,
-    "estimated_minutes": 12
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "ecom-L1-099",
@@ -3979,42 +3652,34 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 99,
     "difficulty": "boss",
-    "title": "Boss Audit #9: Verified Customer Sentiment & Satisfaction",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Success Lead"
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
     },
-    "request": "Annual brand health check: We want to audit customer satisfaction across our merchandise lines. Join categories, products, and customer reviews from verified buyers to calculate review count and average satisfaction rating for each category, ordered highest rating first.",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "3-WAY JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "category_name",
-      "verified_reviews",
-      "avg_rating"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.name AS category_name, COUNT(r.id) AS verified_reviews, ROUND(AVG(r.rating), 2) AS avg_rating FROM categories c JOIN products p ON c.id = p.category_id JOIN customer_reviews r ON p.id = r.product_id WHERE r.is_verified_purchase = true GROUP BY c.name ORDER BY avg_rating DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join categories -> products -> customer_reviews.",
-      "Filter where is_verified_purchase = true.",
-      "Group by category name, calculate count and avg rating, order descending."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Benchmarks customer sentiment and verified review satisfaction by category.",
-    "xp": 60,
-    "estimated_minutes": 13
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
+    "xp": 75,
+    "estimated_minutes": 20
   },
   {
     "id": "ecom-L1-100",
@@ -4022,45 +3687,33 @@ export const ECOM_L1_QUESTIONS: QuestionDefinition[] = [
     "level": 1,
     "order": 100,
     "difficulty": "boss",
-    "title": "Boss Audit #10: Enterprise OmniCart Master Ledger Audit",
+    "title": "Planner Cost Inspection with EXPLAIN (FORMAT JSON)",
     "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer"
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
     },
-    "request": "The ultimate startup audit: Alex Rivera here. To conclude our Startup Stage at OmniCart Direct, I need an all-hands master ledger summary. Join customer accounts and completed delivered orders to compute our total delivered order volume, total enterprise revenue collected, average shipping fee per order, and average order transaction size, grouped by customer region, ordered from highest revenue market downward.",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Infrastructure Audit: Inspect the PostgreSQL query planner path for queries filtering orders by total_amount > 50. Run an EXPLAIN (FORMAT JSON) on the query to analyze cost and node scan types.\"",
     "context_notes": "",
     "concepts": [
-      "MULTI-TABLE JOIN",
-      "WHERE",
-      "GROUP BY",
-      "COUNT",
-      "SUM",
-      "AVG",
-      "ROUND",
-      "ORDER BY"
+      "EXPLAIN",
+      "QUERY PLANNER",
+      "COST PROFILING"
     ],
     "expected_columns": [
-      "region",
-      "delivered_orders",
-      "total_revenue",
-      "avg_shipping_fee",
-      "avg_order_value"
+      "QUERY PLAN"
     ],
-    "reference_sql": "SELECT c.region, COUNT(o.id) AS delivered_orders, ROUND(SUM(o.total_amount), 2) AS total_revenue, ROUND(AVG(o.shipping_fee), 2) AS avg_shipping_fee, ROUND(AVG(o.total_amount), 2) AS avg_order_value FROM customers c JOIN orders o ON c.id = o.customer_id WHERE o.status = 'delivered' GROUP BY c.region ORDER BY total_revenue DESC;",
+    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 50;",
     "validation": {
-      "order_sensitive": true,
+      "order_sensitive": false,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Join customers and orders on c.id = o.customer_id.",
-      "Filter where status = 'delivered'.",
-      "Group by c.region.",
-      "Calculate COUNT(o.id), SUM(total_amount), AVG(shipping_fee), and AVG(total_amount).",
-      "Order by total_revenue DESC."
+      "Prefix your SELECT query with EXPLAIN (FORMAT JSON)."
     ],
-    "solution_explanation": "Final Level 1 culminating master audit evaluating OmniCart regional operations.",
+    "solution_explanation": "Profiles optimizer execution tree and cost metrics using PostgreSQL EXPLAIN.",
     "xp": 75,
-    "estimated_minutes": 15
+    "estimated_minutes": 20
   }
 ];
