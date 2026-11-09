@@ -6,37 +6,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 1,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q1)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #1 - Samira Khan (CEO & Founder)]: Rank records in accounts by id. Return id, company_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 11;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, company_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM accounts WHERE id >= 1 ORDER BY rank_num ASC LIMIT 11;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -44,35 +44,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 2,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in pricing_plans (Q2)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #2 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of pricing_plans. Return id, plan_name AS partition_key, monthly_price AS metric_val, and DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 12;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, plan_name AS partition_key, monthly_price AS metric_val, DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk FROM pricing_plans WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 12;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -80,36 +82,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 3,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q3)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_3 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #3 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on subscriptions. Return id, mrr AS current_val, and LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 13;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "mrr",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_3 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, mrr AS current_val, LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric FROM subscriptions WHERE id >= 1 ORDER BY id ASC LIMIT 13;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -117,36 +120,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 4,
-    "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q4)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #4 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on invoices. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 14;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_4_low PARTITION OF invoices_part_4 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_4_high PARTITION OF invoices_part_4 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_4 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_4;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM invoices WHERE id >= 1 ORDER BY id ASC LIMIT 14;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -154,36 +158,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 5,
-    "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on users (Q5)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_5() and bind trigger trg_audit_subscriptions_5 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_5(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #5 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in users. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 15;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_5() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_5 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_5(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM users WHERE id >= 1 ORDER BY id ASC LIMIT 15;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -191,37 +195,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 6,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q6)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #6 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for api_keys. Create a CTE named staged_metrics selecting id, key_name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 16;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, key_name AS staged_name, id AS score FROM api_keys WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 16;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -229,36 +232,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 7,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q7)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_7 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #7 - Chloe Vance (Head of Product Analytics)]: Rank records in feature_usage by monthly_events. Return id, feature_name AS entity_title, monthly_events AS metric_score, and ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 17;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_7 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_7 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, feature_name AS entity_title, monthly_events AS metric_score, ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num FROM feature_usage WHERE id >= 1 ORDER BY rank_num ASC LIMIT 17;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -266,37 +270,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 8,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in cloud_clusters (Q8)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #8 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of cloud_clusters. Return id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, and DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 18;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk FROM cloud_clusters WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 18;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -304,37 +308,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 9,
-    "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q9)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #9 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on support_tickets. Return id, resolution_hours AS current_val, and LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 19;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "resolution_hours",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, resolution_hours AS current_val, LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric FROM support_tickets WHERE id >= 1 ORDER BY id ASC LIMIT 19;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -342,37 +346,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 10,
-    "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q10)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_10 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #10 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on churn_events. Return id, arr_lost AS current_val, and LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 20;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "arr_lost",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_10 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_10 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, arr_lost AS current_val, LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric FROM churn_events WHERE id >= 1 ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -380,34 +384,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 11,
-    "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on integrations (Q11)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #11 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in integrations. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 21;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM integrations WHERE id >= 1 ORDER BY id ASC LIMIT 21;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -415,36 +421,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 12,
-    "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q12)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_12(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_12(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #12 - Liam Vance (Head of Customer Success)]: Stage transformation logic for audit_events. Create a CTE named staged_metrics selecting id, action AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 22;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_12(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_12(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, action AS staged_name, id AS score FROM audit_events WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 22;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -452,37 +458,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 13,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q13)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #13 - Samira Khan (CEO & Founder)]: Rank records in nps_surveys by score. Return id, account_id::text AS entity_title, score AS metric_score, and ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 23;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id::text AS entity_title, score AS metric_score, ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num FROM nps_surveys WHERE id >= 1 ORDER BY rank_num ASC LIMIT 23;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -490,35 +496,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 14,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in feature_flags (Q14)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #14 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of feature_flags. Return id, min_tier AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 24;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, min_tier AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk FROM feature_flags WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 24;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -526,36 +534,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 15,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q15)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_15 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #15 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on accounts. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 25;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_15 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -564,36 +573,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 16,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q16)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #16 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on pricing_plans. Return id, monthly_price AS current_val, and LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 26;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "monthly_price",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_16_low PARTITION OF invoices_part_16 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_16_high PARTITION OF invoices_part_16 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_16 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_16;",
+    "reference_sql": "SELECT id, monthly_price AS current_val, LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric FROM pricing_plans WHERE id >= 1 ORDER BY id ASC LIMIT 26;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-017",
@@ -601,36 +611,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 17,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on subscriptions (Q17)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_17() and bind trigger trg_audit_subscriptions_17 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_17(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #17 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in subscriptions. Return id, mrr AS baseline_val, and SUM(mrr) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 27;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_17() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_17 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_17(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, mrr AS baseline_val, SUM(mrr) OVER (ORDER BY id ASC) AS running_total FROM subscriptions WHERE id >= 1 ORDER BY id ASC LIMIT 27;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-018",
@@ -638,37 +648,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 18,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q18)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #18 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for invoices. Create a CTE named staged_metrics selecting id, account_id::text AS staged_name, and amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 28;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, account_id::text AS staged_name, amount AS score FROM invoices WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 28;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-019",
@@ -676,36 +685,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 19,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q19)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_19 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #19 - Chloe Vance (Head of Product Analytics)]: Rank records in users by id. Return id, full_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 29;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_19 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_19 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, full_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM users WHERE id >= 1 ORDER BY rank_num ASC LIMIT 29;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-020",
@@ -713,37 +723,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 20,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in api_keys (Q20)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #20 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of api_keys. Return id, account_id AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 30;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, account_id AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk FROM api_keys WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 30;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-021",
@@ -751,37 +761,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 21,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q21)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #21 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on feature_usage. Return id, monthly_events AS current_val, and LAG(monthly_events, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 31;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "monthly_events",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, monthly_events AS current_val, LAG(monthly_events, 1) OVER (ORDER BY id ASC) AS prev_metric FROM feature_usage WHERE id >= 1 ORDER BY id ASC LIMIT 31;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-022",
@@ -789,37 +799,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 22,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q22)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_22 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #22 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on cloud_clusters. Return id, monthly_cost_usd AS current_val, and LEAD(monthly_cost_usd, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 32;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "monthly_cost_usd",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_22 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_22 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, monthly_cost_usd AS current_val, LEAD(monthly_cost_usd, 1) OVER (ORDER BY id ASC) AS next_metric FROM cloud_clusters WHERE id >= 1 ORDER BY id ASC LIMIT 32;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-023",
@@ -827,34 +837,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 23,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on support_tickets (Q23)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #23 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in support_tickets. Return id, resolution_hours AS baseline_val, and SUM(resolution_hours) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 33;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, resolution_hours AS baseline_val, SUM(resolution_hours) OVER (ORDER BY id ASC) AS running_total FROM support_tickets WHERE id >= 1 ORDER BY id ASC LIMIT 33;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-024",
@@ -862,36 +874,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 24,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q24)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_24(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_24(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #24 - Liam Vance (Head of Customer Success)]: Stage transformation logic for churn_events. Create a CTE named staged_metrics selecting id, reason AS staged_name, and arr_lost AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 34;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_24(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_24(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, reason AS staged_name, arr_lost AS score FROM churn_events WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 34;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-025",
@@ -899,37 +911,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 25,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q25)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #25 - Samira Khan (CEO & Founder)]: Rank records in integrations by id. Return id, provider AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 35;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, provider AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM integrations WHERE id >= 1 ORDER BY rank_num ASC LIMIT 35;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-026",
@@ -937,35 +949,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 26,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in audit_events (Q26)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #26 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of audit_events. Return id, account_id AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 36;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk FROM audit_events WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 36;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-027",
@@ -973,36 +987,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 27,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q27)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_27 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #27 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on nps_surveys. Return id, score AS current_val, and LAG(score, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 37;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "score",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_27 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, score AS current_val, LAG(score, 1) OVER (ORDER BY id ASC) AS prev_metric FROM nps_surveys WHERE id >= 1 ORDER BY id ASC LIMIT 37;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-028",
@@ -1010,36 +1025,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 28,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q28)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #28 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on feature_flags. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 38;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_28_low PARTITION OF invoices_part_28 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_28_high PARTITION OF invoices_part_28 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_28 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_28;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM feature_flags WHERE id >= 1 ORDER BY id ASC LIMIT 38;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-029",
@@ -1047,36 +1063,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 29,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on accounts (Q29)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_29() and bind trigger trg_audit_subscriptions_29 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_29(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #29 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in accounts. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 39;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_29() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_29 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_29(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 39;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-030",
@@ -1084,72 +1100,72 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 30,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q30)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #30 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for pricing_plans. Create a CTE named staged_metrics selecting id, plan_name AS staged_name, and monthly_price AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 40;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, plan_name AS staged_name, monthly_price AS score FROM pricing_plans WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 40;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "saas-L4-031",
     "domain": "saas",
     "level": 4,
     "order": 31,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q31)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_31 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #31 - Chloe Vance (Head of Product Analytics)]: Rank records in subscriptions by mrr. Return id, plan AS entity_title, mrr AS metric_score, and ROW_NUMBER() OVER (ORDER BY mrr DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 41;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_31 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_31 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, plan AS entity_title, mrr AS metric_score, ROW_NUMBER() OVER (ORDER BY mrr DESC) AS rank_num FROM subscriptions WHERE id >= 1 ORDER BY rank_num ASC LIMIT 41;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1158,36 +1174,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 32,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in invoices (Q32)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #32 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of invoices. Return id, account_id AS partition_key, amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 42;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, account_id AS partition_key, amount AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk FROM invoices WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 42;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1196,36 +1212,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 33,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q33)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #33 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on users. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 43;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM users WHERE id >= 1 ORDER BY id ASC LIMIT 43;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1234,36 +1250,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 34,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q34)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_34 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #34 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on api_keys. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 44;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_34 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_34 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM api_keys WHERE id >= 1 ORDER BY id ASC LIMIT 44;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1272,33 +1288,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 35,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on feature_usage (Q35)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #35 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in feature_usage. Return id, monthly_events AS baseline_val, and SUM(monthly_events) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 45;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, monthly_events AS baseline_val, SUM(monthly_events) OVER (ORDER BY id ASC) AS running_total FROM feature_usage WHERE id >= 1 ORDER BY id ASC LIMIT 45;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1307,35 +1325,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 36,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q36)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_36(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_36(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #36 - Liam Vance (Head of Customer Success)]: Stage transformation logic for cloud_clusters. Create a CTE named staged_metrics selecting id, cluster_name AS staged_name, and monthly_cost_usd AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 46;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_36(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_36(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, cluster_name AS staged_name, monthly_cost_usd AS score FROM cloud_clusters WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 46;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1344,36 +1362,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 37,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q37)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #37 - Samira Khan (CEO & Founder)]: Rank records in support_tickets by resolution_hours. Return id, priority AS entity_title, resolution_hours AS metric_score, and ROW_NUMBER() OVER (ORDER BY resolution_hours DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 47;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, priority AS entity_title, resolution_hours AS metric_score, ROW_NUMBER() OVER (ORDER BY resolution_hours DESC) AS rank_num FROM support_tickets WHERE id >= 1 ORDER BY rank_num ASC LIMIT 47;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1382,34 +1400,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 38,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in churn_events (Q38)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #38 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of churn_events. Return id, account_id AS partition_key, arr_lost AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY arr_lost DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 48;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, arr_lost AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY arr_lost DESC) AS dense_rnk FROM churn_events WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 48;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1418,35 +1438,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 39,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q39)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_39 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #39 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on integrations. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 49;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_39 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM integrations WHERE id >= 1 ORDER BY id ASC LIMIT 49;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1455,35 +1476,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 40,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q40)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #40 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on audit_events. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 50;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_40_low PARTITION OF invoices_part_40 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_40_high PARTITION OF invoices_part_40 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_40 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_40;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM audit_events WHERE id >= 1 ORDER BY id ASC LIMIT 50;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1492,35 +1514,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 41,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on nps_surveys (Q41)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_41() and bind trigger trg_audit_subscriptions_41 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_41(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #41 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in nps_surveys. Return id, score AS baseline_val, and SUM(score) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 51;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_41() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_41 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_41(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, score AS baseline_val, SUM(score) OVER (ORDER BY id ASC) AS running_total FROM nps_surveys WHERE id >= 1 ORDER BY id ASC LIMIT 51;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1529,36 +1551,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 42,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q42)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #42 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for feature_flags. Create a CTE named staged_metrics selecting id, flag_key AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 52;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, flag_key AS staged_name, id AS score FROM feature_flags WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 52;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1567,35 +1588,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 43,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q43)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_43 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #43 - Chloe Vance (Head of Product Analytics)]: Rank records in accounts by id. Return id, company_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 53;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_43 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_43 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, company_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM accounts WHERE id >= 1 ORDER BY rank_num ASC LIMIT 53;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1604,36 +1626,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 44,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in pricing_plans (Q44)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #44 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of pricing_plans. Return id, plan_name AS partition_key, monthly_price AS metric_val, and DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 54;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, plan_name AS partition_key, monthly_price AS metric_val, DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk FROM pricing_plans WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 54;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1642,36 +1664,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 45,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q45)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #45 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on subscriptions. Return id, mrr AS current_val, and LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 55;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "mrr",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, mrr AS current_val, LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric FROM subscriptions WHERE id >= 1 ORDER BY id ASC LIMIT 55;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1680,36 +1702,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 46,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q46)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_46 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #46 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on invoices. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 56;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_46 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_46 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM invoices WHERE id >= 1 ORDER BY id ASC LIMIT 56;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1718,33 +1740,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 47,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on users (Q47)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #47 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in users. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 57;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM users WHERE id >= 1 ORDER BY id ASC LIMIT 57;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1753,35 +1777,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 48,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q48)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_48(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_48(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #48 - Liam Vance (Head of Customer Success)]: Stage transformation logic for api_keys. Create a CTE named staged_metrics selecting id, key_name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 58;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_48(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_48(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, key_name AS staged_name, id AS score FROM api_keys WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 58;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1790,36 +1814,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 49,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q49)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #49 - Samira Khan (CEO & Founder)]: Rank records in feature_usage by monthly_events. Return id, feature_name AS entity_title, monthly_events AS metric_score, and ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 59;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, feature_name AS entity_title, monthly_events AS metric_score, ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num FROM feature_usage WHERE id >= 1 ORDER BY rank_num ASC LIMIT 59;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1828,34 +1852,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 50,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in cloud_clusters (Q50)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #50 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of cloud_clusters. Return id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, and DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 60;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk FROM cloud_clusters WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 60;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1864,35 +1890,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q51)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_51 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #51 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on support_tickets. Return id, resolution_hours AS current_val, and LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 61;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "resolution_hours",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_51 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, resolution_hours AS current_val, LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric FROM support_tickets WHERE id >= 1 ORDER BY id ASC LIMIT 61;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1901,35 +1928,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q52)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #52 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on churn_events. Return id, arr_lost AS current_val, and LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 62;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "arr_lost",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_52_low PARTITION OF invoices_part_52 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_52_high PARTITION OF invoices_part_52 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_52 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_52;",
+    "reference_sql": "SELECT id, arr_lost AS current_val, LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric FROM churn_events WHERE id >= 1 ORDER BY id ASC LIMIT 62;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1938,35 +1966,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on integrations (Q53)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_53() and bind trigger trg_audit_subscriptions_53 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_53(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #53 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in integrations. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 63;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_53() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_53 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_53(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM integrations WHERE id >= 1 ORDER BY id ASC LIMIT 63;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1975,36 +2003,35 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 54,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q54)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #54 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for audit_events. Create a CTE named staged_metrics selecting id, action AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 64;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, action AS staged_name, id AS score FROM audit_events WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 64;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2013,35 +2040,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "saas",
     "level": 4,
     "order": 55,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q55)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_55 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #55 - Chloe Vance (Head of Product Analytics)]: Rank records in nps_surveys by score. Return id, account_id::text AS entity_title, score AS metric_score, and ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 65;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_55 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_55 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id::text AS entity_title, score AS metric_score, ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num FROM nps_surveys WHERE id >= 1 ORDER BY rank_num ASC LIMIT 65;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2051,37 +2079,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 56,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in feature_flags (Q56)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #56 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of feature_flags. Return id, min_tier AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 66;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, min_tier AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk FROM feature_flags WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 66;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-057",
@@ -2089,37 +2117,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 57,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q57)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #57 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on accounts. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 67;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 67;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-058",
@@ -2127,37 +2155,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 58,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q58)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_58 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #58 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on pricing_plans. Return id, monthly_price AS current_val, and LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 68;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "monthly_price",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_58 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_58 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, monthly_price AS current_val, LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric FROM pricing_plans WHERE id >= 1 ORDER BY id ASC LIMIT 68;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-059",
@@ -2165,34 +2193,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 59,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on subscriptions (Q59)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #59 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in subscriptions. Return id, mrr AS baseline_val, and SUM(mrr) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 69;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, mrr AS baseline_val, SUM(mrr) OVER (ORDER BY id ASC) AS running_total FROM subscriptions WHERE id >= 1 ORDER BY id ASC LIMIT 69;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-060",
@@ -2200,36 +2230,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 60,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q60)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_60(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_60(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #60 - Liam Vance (Head of Customer Success)]: Stage transformation logic for invoices. Create a CTE named staged_metrics selecting id, account_id::text AS staged_name, and amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 70;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_60(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_60(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, account_id::text AS staged_name, amount AS score FROM invoices WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 70;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-061",
@@ -2237,37 +2267,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 61,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q61)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #61 - Samira Khan (CEO & Founder)]: Rank records in users by id. Return id, full_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 71;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, full_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM users WHERE id >= 1 ORDER BY rank_num ASC LIMIT 71;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-062",
@@ -2275,35 +2305,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 62,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in api_keys (Q62)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #62 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of api_keys. Return id, account_id AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 72;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk FROM api_keys WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 72;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-063",
@@ -2311,36 +2343,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 63,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q63)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_63 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #63 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on feature_usage. Return id, monthly_events AS current_val, and LAG(monthly_events, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 73;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "monthly_events",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_63 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, monthly_events AS current_val, LAG(monthly_events, 1) OVER (ORDER BY id ASC) AS prev_metric FROM feature_usage WHERE id >= 1 ORDER BY id ASC LIMIT 73;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-064",
@@ -2348,36 +2381,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 64,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q64)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #64 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on cloud_clusters. Return id, monthly_cost_usd AS current_val, and LEAD(monthly_cost_usd, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 74;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "monthly_cost_usd",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_64_low PARTITION OF invoices_part_64 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_64_high PARTITION OF invoices_part_64 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_64 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_64;",
+    "reference_sql": "SELECT id, monthly_cost_usd AS current_val, LEAD(monthly_cost_usd, 1) OVER (ORDER BY id ASC) AS next_metric FROM cloud_clusters WHERE id >= 1 ORDER BY id ASC LIMIT 74;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-065",
@@ -2385,36 +2419,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 65,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on support_tickets (Q65)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_65() and bind trigger trg_audit_subscriptions_65 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_65(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #65 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in support_tickets. Return id, resolution_hours AS baseline_val, and SUM(resolution_hours) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 75;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_65() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_65 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_65(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, resolution_hours AS baseline_val, SUM(resolution_hours) OVER (ORDER BY id ASC) AS running_total FROM support_tickets WHERE id >= 1 ORDER BY id ASC LIMIT 75;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-066",
@@ -2422,37 +2456,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 66,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q66)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #66 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for churn_events. Create a CTE named staged_metrics selecting id, reason AS staged_name, and arr_lost AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 76;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, reason AS staged_name, arr_lost AS score FROM churn_events WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 76;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-067",
@@ -2460,36 +2493,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 67,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q67)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_67 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #67 - Chloe Vance (Head of Product Analytics)]: Rank records in integrations by id. Return id, provider AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 77;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_67 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_67 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, provider AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM integrations WHERE id >= 1 ORDER BY rank_num ASC LIMIT 77;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-068",
@@ -2497,37 +2531,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 68,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in audit_events (Q68)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #68 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of audit_events. Return id, account_id AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 78;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, account_id AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY id DESC) AS dense_rnk FROM audit_events WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 78;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-069",
@@ -2535,37 +2569,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 69,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q69)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #69 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on nps_surveys. Return id, score AS current_val, and LAG(score, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 79;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "score",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, score AS current_val, LAG(score, 1) OVER (ORDER BY id ASC) AS prev_metric FROM nps_surveys WHERE id >= 1 ORDER BY id ASC LIMIT 79;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-070",
@@ -2573,37 +2607,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 70,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q70)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_70 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #70 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on feature_flags. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 80;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_70 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_70 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM feature_flags WHERE id >= 1 ORDER BY id ASC LIMIT 80;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-071",
@@ -2611,34 +2645,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on accounts (Q71)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #71 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in accounts. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 81;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 81;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-072",
@@ -2646,36 +2682,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q72)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_72(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_72(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #72 - Liam Vance (Head of Customer Success)]: Stage transformation logic for pricing_plans. Create a CTE named staged_metrics selecting id, plan_name AS staged_name, and monthly_price AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 82;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_72(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_72(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, plan_name AS staged_name, monthly_price AS score FROM pricing_plans WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 82;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-073",
@@ -2683,37 +2719,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q73)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #73 - Samira Khan (CEO & Founder)]: Rank records in subscriptions by mrr. Return id, plan AS entity_title, mrr AS metric_score, and ROW_NUMBER() OVER (ORDER BY mrr DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 83;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, plan AS entity_title, mrr AS metric_score, ROW_NUMBER() OVER (ORDER BY mrr DESC) AS rank_num FROM subscriptions WHERE id >= 1 ORDER BY rank_num ASC LIMIT 83;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-074",
@@ -2721,35 +2757,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in invoices (Q74)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #74 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of invoices. Return id, account_id AS partition_key, amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 84;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, amount AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk FROM invoices WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 84;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-075",
@@ -2757,36 +2795,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q75)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_75 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #75 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on users. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 85;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_75 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM users WHERE id >= 1 ORDER BY id ASC LIMIT 85;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-076",
@@ -2794,36 +2833,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q76)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #76 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on api_keys. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 86;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_76_low PARTITION OF invoices_part_76 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_76_high PARTITION OF invoices_part_76 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_76 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_76;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM api_keys WHERE id >= 1 ORDER BY id ASC LIMIT 86;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-077",
@@ -2831,36 +2871,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on feature_usage (Q77)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_77() and bind trigger trg_audit_subscriptions_77 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_77(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #77 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in feature_usage. Return id, monthly_events AS baseline_val, and SUM(monthly_events) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 87;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_77() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_77 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_77(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, monthly_events AS baseline_val, SUM(monthly_events) OVER (ORDER BY id ASC) AS running_total FROM feature_usage WHERE id >= 1 ORDER BY id ASC LIMIT 87;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-078",
@@ -2868,37 +2908,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q78)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #78 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for cloud_clusters. Create a CTE named staged_metrics selecting id, cluster_name AS staged_name, and monthly_cost_usd AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 88;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, cluster_name AS staged_name, monthly_cost_usd AS score FROM cloud_clusters WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 88;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-079",
@@ -2906,36 +2945,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q79)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_79 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #79 - Chloe Vance (Head of Product Analytics)]: Rank records in support_tickets by resolution_hours. Return id, priority AS entity_title, resolution_hours AS metric_score, and ROW_NUMBER() OVER (ORDER BY resolution_hours DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 89;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_79 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_79 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, priority AS entity_title, resolution_hours AS metric_score, ROW_NUMBER() OVER (ORDER BY resolution_hours DESC) AS rank_num FROM support_tickets WHERE id >= 1 ORDER BY rank_num ASC LIMIT 89;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-080",
@@ -2943,37 +2983,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 80,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in churn_events (Q80)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #80 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of churn_events. Return id, account_id AS partition_key, arr_lost AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY arr_lost DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 90;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, account_id AS partition_key, arr_lost AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY arr_lost DESC) AS dense_rnk FROM churn_events WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 90;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-081",
@@ -2981,37 +3021,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q81)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #81 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on integrations. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 91;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM integrations WHERE id >= 1 ORDER BY id ASC LIMIT 91;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-082",
@@ -3019,37 +3059,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q82)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_82 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #82 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on audit_events. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 92;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_82 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_82 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM audit_events WHERE id >= 1 ORDER BY id ASC LIMIT 92;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-083",
@@ -3057,34 +3097,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on nps_surveys (Q83)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #83 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in nps_surveys. Return id, score AS baseline_val, and SUM(score) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 93;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, score AS baseline_val, SUM(score) OVER (ORDER BY id ASC) AS running_total FROM nps_surveys WHERE id >= 1 ORDER BY id ASC LIMIT 93;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-084",
@@ -3092,36 +3134,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q84)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_84(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_84(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #84 - Liam Vance (Head of Customer Success)]: Stage transformation logic for feature_flags. Create a CTE named staged_metrics selecting id, flag_key AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 94;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_84(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_84(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, flag_key AS staged_name, id AS score FROM feature_flags WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 94;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-085",
@@ -3129,222 +3171,225 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q85)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #85 - Samira Khan (CEO & Founder)]: Rank records in accounts by id. Return id, company_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 95;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, company_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM accounts WHERE id >= 1 ORDER BY rank_num ASC LIMIT 95;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "saas-L4-086",
     "domain": "saas",
     "level": 4,
     "order": 86,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "boss",
+    "title": "Dense Partition Ranking in pricing_plans (Q86)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #86 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of pricing_plans. Return id, plan_name AS partition_key, monthly_price AS metric_val, and DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 96;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, plan_name AS partition_key, monthly_price AS metric_val, DENSE_RANK() OVER (PARTITION BY plan_name ORDER BY monthly_price DESC) AS dense_rnk FROM pricing_plans WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 96;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-087",
     "domain": "saas",
     "level": 4,
     "order": 87,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "boss",
+    "title": "Sequential Trend Analysis with LAG() (Q87)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_87 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #87 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on subscriptions. Return id, mrr AS current_val, and LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 97;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "mrr",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_87 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, mrr AS current_val, LAG(mrr, 1) OVER (ORDER BY id ASC) AS prev_metric FROM subscriptions WHERE id >= 1 ORDER BY id ASC LIMIT 97;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-088",
     "domain": "saas",
     "level": 4,
     "order": 88,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "boss",
+    "title": "Sequential Projection Analysis with LEAD() (Q88)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #88 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on invoices. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 98;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_88_low PARTITION OF invoices_part_88 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_88_high PARTITION OF invoices_part_88 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_88 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_88;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM invoices WHERE id >= 1 ORDER BY id ASC LIMIT 98;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-089",
     "domain": "saas",
     "level": 4,
     "order": 89,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "boss",
+    "title": "Cumulative Running Total on users (Q89)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Compliance Officer Directive: Create an event trigger on subscriptions to monitor record mutations. Define function fn_audit_subscriptions_89() and bind trigger trg_audit_subscriptions_89 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_89(). Then select id, plan, mrr from subscriptions ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #89 - Samira Khan (CEO & Founder)]: Calculate cumulative progression in users. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 99;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_subscriptions_89() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_subscriptions_89 BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION fn_audit_subscriptions_89(); SELECT id, plan, mrr FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM users WHERE id >= 1 ORDER BY id ASC LIMIT 99;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query subscriptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-090",
     "domain": "saas",
     "level": 4,
     "order": 90,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "boss",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q90)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Metrics Audit: When calculating performance ratios in subscriptions, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, plan, and ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #90 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Stage transformation logic for api_keys. Create a CTE named staged_metrics selecting id, key_name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 100;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, plan, ROUND((mrr / NULLIF(COALESCE(mrr, 1), 0))::numeric, 2) AS index_ratio FROM subscriptions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, key_name AS staged_name, id AS score FROM api_keys WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 100;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-091",
@@ -3352,36 +3397,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 91,
     "difficulty": "boss",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q91)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_accounts_91 joining accounts and pricing_plans on t1.id = t2.id. Project t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, and COALESCE(t2.plan_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #91 - Chloe Vance (Head of Product Analytics)]: Rank records in feature_usage by monthly_events. Return id, feature_name AS entity_title, monthly_events AS metric_score, and ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 101;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_accounts_91 AS SELECT t1.id, COALESCE(t1.company_name, 'Unassigned') AS primary_name, COALESCE(t2.plan_name, 'None') AS secondary_name FROM accounts t1 JOIN pricing_plans t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_accounts_91 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, feature_name AS entity_title, monthly_events AS metric_score, ROW_NUMBER() OVER (ORDER BY monthly_events DESC) AS rank_num FROM feature_usage WHERE id >= 1 ORDER BY rank_num ASC LIMIT 101;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-092",
@@ -3389,37 +3435,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 92,
     "difficulty": "boss",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in cloud_clusters (Q92)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Executive Memo: Segment records in subscriptions into 4 analytical quartiles based on mrr using NTILE(4) within a CTE named cohort_analysis. Return id, plan, mrr, and quartile ordered by quartile ASC, mrr DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #92 - Liam Vance (Head of Customer Success)]: Compute dense ranking within each segment of cloud_clusters. Return id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, and DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 102;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, plan, mrr, NTILE(4) OVER (ORDER BY mrr DESC) AS quartile FROM subscriptions) SELECT id, plan, mrr, quartile FROM cohort_analysis ORDER BY quartile ASC, mrr DESC LIMIT 25;",
+    "reference_sql": "SELECT id, cloud_provider AS partition_key, monthly_cost_usd AS metric_val, DENSE_RANK() OVER (PARTITION BY cloud_provider ORDER BY monthly_cost_usd DESC) AS dense_rnk FROM cloud_clusters WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 102;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY mrr DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-093",
@@ -3427,37 +3473,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 93,
     "difficulty": "boss",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q93)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Samira Khan",
+      "role": "CEO & Founder",
+      "department": "Executive"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Financial Growth Memo: In invoices, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #93 - Samira Khan (CEO & Founder)]: Perform period-over-period delta analysis on support_tickets. Return id, resolution_hours AS current_val, and LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 103;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "resolution_hours",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM invoices ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, resolution_hours AS current_val, LAG(resolution_hours, 1) OVER (ORDER BY id ASC) AS prev_metric FROM support_tickets WHERE id >= 1 ORDER BY id ASC LIMIT 103;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-094",
@@ -3465,37 +3511,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 94,
     "difficulty": "boss",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q94)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Tariq Mansoor",
+      "role": "VP of Engineering & Cloud Ops",
+      "department": "Infrastructure"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Ticket: Ingest and cleanse active records from subscriptions. Create a Temporary Staging Table named temp_subscriptions_cln_94 containing id, UPPER(TRIM(plan)) AS cleaned_name, and COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount where plan IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #94 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Perform forward-looking trend analysis on churn_events. Return id, arr_lost AS current_val, and LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 104;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "arr_lost",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_subscriptions_cln_94 AS SELECT id, UPPER(TRIM(plan)) AS cleaned_name, COALESCE(ROUND(mrr * 1.08, 2), 0.00) AS adjusted_amount FROM subscriptions WHERE plan IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_subscriptions_cln_94 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, arr_lost AS current_val, LEAD(arr_lost, 1) OVER (ORDER BY id ASC) AS next_metric FROM churn_events WHERE id >= 1 ORDER BY id ASC LIMIT 104;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-095",
@@ -3503,34 +3549,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 95,
     "difficulty": "boss",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on integrations (Q95)",
     "stakeholder": {
-      "name": "Tariq Mansoor",
-      "role": "VP of Engineering & Cloud Ops",
-      "department": "Infrastructure"
+      "name": "Chloe Vance",
+      "role": "Head of Product Analytics",
+      "department": "Product"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in invoices. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from invoices where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #95 - Chloe Vance (Head of Product Analytics)]: Calculate cumulative progression in integrations. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 105;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM invoices WHERE amount > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM integrations WHERE id >= 1 ORDER BY id ASC LIMIT 105;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-096",
@@ -3538,36 +3586,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 96,
     "difficulty": "boss",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q96)",
     "stakeholder": {
-      "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
-      "department": "Product"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_subscriptions_96(p_id INT, p_val NUMERIC) that updates mrr by adding p_val for the specified id. Execute with CALL sp_reconcile_subscriptions_96(1, 10); then select id, plan, mrr from subscriptions where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #96 - Liam Vance (Head of Customer Success)]: Stage transformation logic for audit_events. Create a CTE named staged_metrics selecting id, action AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 106;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "plan",
-      "mrr"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_subscriptions_96(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE subscriptions SET mrr = mrr + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_subscriptions_96(1, 10); SELECT id, plan, mrr FROM subscriptions WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, action AS staged_name, id AS score FROM audit_events WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 106;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-097",
@@ -3575,37 +3623,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 97,
     "difficulty": "boss",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q97)",
     "stakeholder": {
       "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
+      "role": "CEO & Founder",
       "department": "Executive"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Data Quality Alert: Standardize legacy text fields in accounts. Select id, UPPER(TRIM(company_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from accounts where company_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Samira Khan (CEO & Founder)\n\n\"[Task #97 - Samira Khan (CEO & Founder)]: Rank records in nps_surveys by score. Return id, account_id::text AS entity_title, score AS metric_score, and ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 107;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(company_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM accounts WHERE company_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id::text AS entity_title, score AS metric_score, ROW_NUMBER() OVER (ORDER BY score DESC) AS rank_num FROM nps_surveys WHERE id >= 1 ORDER BY rank_num ASC LIMIT 107;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(company_name)) and filter with WHERE company_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-098",
@@ -3613,35 +3661,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 98,
     "difficulty": "boss",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in feature_flags (Q98)",
     "stakeholder": {
       "name": "Tariq Mansoor",
       "role": "VP of Engineering & Cloud Ops",
       "department": "Infrastructure"
     },
-    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"Audit Discrepancy: Identify all accounts entries that have active corresponding associations in pricing_plans. Using a Correlated Subquery with EXISTS, return t1.id and t1.company_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Tariq Mansoor (VP of Engineering & Cloud Ops)\n\n\"[Task #98 - Tariq Mansoor (VP of Engineering & Cloud Ops)]: Compute dense ranking within each segment of feature_flags. Return id, min_tier AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 108;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "company_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.company_name FROM accounts t1 WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, min_tier AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY min_tier ORDER BY id DESC) AS dense_rnk FROM feature_flags WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 108;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM pricing_plans t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-099",
@@ -3649,36 +3699,37 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 99,
     "difficulty": "boss",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q99)",
     "stakeholder": {
       "name": "Chloe Vance",
-      "role": "Head of Product Analytics & CS",
+      "role": "Head of Product Analytics",
       "department": "Product"
     },
-    "request": "From: Chloe Vance (Head of Product Analytics & CS)\n\n\"ALERT: The dashboard query on invoices is causing severe CPU spikes. Create a composite index named idx_invoices_opt_99 ON invoices(id, amount DESC). Then retrieve id, is_paid, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Chloe Vance (Head of Product Analytics)\n\n\"[Task #99 - Chloe Vance (Head of Product Analytics)]: Perform period-over-period delta analysis on accounts. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 109;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "is_paid",
-      "amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_invoices_opt_99 ON invoices(id, amount DESC); SELECT id, is_paid, amount FROM invoices WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 109;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "saas-L4-100",
@@ -3686,35 +3737,36 @@ export const SAAS_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 100,
     "difficulty": "boss",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q100)",
     "stakeholder": {
-      "name": "Samira Khan",
-      "role": "CEO & Co-Founder",
-      "department": "Executive"
+      "name": "Liam Vance",
+      "role": "Head of Customer Success",
+      "department": "Success"
     },
-    "request": "From: Samira Khan (CEO & Co-Founder)\n\n\"Infrastructure Directive: Ledger invoices is reaching multi-gigabyte scale. Create a partitioned table named invoices_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Head of Customer Success)\n\n\"[Task #100 - Liam Vance (Head of Customer Success)]: Perform forward-looking trend analysis on pricing_plans. Return id, monthly_price AS current_val, and LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 110;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "monthly_price",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE invoices_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE invoices_part_100_low PARTITION OF invoices_part_100 FOR VALUES FROM (0) TO (100); CREATE TABLE invoices_part_100_high PARTITION OF invoices_part_100 FOR VALUES FROM (100) TO (100000); INSERT INTO invoices_part_100 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM invoices_part_100;",
+    "reference_sql": "SELECT id, monthly_price AS current_val, LEAD(monthly_price, 1) OVER (ORDER BY id ASC) AS next_metric FROM pricing_plans WHERE id >= 1 ORDER BY id ASC LIMIT 110;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   }
 ];

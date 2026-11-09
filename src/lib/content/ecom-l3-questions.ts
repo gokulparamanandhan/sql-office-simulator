@@ -6,559 +6,537 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "domain": "ecommerce",
     "level": 3,
     "order": 1,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in categories (Q1)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #1 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 11;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 11;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-002",
     "domain": "ecommerce",
     "level": 3,
     "order": 2,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q2)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_2 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #2 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 12;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_2 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_2 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 12;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-003",
     "domain": "ecommerce",
     "level": 3,
     "order": 3,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q3)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #3 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 13;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 13;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-004",
     "domain": "ecommerce",
     "level": 3,
     "order": 4,
-    "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "warm-up",
+    "title": "Registry Integration with UNION ALL (Q4)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #4 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 34 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 14;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 34 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 14;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-005",
     "domain": "ecommerce",
     "level": 3,
     "order": 5,
-    "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "warm-up",
+    "title": "Relational Verification with EXISTS (Q5)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_5 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_5 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_5 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "ecom-L3-006",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 6,
-    "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
-      "department": "Sales"
-    },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "ecom-L3-007",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 7,
-    "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
-    "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Supply Director",
-      "department": "Operations"
-    },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_7(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_7(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "name",
-      "price"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_7(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_7(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "ecom-L3-008",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 8,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Support Lead",
-      "department": "Support"
-    },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "ecom-L3-009",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 9,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer",
-      "department": "Executive"
-    },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #5 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 15;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "name"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 15;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
+  },
+  {
+    "id": "ecom-L3-006",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 6,
+    "difficulty": "warm-up",
+    "title": "Inline Derived Table Transformation in inventory (Q6)",
+    "stakeholder": {
+      "name": "Rachel Green",
+      "role": "VP of Sales & Growth",
+      "department": "Sales"
+    },
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #6 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 16;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "text",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 16;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "ecom-L3-007",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 7,
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in categories (Q7)",
+    "stakeholder": {
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
+    },
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #7 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 17;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(id)"
+    ],
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 17;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "ecom-L3-008",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 8,
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q8)",
+    "stakeholder": {
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
+    },
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #8 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 18;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 18;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "ecom-L3-009",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 9,
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q9)",
+    "stakeholder": {
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
+    },
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #9 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 19;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 19;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-010",
     "domain": "ecommerce",
     "level": 3,
     "order": 10,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Registry Integration with UNION ALL (Q10)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_10 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #10 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 40 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 20;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_10 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 40 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-011",
     "domain": "ecommerce",
     "level": 3,
     "order": 11,
-    "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "warm-up",
+    "title": "Relational Verification with EXISTS (Q11)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #11 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 21;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_11_low PARTITION OF orders_part_11 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_11_high PARTITION OF orders_part_11 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_11 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_11;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 21;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-012",
     "domain": "ecommerce",
     "level": 3,
     "order": 12,
-    "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "warm-up",
+    "title": "Inline Derived Table Transformation in inventory (Q12)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_12() and bind trigger trg_audit_products_12 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_12(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #12 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 22;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_12() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_12 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_12(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 22;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-013",
     "domain": "ecommerce",
     "level": 3,
     "order": 13,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in categories (Q13)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #13 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 23;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 23;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-014",
     "domain": "ecommerce",
     "level": 3,
     "order": 14,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q14)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_14 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #14 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 24;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_14 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_14 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 24;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-015",
     "domain": "ecommerce",
     "level": 3,
     "order": 15,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q15)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #15 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 25;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "ecom-L3-016",
@@ -566,37 +544,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 16,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q16)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #16 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 46 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 26;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 46 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 26;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-017",
@@ -604,37 +580,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 17,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q17)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_17 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #17 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 27;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_17 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_17 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 27;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-018",
@@ -642,34 +615,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 18,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in inventory (Q18)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #18 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 28;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 28;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-019",
@@ -677,36 +652,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 19,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in categories (Q19)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_19(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_19(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #19 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 29;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "price"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_19(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_19(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 29;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-020",
@@ -714,37 +687,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 20,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q20)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #20 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 30;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 30;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-021",
@@ -752,35 +722,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 21,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q21)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #21 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 31;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 31;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-022",
@@ -788,36 +759,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 22,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q22)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_22 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #22 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 52 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 32;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_22 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 52 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 32;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-023",
@@ -825,36 +795,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 23,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q23)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #23 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 33;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_23_low PARTITION OF orders_part_23 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_23_high PARTITION OF orders_part_23 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_23 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_23;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 33;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-024",
@@ -862,36 +830,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 24,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q24)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_24() and bind trigger trg_audit_products_24 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_24(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #24 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 34;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_24() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_24 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_24(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 34;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-025",
@@ -899,37 +867,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 25,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q25)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #25 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 35;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 35;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-026",
@@ -937,36 +902,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 26,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q26)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_26 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #26 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 36;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_26 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_26 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 36;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-027",
@@ -974,37 +937,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 27,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q27)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #27 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 37;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 37;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-028",
@@ -1012,37 +974,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 28,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q28)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #28 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 58 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 38;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 58 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 38;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-029",
@@ -1050,37 +1010,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 29,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q29)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_29 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #29 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 39;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_29 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_29 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 39;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-030",
@@ -1088,34 +1045,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 30,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in inventory (Q30)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #30 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 40;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 40;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-031",
@@ -1123,36 +1082,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 31,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in categories (Q31)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_31(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_31(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #31 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 41;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "price"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_31(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_31(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 41;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-032",
@@ -1160,37 +1117,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 32,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q32)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #32 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 42;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 42;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-033",
@@ -1198,35 +1152,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 33,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q33)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #33 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 43;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 43;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-034",
@@ -1234,36 +1189,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 34,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q34)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_34 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #34 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 64 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 44;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_34 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 64 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 44;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-035",
@@ -1271,36 +1225,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 35,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q35)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #35 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 45;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_35_low PARTITION OF orders_part_35 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_35_high PARTITION OF orders_part_35 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_35 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_35;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 45;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-036",
@@ -1308,36 +1260,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 36,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q36)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_36() and bind trigger trg_audit_products_36 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_36(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #36 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 46;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_36() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_36 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_36(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 46;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-037",
@@ -1345,37 +1297,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 37,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q37)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #37 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 47;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 47;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-038",
@@ -1383,36 +1332,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 38,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q38)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_38 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #38 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 48;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_38 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_38 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 48;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-039",
@@ -1420,37 +1367,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 39,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q39)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #39 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 49;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 49;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-040",
@@ -1458,37 +1404,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 40,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q40)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #40 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 70 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 50;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 70 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 50;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-041",
@@ -1496,37 +1440,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 41,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q41)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_41 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #41 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 51;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_41 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_41 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 51;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-042",
@@ -1534,34 +1475,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 42,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in inventory (Q42)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #42 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 52;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 52;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-043",
@@ -1569,36 +1512,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 43,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in categories (Q43)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_43(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_43(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #43 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 53;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "price"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_43(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_43(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 53;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-044",
@@ -1606,37 +1547,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 44,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q44)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #44 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 54;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 54;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-045",
@@ -1644,35 +1582,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 45,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q45)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #45 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 55;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 55;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-046",
@@ -1680,36 +1619,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 46,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q46)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_46 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #46 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 76 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 56;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_46 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 76 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 56;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-047",
@@ -1717,36 +1655,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 47,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q47)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #47 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 57;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_47_low PARTITION OF orders_part_47 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_47_high PARTITION OF orders_part_47 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_47 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_47;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 57;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-048",
@@ -1754,36 +1690,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 48,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q48)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_48() and bind trigger trg_audit_products_48 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_48(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #48 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 58;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_48() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_48 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_48(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 58;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-049",
@@ -1791,37 +1727,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 49,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q49)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #49 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 59;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 59;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-050",
@@ -1829,407 +1762,394 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 50,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q50)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_50 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #50 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 60;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_50 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_50 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 60;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-051",
     "domain": "ecommerce",
     "level": 3,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Conditional Tier Classification with CASE WHEN (Q51)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #51 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 61;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 61;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-052",
     "domain": "ecommerce",
     "level": 3,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Registry Integration with UNION ALL (Q52)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #52 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 82 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 62;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 82 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 62;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-053",
     "domain": "ecommerce",
     "level": 3,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Relational Verification with EXISTS (Q53)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_53 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_53 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_53 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-054",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 54,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
-      "department": "Sales"
-    },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-055",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 55,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
-    "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Supply Director",
-      "department": "Operations"
-    },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_55(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_55(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "name",
-      "price"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_55(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_55(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-056",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 56,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Support Lead",
-      "department": "Support"
-    },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-057",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 57,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer",
-      "department": "Executive"
-    },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #53 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 63;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "name"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 63;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "ecom-L3-054",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 54,
+    "difficulty": "core",
+    "title": "Inline Derived Table Transformation in inventory (Q54)",
+    "stakeholder": {
+      "name": "Rachel Green",
+      "role": "VP of Sales & Growth",
+      "department": "Sales"
+    },
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #54 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 64;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "text",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 64;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "ecom-L3-055",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 55,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery in categories (Q55)",
+    "stakeholder": {
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
+    },
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #55 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 65;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(id)"
+    ],
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 65;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "ecom-L3-056",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 56,
+    "difficulty": "core",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q56)",
+    "stakeholder": {
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
+    },
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #56 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 66;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 66;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "ecom-L3-057",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 57,
+    "difficulty": "core",
+    "title": "Conditional Tier Classification with CASE WHEN (Q57)",
+    "stakeholder": {
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
+    },
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #57 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 67;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 67;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-058",
     "domain": "ecommerce",
     "level": 3,
     "order": 58,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Registry Integration with UNION ALL (Q58)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_58 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #58 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 88 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 68;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_58 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 88 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 68;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-059",
     "domain": "ecommerce",
     "level": 3,
     "order": 59,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Relational Verification with EXISTS (Q59)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #59 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 69;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_59_low PARTITION OF orders_part_59 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_59_high PARTITION OF orders_part_59 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_59 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_59;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
-    ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-060",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 60,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
-    "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Support Lead",
-      "department": "Support"
-    },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_60() and bind trigger trg_audit_products_60 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_60(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
-    ],
-    "expected_columns": [
-      "id",
-      "name",
-      "price"
-    ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_60() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_60 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_60(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 69;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "ecom-L3-060",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 60,
+    "difficulty": "core",
+    "title": "Inline Derived Table Transformation in inventory (Q60)",
+    "stakeholder": {
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
+    },
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #60 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 70;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "text",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 70;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "ecom-L3-061",
@@ -2237,37 +2157,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 61,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q61)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #61 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 71;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 71;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-062",
@@ -2275,36 +2192,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 62,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q62)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_62 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #62 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 72;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_62 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_62 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 72;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-063",
@@ -2312,37 +2227,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 63,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q63)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #63 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 73;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 73;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-064",
@@ -2350,37 +2264,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 64,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q64)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #64 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 94 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 74;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 94 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 74;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-065",
@@ -2388,37 +2300,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 65,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q65)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_65 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #65 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 75;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_65 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_65 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 75;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-066",
@@ -2426,34 +2335,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 66,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in inventory (Q66)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #66 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 76;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 76;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-067",
@@ -2461,36 +2372,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 67,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in categories (Q67)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_67(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_67(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #67 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 77;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "price"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_67(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_67(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 77;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-068",
@@ -2498,37 +2407,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 68,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q68)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #68 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 78;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 78;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-069",
@@ -2536,35 +2442,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 69,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q69)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #69 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 79;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 79;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-070",
@@ -2572,36 +2479,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 70,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q70)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_70 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #70 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 100 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 80;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_70 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 100 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 80;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-071",
@@ -2609,36 +2515,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q71)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #71 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 81;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_71_low PARTITION OF orders_part_71 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_71_high PARTITION OF orders_part_71 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_71 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_71;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 81;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-072",
@@ -2646,36 +2550,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q72)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_72() and bind trigger trg_audit_products_72 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_72(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #72 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 82;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_72() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_72 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_72(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 82;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-073",
@@ -2683,37 +2587,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q73)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #73 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 83;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 83;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-074",
@@ -2721,36 +2622,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q74)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_74 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #74 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 84;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_74 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_74 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 5) ORDER BY id ASC LIMIT 84;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-075",
@@ -2758,37 +2657,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q75)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #75 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 85;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 85;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-076",
@@ -2796,37 +2694,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q76)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #76 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 106 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 86;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 106 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 86;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-077",
@@ -2834,37 +2730,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q77)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_77 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #77 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 87;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_77 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_77 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 87;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-078",
@@ -2872,34 +2765,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in inventory (Q78)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #78 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 88;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 88;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-079",
@@ -2907,36 +2802,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in categories (Q79)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_79(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_79(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #79 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 89;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "price"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_79(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_79(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 89;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-080",
@@ -2944,37 +2837,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 80,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q80)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #80 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 90;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 1) ORDER BY id ASC LIMIT 90;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-081",
@@ -2982,35 +2872,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q81)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #81 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 91;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 91;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-082",
@@ -3018,36 +2909,35 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q82)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_82 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #82 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 112 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 92;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_82 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 112 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 92;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-083",
@@ -3055,36 +2945,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q83)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #83 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 93;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_83_low PARTITION OF orders_part_83 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_83_high PARTITION OF orders_part_83 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_83 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_83;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 93;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-084",
@@ -3092,36 +2980,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q84)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_84() and bind trigger trg_audit_products_84 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_84(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #84 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 94;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_84() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_84 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_84(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 94;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-085",
@@ -3129,37 +3017,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q85)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #85 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 95;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 95;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-086",
@@ -3167,36 +3052,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 86,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q86)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_86 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #86 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 96;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_86 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_86 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 2) ORDER BY id ASC LIMIT 96;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-087",
@@ -3204,37 +3087,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 87,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q87)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #87 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 97;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 97;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-088",
@@ -3242,295 +3124,285 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 88,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q88)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #88 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 118 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 98;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 118 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 98;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "ecom-L3-089",
     "domain": "ecommerce",
     "level": 3,
     "order": 89,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "boss",
+    "title": "Relational Verification with EXISTS (Q89)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Data Quality Ticket: Ingest and cleanse active records from products. Create a Temporary Staging Table named temp_products_cln_89 containing id, UPPER(TRIM(name)) AS cleaned_name, and COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount where name IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_products_cln_89 AS SELECT id, UPPER(TRIM(name)) AS cleaned_name, COALESCE(ROUND(price * 1.08, 2), 0.00) AS adjusted_amount FROM products WHERE name IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_products_cln_89 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-090",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 90,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
-      "department": "Sales"
-    },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in orders. Run an EXPLAIN (FORMAT JSON) on a query selecting id and total_amount from orders where total_amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, total_amount FROM orders WHERE total_amount > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-091",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 91,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
-    "stakeholder": {
-      "name": "Liam Vance",
-      "role": "Fulfillment & Supply Director",
-      "department": "Operations"
-    },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_products_91(p_id INT, p_val NUMERIC) that updates price by adding p_val for the specified id. Execute with CALL sp_reconcile_products_91(1, 10); then select id, name, price from products where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "name",
-      "price"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_products_91(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE products SET price = price + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_products_91(1, 10); SELECT id, name, price FROM products WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-092",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 92,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Marcus Bell",
-      "role": "Customer Support Lead",
-      "department": "Support"
-    },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Data Quality Alert: Standardize legacy text fields in departments. Select id, UPPER(TRIM(name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from departments where name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM departments WHERE name IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(name)) and filter with WHERE name IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "ecom-L3-093",
-    "domain": "ecommerce",
-    "level": 3,
-    "order": 93,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Alex Rivera",
-      "role": "Chief Executive Officer",
-      "department": "Executive"
-    },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Audit Discrepancy: Identify all departments entries that have active corresponding associations in categories. Using a Correlated Subquery with EXISTS, return t1.id and t1.name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #89 - Alex Rivera (Chief Executive Officer)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 99;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "name"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.name FROM departments t1 WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 99;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM categories t2 WHERE t2.department_id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "ecom-L3-090",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 90,
+    "difficulty": "boss",
+    "title": "Inline Derived Table Transformation in inventory (Q90)",
+    "stakeholder": {
+      "name": "Rachel Green",
+      "role": "VP of Sales & Growth",
+      "department": "Sales"
+    },
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #90 - Rachel Green (VP of Sales & Growth)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 100;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "text",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 100;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "ecom-L3-091",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 91,
+    "difficulty": "boss",
+    "title": "Benchmark Segmentation with Subquery in categories (Q91)",
+    "stakeholder": {
+      "name": "Liam Vance",
+      "role": "Fulfillment & Supply Director",
+      "department": "Operations"
+    },
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #91 - Liam Vance (Fulfillment & Supply Director)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 101;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(id)"
+    ],
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 101;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "ecom-L3-092",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 92,
+    "difficulty": "boss",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q92)",
+    "stakeholder": {
+      "name": "Marcus Bell",
+      "role": "Customer Support Lead",
+      "department": "Support"
+    },
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #92 - Marcus Bell (Customer Support Lead)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 102;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 3) ORDER BY id ASC LIMIT 102;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "ecom-L3-093",
+    "domain": "ecommerce",
+    "level": 3,
+    "order": 93,
+    "difficulty": "boss",
+    "title": "Conditional Tier Classification with CASE WHEN (Q93)",
+    "stakeholder": {
+      "name": "Alex Rivera",
+      "role": "Chief Executive Officer",
+      "department": "Executive"
+    },
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #93 - Alex Rivera (Chief Executive Officer)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 103;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 103;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-094",
     "domain": "ecommerce",
     "level": 3,
     "order": 94,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "boss",
+    "title": "Registry Integration with UNION ALL (Q94)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"ALERT: The dashboard query on orders is causing severe CPU spikes. Create a composite index named idx_orders_opt_94 ON orders(id, total_amount DESC). Then retrieve id, status, total_amount where total_amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #94 - Rachel Green (VP of Sales & Growth)]: Combine registry names from order_items and orders. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 124 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier from orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 104;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "status",
-      "total_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_orders_opt_94 ON orders(id, total_amount DESC); SELECT id, status, total_amount FROM orders WHERE total_amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 124 UNION ALL SELECT status::text AS entity_name, 'Secondary Stream' AS source_tier FROM orders WHERE status IS NOT NULL ORDER BY entity_name ASC LIMIT 104;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-095",
     "domain": "ecommerce",
     "level": 3,
     "order": 95,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "boss",
+    "title": "Relational Verification with EXISTS (Q95)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Infrastructure Directive: Ledger orders is reaching multi-gigabyte scale. Create a partitioned table named orders_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #95 - Liam Vance (Fulfillment & Supply Director)]: Verify relational existence in shipments. Return t.id and t.carrier AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 105;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE orders_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE orders_part_95_low PARTITION OF orders_part_95 FOR VALUES FROM (0) TO (100); CREATE TABLE orders_part_95_high PARTITION OF orders_part_95 FOR VALUES FROM (100) TO (100000); INSERT INTO orders_part_95 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM orders_part_95;",
+    "reference_sql": "SELECT t.id, t.carrier AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 105;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-096",
@@ -3538,36 +3410,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 96,
     "difficulty": "boss",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in inventory (Q96)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Compliance Officer Directive: Create an event trigger on products to monitor record mutations. Define function fn_audit_products_96() and bind trigger trg_audit_products_96 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_96(). Then select id, name, price from products ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #96 - Marcus Bell (Customer Support Lead)]: Query derived table from inventory. Project dt.id, dt.product_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 106;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_products_96() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_products_96 BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION fn_audit_products_96(); SELECT id, name, price FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.product_id::text AS derived_name, dt.score FROM (SELECT id, product_id::text, quantity_on_hand AS score FROM inventory WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 106;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query products."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-097",
@@ -3575,37 +3447,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 97,
     "difficulty": "boss",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in categories (Q97)",
     "stakeholder": {
       "name": "Alex Rivera",
       "role": "Chief Executive Officer",
       "department": "Executive"
     },
-    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"Financial Metrics Audit: When calculating performance ratios in products, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, name, and ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Alex Rivera (Chief Executive Officer)\n\n\"[Task #97 - Alex Rivera (Chief Executive Officer)]: Isolate records in categories. Select id, name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 107;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "name",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, name, ROUND((price / NULLIF(COALESCE(price, 1), 0))::numeric, 2) AS index_ratio FROM products ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS item_title, id AS metric_score FROM categories WHERE id >= (SELECT MIN(id) FROM categories) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 107;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-098",
@@ -3613,36 +3482,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 98,
     "difficulty": "boss",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q98)",
     "stakeholder": {
       "name": "Rachel Green",
-      "role": "VP of Sales & Marketing",
+      "role": "VP of Sales & Growth",
       "department": "Sales"
     },
-    "request": "From: Rachel Green (VP of Sales & Marketing)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_departments_98 joining departments and categories on t1.id = t2.department_id. Project t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Green (VP of Sales & Growth)\n\n\"[Task #98 - Rachel Green (VP of Sales & Growth)]: Filter products using an IN subquery against active ids. Return id and name AS filtered_name where id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 108;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_departments_98 AS SELECT t1.id, COALESCE(t1.name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM departments t1 JOIN categories t2 ON t1.id = t2.department_id; SELECT id, primary_name, secondary_name FROM v_exec_summary_departments_98 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS filtered_name FROM products WHERE id IN (SELECT id FROM products WHERE id >= 4) ORDER BY id ASC LIMIT 108;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-099",
@@ -3650,37 +3517,36 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 99,
     "difficulty": "boss",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q99)",
     "stakeholder": {
       "name": "Liam Vance",
       "role": "Fulfillment & Supply Director",
       "department": "Operations"
     },
-    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"Executive Memo: Segment records in products into 4 analytical quartiles based on price using NTILE(4) within a CTE named cohort_analysis. Return id, name, price, and quartile ordered by quartile ASC, price DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Liam Vance (Fulfillment & Supply Director)\n\n\"[Task #99 - Liam Vance (Fulfillment & Supply Director)]: Classify entries in orders. Select id, status AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from orders ORDER BY id ASC LIMIT 109;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "name",
-      "price",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, name, price, NTILE(4) OVER (ORDER BY price DESC) AS quartile FROM products) SELECT id, name, price, quartile FROM cohort_analysis ORDER BY quartile ASC, price DESC LIMIT 25;",
+    "reference_sql": "SELECT id, status AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM orders ORDER BY id ASC LIMIT 109;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY price DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "ecom-L3-100",
@@ -3688,36 +3554,34 @@ export const ECOM_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 100,
     "difficulty": "boss",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q100)",
     "stakeholder": {
       "name": "Marcus Bell",
       "role": "Customer Support Lead",
       "department": "Support"
     },
-    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"Financial Growth Memo: In orders, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Marcus Bell (Customer Support Lead)\n\n\"[Task #100 - Marcus Bell (Customer Support Lead)]: Combine registry names from order_items and departments. Select order_id::text::text AS entity_name, 'Primary Stream' AS source_tier from order_items WHERE order_id::text IS NOT NULL AND id <= 130 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier from departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 110;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "total_amount",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, total_amount, LAG(total_amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(total_amount) OVER (ORDER BY id ASC) AS next_amount FROM orders ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT order_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM order_items WHERE order_id::text IS NOT NULL AND id <= 130 UNION ALL SELECT name::text AS entity_name, 'Secondary Stream' AS source_tier FROM departments WHERE name IS NOT NULL ORDER BY entity_name ASC LIMIT 110;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   }
 ];

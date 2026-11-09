@@ -6,37 +6,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 1,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q1)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #1 - Victor Vance (Head of Risk & Compliance)]: Rank records in branches by vault_cash_limit. Return id, branch_name AS entity_title, vault_cash_limit AS metric_score, and ROW_NUMBER() OVER (ORDER BY vault_cash_limit DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 11;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, branch_name AS entity_title, vault_cash_limit AS metric_score, ROW_NUMBER() OVER (ORDER BY vault_cash_limit DESC) AS rank_num FROM branches WHERE id >= 1 ORDER BY rank_num ASC LIMIT 11;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -44,35 +44,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 2,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in customers (Q2)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #2 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of customers. Return id, branch_city AS partition_key, credit_score AS metric_val, and DENSE_RANK() OVER (PARTITION BY branch_city ORDER BY credit_score DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 12;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, branch_city AS partition_key, credit_score AS metric_val, DENSE_RANK() OVER (PARTITION BY branch_city ORDER BY credit_score DESC) AS dense_rnk FROM customers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 12;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -80,36 +82,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 3,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q3)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_3 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #3 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on account_types. Return id, min_balance AS current_val, and LAG(min_balance, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 13;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "min_balance",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_3 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, min_balance AS current_val, LAG(min_balance, 1) OVER (ORDER BY id ASC) AS prev_metric FROM account_types WHERE id >= 1 ORDER BY id ASC LIMIT 13;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -117,36 +120,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 4,
-    "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q4)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #4 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on accounts. Return id, balance AS current_val, and LEAD(balance, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 14;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "balance",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_4_low PARTITION OF transactions_part_4 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_4_high PARTITION OF transactions_part_4 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_4 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_4;",
+    "reference_sql": "SELECT id, balance AS current_val, LEAD(balance, 1) OVER (ORDER BY id ASC) AS next_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 14;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -154,36 +158,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 5,
-    "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on transactions (Q5)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_5() and bind trigger trg_audit_accounts_5 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_5(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #5 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in transactions. Return id, amount AS baseline_val, and SUM(amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 15;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_5() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_5 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_5(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS baseline_val, SUM(amount) OVER (ORDER BY id ASC) AS running_total FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 15;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -191,37 +195,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 6,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q6)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #6 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for merchants. Create a CTE named staged_metrics selecting id, name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 16;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, name AS staged_name, id AS score FROM merchants WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 16;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -229,36 +232,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 7,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q7)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_7 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #7 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in cards by daily_limit. Return id, card_type AS entity_title, daily_limit AS metric_score, and ROW_NUMBER() OVER (ORDER BY daily_limit DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 17;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_7 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_7 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, card_type AS entity_title, daily_limit AS metric_score, ROW_NUMBER() OVER (ORDER BY daily_limit DESC) AS rank_num FROM cards WHERE id >= 1 ORDER BY rank_num ASC LIMIT 17;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -266,37 +270,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 8,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in card_swipes (Q8)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #8 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of card_swipes. Return id, card_id AS partition_key, amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY card_id ORDER BY amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 18;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, card_id AS partition_key, amount AS metric_val, DENSE_RANK() OVER (PARTITION BY card_id ORDER BY amount DESC) AS dense_rnk FROM card_swipes WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 18;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -304,37 +308,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 9,
-    "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q9)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #9 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on loans. Return id, principal_amount AS current_val, and LAG(principal_amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 19;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "principal_amount",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, principal_amount AS current_val, LAG(principal_amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM loans WHERE id >= 1 ORDER BY id ASC LIMIT 19;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -342,37 +346,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 10,
-    "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q10)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_10 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #10 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on loan_payments. Return id, payment_amount AS current_val, and LEAD(payment_amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 20;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "payment_amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_10 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_10 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, payment_amount AS current_val, LEAD(payment_amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM loan_payments WHERE id >= 1 ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -380,34 +384,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 11,
-    "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on credit_lines (Q11)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #11 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in credit_lines. Return id, total_limit AS baseline_val, and SUM(total_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 21;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, total_limit AS baseline_val, SUM(total_limit) OVER (ORDER BY id ASC) AS running_total FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 21;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -415,36 +421,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 12,
-    "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q12)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_12(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_12(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #12 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for branches. Create a CTE named staged_metrics selecting id, branch_name AS staged_name, and vault_cash_limit AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 22;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_12(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_12(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, branch_name AS staged_name, vault_cash_limit AS score FROM branches WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 22;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -452,37 +458,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 13,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q13)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #13 - Victor Vance (Head of Risk & Compliance)]: Rank records in customers by credit_score. Return id, name AS entity_title, credit_score AS metric_score, and ROW_NUMBER() OVER (ORDER BY credit_score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 23;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS entity_title, credit_score AS metric_score, ROW_NUMBER() OVER (ORDER BY credit_score DESC) AS rank_num FROM customers WHERE id >= 1 ORDER BY rank_num ASC LIMIT 23;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -490,35 +496,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 14,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in account_types (Q14)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #14 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of account_types. Return id, type_name AS partition_key, min_balance AS metric_val, and DENSE_RANK() OVER (PARTITION BY type_name ORDER BY min_balance DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 24;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, type_name AS partition_key, min_balance AS metric_val, DENSE_RANK() OVER (PARTITION BY type_name ORDER BY min_balance DESC) AS dense_rnk FROM account_types WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 24;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -526,36 +534,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 15,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q15)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_15 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #15 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on accounts. Return id, balance AS current_val, and LAG(balance, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 25;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "balance",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_15 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, balance AS current_val, LAG(balance, 1) OVER (ORDER BY id ASC) AS prev_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -564,36 +573,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 16,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q16)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #16 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on transactions. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 26;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_16_low PARTITION OF transactions_part_16 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_16_high PARTITION OF transactions_part_16 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_16 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_16;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 26;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-017",
@@ -601,36 +611,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 17,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on merchants (Q17)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_17() and bind trigger trg_audit_accounts_17 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_17(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #17 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in merchants. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 27;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_17() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_17 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_17(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM merchants WHERE id >= 1 ORDER BY id ASC LIMIT 27;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-018",
@@ -638,37 +648,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 18,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q18)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #18 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for cards. Create a CTE named staged_metrics selecting id, card_type AS staged_name, and daily_limit AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 28;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, card_type AS staged_name, daily_limit AS score FROM cards WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 28;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-019",
@@ -676,36 +685,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 19,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q19)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_19 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #19 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in card_swipes by amount. Return id, card_id::text AS entity_title, amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 29;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_19 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_19 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, card_id::text AS entity_title, amount AS metric_score, ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num FROM card_swipes WHERE id >= 1 ORDER BY rank_num ASC LIMIT 29;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-020",
@@ -713,37 +723,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 20,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in loans (Q20)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #20 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of loans. Return id, customer_id AS partition_key, principal_amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY principal_amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 30;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, customer_id AS partition_key, principal_amount AS metric_val, DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY principal_amount DESC) AS dense_rnk FROM loans WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 30;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-021",
@@ -751,37 +761,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 21,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q21)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #21 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on loan_payments. Return id, payment_amount AS current_val, and LAG(payment_amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 31;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "payment_amount",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, payment_amount AS current_val, LAG(payment_amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM loan_payments WHERE id >= 1 ORDER BY id ASC LIMIT 31;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-022",
@@ -789,37 +799,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 22,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q22)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_22 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #22 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on credit_lines. Return id, total_limit AS current_val, and LEAD(total_limit, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 32;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "total_limit",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_22 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_22 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, total_limit AS current_val, LEAD(total_limit, 1) OVER (ORDER BY id ASC) AS next_metric FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 32;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-023",
@@ -827,34 +837,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 23,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on branches (Q23)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #23 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in branches. Return id, vault_cash_limit AS baseline_val, and SUM(vault_cash_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 33;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, vault_cash_limit AS baseline_val, SUM(vault_cash_limit) OVER (ORDER BY id ASC) AS running_total FROM branches WHERE id >= 1 ORDER BY id ASC LIMIT 33;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-024",
@@ -862,36 +874,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 24,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q24)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_24(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_24(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #24 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for customers. Create a CTE named staged_metrics selecting id, name AS staged_name, and credit_score AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 34;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_24(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_24(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, name AS staged_name, credit_score AS score FROM customers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 34;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-025",
@@ -899,37 +911,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 25,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q25)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #25 - Victor Vance (Head of Risk & Compliance)]: Rank records in account_types by min_balance. Return id, type_name AS entity_title, min_balance AS metric_score, and ROW_NUMBER() OVER (ORDER BY min_balance DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 35;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, type_name AS entity_title, min_balance AS metric_score, ROW_NUMBER() OVER (ORDER BY min_balance DESC) AS rank_num FROM account_types WHERE id >= 1 ORDER BY rank_num ASC LIMIT 35;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-026",
@@ -937,35 +949,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 26,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in accounts (Q26)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #26 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of accounts. Return id, customer_id AS partition_key, balance AS metric_val, and DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY balance DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 36;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, customer_id AS partition_key, balance AS metric_val, DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY balance DESC) AS dense_rnk FROM accounts WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 36;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-027",
@@ -973,36 +987,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 27,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q27)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_27 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #27 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on transactions. Return id, amount AS current_val, and LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 37;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "amount",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_27 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS current_val, LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 37;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-028",
@@ -1010,36 +1025,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 28,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q28)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #28 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on merchants. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 38;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_28_low PARTITION OF transactions_part_28 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_28_high PARTITION OF transactions_part_28 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_28 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_28;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM merchants WHERE id >= 1 ORDER BY id ASC LIMIT 38;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-029",
@@ -1047,36 +1063,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 29,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on cards (Q29)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_29() and bind trigger trg_audit_accounts_29 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_29(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #29 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in cards. Return id, daily_limit AS baseline_val, and SUM(daily_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 39;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_29() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_29 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_29(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, daily_limit AS baseline_val, SUM(daily_limit) OVER (ORDER BY id ASC) AS running_total FROM cards WHERE id >= 1 ORDER BY id ASC LIMIT 39;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-030",
@@ -1084,72 +1100,72 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 30,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q30)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #30 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for card_swipes. Create a CTE named staged_metrics selecting id, card_id::text AS staged_name, and amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 40;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, card_id::text AS staged_name, amount AS score FROM card_swipes WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 40;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "fin-L4-031",
     "domain": "finance",
     "level": 4,
     "order": 31,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q31)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_31 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #31 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in loans by principal_amount. Return id, loan_type AS entity_title, principal_amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY principal_amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 41;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_31 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_31 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, loan_type AS entity_title, principal_amount AS metric_score, ROW_NUMBER() OVER (ORDER BY principal_amount DESC) AS rank_num FROM loans WHERE id >= 1 ORDER BY rank_num ASC LIMIT 41;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1158,36 +1174,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 32,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in loan_payments (Q32)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #32 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of loan_payments. Return id, loan_id AS partition_key, payment_amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY loan_id ORDER BY payment_amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 42;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, loan_id AS partition_key, payment_amount AS metric_val, DENSE_RANK() OVER (PARTITION BY loan_id ORDER BY payment_amount DESC) AS dense_rnk FROM loan_payments WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 42;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1196,36 +1212,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 33,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q33)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #33 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on credit_lines. Return id, total_limit AS current_val, and LAG(total_limit, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 43;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "total_limit",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, total_limit AS current_val, LAG(total_limit, 1) OVER (ORDER BY id ASC) AS prev_metric FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 43;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1234,36 +1250,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 34,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q34)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_34 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #34 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on branches. Return id, vault_cash_limit AS current_val, and LEAD(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 44;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "vault_cash_limit",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_34 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_34 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, vault_cash_limit AS current_val, LEAD(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS next_metric FROM branches WHERE id >= 1 ORDER BY id ASC LIMIT 44;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1272,33 +1288,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 35,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on customers (Q35)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #35 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in customers. Return id, credit_score AS baseline_val, and SUM(credit_score) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 45;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, credit_score AS baseline_val, SUM(credit_score) OVER (ORDER BY id ASC) AS running_total FROM customers WHERE id >= 1 ORDER BY id ASC LIMIT 45;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1307,35 +1325,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 36,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q36)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_36(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_36(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #36 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for account_types. Create a CTE named staged_metrics selecting id, type_name AS staged_name, and min_balance AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 46;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_36(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_36(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, type_name AS staged_name, min_balance AS score FROM account_types WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 46;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1344,36 +1362,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 37,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q37)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #37 - Victor Vance (Head of Risk & Compliance)]: Rank records in accounts by balance. Return id, account_type AS entity_title, balance AS metric_score, and ROW_NUMBER() OVER (ORDER BY balance DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 47;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_type AS entity_title, balance AS metric_score, ROW_NUMBER() OVER (ORDER BY balance DESC) AS rank_num FROM accounts WHERE id >= 1 ORDER BY rank_num ASC LIMIT 47;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1382,34 +1400,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 38,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in transactions (Q38)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #38 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of transactions. Return id, account_id AS partition_key, amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 48;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, amount AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY amount DESC) AS dense_rnk FROM transactions WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 48;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1418,35 +1438,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 39,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q39)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_39 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #39 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on merchants. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 49;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_39 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM merchants WHERE id >= 1 ORDER BY id ASC LIMIT 49;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1455,35 +1476,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 40,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q40)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #40 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on cards. Return id, daily_limit AS current_val, and LEAD(daily_limit, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 50;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "daily_limit",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_40_low PARTITION OF transactions_part_40 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_40_high PARTITION OF transactions_part_40 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_40 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_40;",
+    "reference_sql": "SELECT id, daily_limit AS current_val, LEAD(daily_limit, 1) OVER (ORDER BY id ASC) AS next_metric FROM cards WHERE id >= 1 ORDER BY id ASC LIMIT 50;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1492,35 +1514,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 41,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on card_swipes (Q41)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_41() and bind trigger trg_audit_accounts_41 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_41(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #41 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in card_swipes. Return id, amount AS baseline_val, and SUM(amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 51;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_41() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_41 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_41(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS baseline_val, SUM(amount) OVER (ORDER BY id ASC) AS running_total FROM card_swipes WHERE id >= 1 ORDER BY id ASC LIMIT 51;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1529,36 +1551,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 42,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q42)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #42 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for loans. Create a CTE named staged_metrics selecting id, loan_type AS staged_name, and principal_amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 52;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, loan_type AS staged_name, principal_amount AS score FROM loans WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 52;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1567,35 +1588,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 43,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q43)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_43 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #43 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in loan_payments by payment_amount. Return id, status AS entity_title, payment_amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY payment_amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 53;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_43 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_43 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entity_title, payment_amount AS metric_score, ROW_NUMBER() OVER (ORDER BY payment_amount DESC) AS rank_num FROM loan_payments WHERE id >= 1 ORDER BY rank_num ASC LIMIT 53;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1604,36 +1626,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 44,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in credit_lines (Q44)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #44 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of credit_lines. Return id, customer_id AS partition_key, total_limit AS metric_val, and DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY total_limit DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 54;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, customer_id AS partition_key, total_limit AS metric_val, DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY total_limit DESC) AS dense_rnk FROM credit_lines WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 54;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1642,36 +1664,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 45,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q45)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #45 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on branches. Return id, vault_cash_limit AS current_val, and LAG(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 55;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "vault_cash_limit",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vault_cash_limit AS current_val, LAG(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS prev_metric FROM branches WHERE id >= 1 ORDER BY id ASC LIMIT 55;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1680,36 +1702,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 46,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q46)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_46 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #46 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on customers. Return id, credit_score AS current_val, and LEAD(credit_score, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 56;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "credit_score",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_46 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_46 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, credit_score AS current_val, LEAD(credit_score, 1) OVER (ORDER BY id ASC) AS next_metric FROM customers WHERE id >= 1 ORDER BY id ASC LIMIT 56;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1718,33 +1740,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 47,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on account_types (Q47)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #47 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in account_types. Return id, min_balance AS baseline_val, and SUM(min_balance) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 57;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, min_balance AS baseline_val, SUM(min_balance) OVER (ORDER BY id ASC) AS running_total FROM account_types WHERE id >= 1 ORDER BY id ASC LIMIT 57;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1753,35 +1777,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 48,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q48)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_48(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_48(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #48 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for accounts. Create a CTE named staged_metrics selecting id, account_type AS staged_name, and balance AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 58;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_48(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_48(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, account_type AS staged_name, balance AS score FROM accounts WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 58;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1790,36 +1814,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 49,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q49)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #49 - Victor Vance (Head of Risk & Compliance)]: Rank records in transactions by amount. Return id, description AS entity_title, amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 59;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, description AS entity_title, amount AS metric_score, ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num FROM transactions WHERE id >= 1 ORDER BY rank_num ASC LIMIT 59;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1828,34 +1852,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 50,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in merchants (Q50)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #50 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of merchants. Return id, category AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY category ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 60;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, category AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY category ORDER BY id DESC) AS dense_rnk FROM merchants WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 60;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1864,35 +1890,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q51)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_51 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #51 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on cards. Return id, daily_limit AS current_val, and LAG(daily_limit, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 61;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "daily_limit",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_51 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, daily_limit AS current_val, LAG(daily_limit, 1) OVER (ORDER BY id ASC) AS prev_metric FROM cards WHERE id >= 1 ORDER BY id ASC LIMIT 61;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1901,35 +1928,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q52)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #52 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on card_swipes. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 62;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_52_low PARTITION OF transactions_part_52 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_52_high PARTITION OF transactions_part_52 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_52 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_52;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM card_swipes WHERE id >= 1 ORDER BY id ASC LIMIT 62;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1938,35 +1966,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on loans (Q53)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_53() and bind trigger trg_audit_accounts_53 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_53(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #53 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in loans. Return id, principal_amount AS baseline_val, and SUM(principal_amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 63;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_53() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_53 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_53(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, principal_amount AS baseline_val, SUM(principal_amount) OVER (ORDER BY id ASC) AS running_total FROM loans WHERE id >= 1 ORDER BY id ASC LIMIT 63;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1975,36 +2003,35 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 54,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q54)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #54 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for loan_payments. Create a CTE named staged_metrics selecting id, status AS staged_name, and payment_amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 64;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, status AS staged_name, payment_amount AS score FROM loan_payments WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 64;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2013,35 +2040,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "finance",
     "level": 4,
     "order": 55,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q55)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_55 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #55 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in credit_lines by total_limit. Return id, status AS entity_title, total_limit AS metric_score, and ROW_NUMBER() OVER (ORDER BY total_limit DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 65;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_55 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_55 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, status AS entity_title, total_limit AS metric_score, ROW_NUMBER() OVER (ORDER BY total_limit DESC) AS rank_num FROM credit_lines WHERE id >= 1 ORDER BY rank_num ASC LIMIT 65;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2051,37 +2079,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 56,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in branches (Q56)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #56 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of branches. Return id, city AS partition_key, vault_cash_limit AS metric_val, and DENSE_RANK() OVER (PARTITION BY city ORDER BY vault_cash_limit DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 66;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, city AS partition_key, vault_cash_limit AS metric_val, DENSE_RANK() OVER (PARTITION BY city ORDER BY vault_cash_limit DESC) AS dense_rnk FROM branches WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 66;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-057",
@@ -2089,37 +2117,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 57,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q57)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #57 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on customers. Return id, credit_score AS current_val, and LAG(credit_score, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 67;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "credit_score",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, credit_score AS current_val, LAG(credit_score, 1) OVER (ORDER BY id ASC) AS prev_metric FROM customers WHERE id >= 1 ORDER BY id ASC LIMIT 67;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-058",
@@ -2127,37 +2155,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 58,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q58)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_58 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #58 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on account_types. Return id, min_balance AS current_val, and LEAD(min_balance, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 68;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "min_balance",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_58 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_58 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, min_balance AS current_val, LEAD(min_balance, 1) OVER (ORDER BY id ASC) AS next_metric FROM account_types WHERE id >= 1 ORDER BY id ASC LIMIT 68;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-059",
@@ -2165,34 +2193,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 59,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on accounts (Q59)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #59 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in accounts. Return id, balance AS baseline_val, and SUM(balance) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 69;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, balance AS baseline_val, SUM(balance) OVER (ORDER BY id ASC) AS running_total FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 69;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-060",
@@ -2200,36 +2230,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 60,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q60)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_60(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_60(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #60 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for transactions. Create a CTE named staged_metrics selecting id, description AS staged_name, and amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 70;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_60(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_60(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, description AS staged_name, amount AS score FROM transactions WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 70;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-061",
@@ -2237,37 +2267,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 61,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q61)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #61 - Victor Vance (Head of Risk & Compliance)]: Rank records in merchants by id. Return id, name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 71;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM merchants WHERE id >= 1 ORDER BY rank_num ASC LIMIT 71;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-062",
@@ -2275,35 +2305,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 62,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in cards (Q62)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #62 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of cards. Return id, account_id AS partition_key, daily_limit AS metric_val, and DENSE_RANK() OVER (PARTITION BY account_id ORDER BY daily_limit DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 72;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, account_id AS partition_key, daily_limit AS metric_val, DENSE_RANK() OVER (PARTITION BY account_id ORDER BY daily_limit DESC) AS dense_rnk FROM cards WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 72;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-063",
@@ -2311,36 +2343,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 63,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q63)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_63 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #63 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on card_swipes. Return id, amount AS current_val, and LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 73;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "amount",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_63 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS current_val, LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM card_swipes WHERE id >= 1 ORDER BY id ASC LIMIT 73;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-064",
@@ -2348,36 +2381,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 64,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q64)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #64 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on loans. Return id, principal_amount AS current_val, and LEAD(principal_amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 74;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "principal_amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_64_low PARTITION OF transactions_part_64 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_64_high PARTITION OF transactions_part_64 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_64 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_64;",
+    "reference_sql": "SELECT id, principal_amount AS current_val, LEAD(principal_amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM loans WHERE id >= 1 ORDER BY id ASC LIMIT 74;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-065",
@@ -2385,36 +2419,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 65,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on loan_payments (Q65)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_65() and bind trigger trg_audit_accounts_65 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_65(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #65 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in loan_payments. Return id, payment_amount AS baseline_val, and SUM(payment_amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 75;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_65() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_65 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_65(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, payment_amount AS baseline_val, SUM(payment_amount) OVER (ORDER BY id ASC) AS running_total FROM loan_payments WHERE id >= 1 ORDER BY id ASC LIMIT 75;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-066",
@@ -2422,37 +2456,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 66,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q66)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #66 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for credit_lines. Create a CTE named staged_metrics selecting id, status AS staged_name, and total_limit AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 76;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, status AS staged_name, total_limit AS score FROM credit_lines WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 76;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-067",
@@ -2460,36 +2493,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 67,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q67)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_67 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #67 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in branches by vault_cash_limit. Return id, branch_name AS entity_title, vault_cash_limit AS metric_score, and ROW_NUMBER() OVER (ORDER BY vault_cash_limit DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 77;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_67 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_67 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, branch_name AS entity_title, vault_cash_limit AS metric_score, ROW_NUMBER() OVER (ORDER BY vault_cash_limit DESC) AS rank_num FROM branches WHERE id >= 1 ORDER BY rank_num ASC LIMIT 77;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-068",
@@ -2497,37 +2531,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 68,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in customers (Q68)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #68 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of customers. Return id, branch_city AS partition_key, credit_score AS metric_val, and DENSE_RANK() OVER (PARTITION BY branch_city ORDER BY credit_score DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 78;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, branch_city AS partition_key, credit_score AS metric_val, DENSE_RANK() OVER (PARTITION BY branch_city ORDER BY credit_score DESC) AS dense_rnk FROM customers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 78;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-069",
@@ -2535,37 +2569,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 69,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q69)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #69 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on account_types. Return id, min_balance AS current_val, and LAG(min_balance, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 79;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "min_balance",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, min_balance AS current_val, LAG(min_balance, 1) OVER (ORDER BY id ASC) AS prev_metric FROM account_types WHERE id >= 1 ORDER BY id ASC LIMIT 79;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-070",
@@ -2573,37 +2607,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 70,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q70)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_70 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #70 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on accounts. Return id, balance AS current_val, and LEAD(balance, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 80;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "balance",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_70 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_70 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, balance AS current_val, LEAD(balance, 1) OVER (ORDER BY id ASC) AS next_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 80;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-071",
@@ -2611,34 +2645,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on transactions (Q71)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #71 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in transactions. Return id, amount AS baseline_val, and SUM(amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 81;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, amount AS baseline_val, SUM(amount) OVER (ORDER BY id ASC) AS running_total FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 81;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-072",
@@ -2646,36 +2682,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q72)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_72(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_72(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #72 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for merchants. Create a CTE named staged_metrics selecting id, name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 82;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_72(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_72(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, name AS staged_name, id AS score FROM merchants WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 82;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-073",
@@ -2683,37 +2719,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q73)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #73 - Victor Vance (Head of Risk & Compliance)]: Rank records in cards by daily_limit. Return id, card_type AS entity_title, daily_limit AS metric_score, and ROW_NUMBER() OVER (ORDER BY daily_limit DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 83;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, card_type AS entity_title, daily_limit AS metric_score, ROW_NUMBER() OVER (ORDER BY daily_limit DESC) AS rank_num FROM cards WHERE id >= 1 ORDER BY rank_num ASC LIMIT 83;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-074",
@@ -2721,35 +2757,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in card_swipes (Q74)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #74 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of card_swipes. Return id, card_id AS partition_key, amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY card_id ORDER BY amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 84;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, card_id AS partition_key, amount AS metric_val, DENSE_RANK() OVER (PARTITION BY card_id ORDER BY amount DESC) AS dense_rnk FROM card_swipes WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 84;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-075",
@@ -2757,36 +2795,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q75)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_75 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #75 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on loans. Return id, principal_amount AS current_val, and LAG(principal_amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 85;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "principal_amount",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_75 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, principal_amount AS current_val, LAG(principal_amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM loans WHERE id >= 1 ORDER BY id ASC LIMIT 85;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-076",
@@ -2794,36 +2833,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q76)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #76 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on loan_payments. Return id, payment_amount AS current_val, and LEAD(payment_amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 86;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "payment_amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_76_low PARTITION OF transactions_part_76 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_76_high PARTITION OF transactions_part_76 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_76 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_76;",
+    "reference_sql": "SELECT id, payment_amount AS current_val, LEAD(payment_amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM loan_payments WHERE id >= 1 ORDER BY id ASC LIMIT 86;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-077",
@@ -2831,36 +2871,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on credit_lines (Q77)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_77() and bind trigger trg_audit_accounts_77 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_77(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #77 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in credit_lines. Return id, total_limit AS baseline_val, and SUM(total_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 87;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_77() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_77 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_77(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, total_limit AS baseline_val, SUM(total_limit) OVER (ORDER BY id ASC) AS running_total FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 87;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-078",
@@ -2868,37 +2908,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q78)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #78 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for branches. Create a CTE named staged_metrics selecting id, branch_name AS staged_name, and vault_cash_limit AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 88;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, branch_name AS staged_name, vault_cash_limit AS score FROM branches WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 88;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-079",
@@ -2906,36 +2945,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q79)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_79 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #79 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in customers by credit_score. Return id, name AS entity_title, credit_score AS metric_score, and ROW_NUMBER() OVER (ORDER BY credit_score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 89;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_79 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_79 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, name AS entity_title, credit_score AS metric_score, ROW_NUMBER() OVER (ORDER BY credit_score DESC) AS rank_num FROM customers WHERE id >= 1 ORDER BY rank_num ASC LIMIT 89;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-080",
@@ -2943,37 +2983,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 80,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in account_types (Q80)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #80 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of account_types. Return id, type_name AS partition_key, min_balance AS metric_val, and DENSE_RANK() OVER (PARTITION BY type_name ORDER BY min_balance DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 90;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, type_name AS partition_key, min_balance AS metric_val, DENSE_RANK() OVER (PARTITION BY type_name ORDER BY min_balance DESC) AS dense_rnk FROM account_types WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 90;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-081",
@@ -2981,37 +3021,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q81)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #81 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on accounts. Return id, balance AS current_val, and LAG(balance, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 91;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "amount",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "balance",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, balance AS current_val, LAG(balance, 1) OVER (ORDER BY id ASC) AS prev_metric FROM accounts WHERE id >= 1 ORDER BY id ASC LIMIT 91;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-082",
@@ -3019,37 +3059,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q82)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_82 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #82 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on transactions. Return id, amount AS current_val, and LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 92;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_82 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_82 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS current_val, LEAD(amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 92;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-083",
@@ -3057,34 +3097,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on merchants (Q83)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #83 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in merchants. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 93;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM merchants WHERE id >= 1 ORDER BY id ASC LIMIT 93;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-084",
@@ -3092,36 +3134,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q84)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_84(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_84(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #84 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for cards. Create a CTE named staged_metrics selecting id, card_type AS staged_name, and daily_limit AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 94;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_84(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_84(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, card_type AS staged_name, daily_limit AS score FROM cards WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 94;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-085",
@@ -3129,222 +3171,225 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q85)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #85 - Victor Vance (Head of Risk & Compliance)]: Rank records in card_swipes by amount. Return id, card_id::text AS entity_title, amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 95;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, card_id::text AS entity_title, amount AS metric_score, ROW_NUMBER() OVER (ORDER BY amount DESC) AS rank_num FROM card_swipes WHERE id >= 1 ORDER BY rank_num ASC LIMIT 95;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "fin-L4-086",
     "domain": "finance",
     "level": 4,
     "order": 86,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "boss",
+    "title": "Dense Partition Ranking in loans (Q86)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #86 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of loans. Return id, customer_id AS partition_key, principal_amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY principal_amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 96;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, customer_id AS partition_key, principal_amount AS metric_val, DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY principal_amount DESC) AS dense_rnk FROM loans WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 96;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-087",
     "domain": "finance",
     "level": 4,
     "order": 87,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "boss",
+    "title": "Sequential Trend Analysis with LAG() (Q87)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_87 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #87 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on loan_payments. Return id, payment_amount AS current_val, and LAG(payment_amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 97;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "payment_amount",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_87 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, payment_amount AS current_val, LAG(payment_amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM loan_payments WHERE id >= 1 ORDER BY id ASC LIMIT 97;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-088",
     "domain": "finance",
     "level": 4,
     "order": 88,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "boss",
+    "title": "Sequential Projection Analysis with LEAD() (Q88)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #88 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on credit_lines. Return id, total_limit AS current_val, and LEAD(total_limit, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 98;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "total_limit",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_88_low PARTITION OF transactions_part_88 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_88_high PARTITION OF transactions_part_88 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_88 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_88;",
+    "reference_sql": "SELECT id, total_limit AS current_val, LEAD(total_limit, 1) OVER (ORDER BY id ASC) AS next_metric FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 98;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-089",
     "domain": "finance",
     "level": 4,
     "order": 89,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "boss",
+    "title": "Cumulative Running Total on branches (Q89)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Compliance Officer Directive: Create an event trigger on accounts to monitor record mutations. Define function fn_audit_accounts_89() and bind trigger trg_audit_accounts_89 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_89(). Then select id, account_type, balance from accounts ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #89 - Victor Vance (Head of Risk & Compliance)]: Calculate cumulative progression in branches. Return id, vault_cash_limit AS baseline_val, and SUM(vault_cash_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 99;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_accounts_89() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_accounts_89 BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION fn_audit_accounts_89(); SELECT id, account_type, balance FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vault_cash_limit AS baseline_val, SUM(vault_cash_limit) OVER (ORDER BY id ASC) AS running_total FROM branches WHERE id >= 1 ORDER BY id ASC LIMIT 99;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query accounts."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-090",
     "domain": "finance",
     "level": 4,
     "order": 90,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "boss",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q90)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Financial Metrics Audit: When calculating performance ratios in accounts, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, account_type, and ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #90 - Elena Rostova (VP of Retail Lending)]: Stage transformation logic for customers. Create a CTE named staged_metrics selecting id, name AS staged_name, and credit_score AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 100;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, account_type, ROUND((balance / NULLIF(COALESCE(balance, 1), 0))::numeric, 2) AS index_ratio FROM accounts ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, name AS staged_name, credit_score AS score FROM customers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 100;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-091",
@@ -3352,36 +3397,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 91,
     "difficulty": "boss",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q91)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_branches_91 joining branches and customers on t1.id = t2.id. Project t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, and COALESCE(t2.name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #91 - Arthur Pendleton (Chief Wealth Advisor)]: Rank records in account_types by min_balance. Return id, type_name AS entity_title, min_balance AS metric_score, and ROW_NUMBER() OVER (ORDER BY min_balance DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 101;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_branches_91 AS SELECT t1.id, COALESCE(t1.branch_name, 'Unassigned') AS primary_name, COALESCE(t2.name, 'None') AS secondary_name FROM branches t1 JOIN customers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_branches_91 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, type_name AS entity_title, min_balance AS metric_score, ROW_NUMBER() OVER (ORDER BY min_balance DESC) AS rank_num FROM account_types WHERE id >= 1 ORDER BY rank_num ASC LIMIT 101;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-092",
@@ -3389,37 +3435,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 92,
     "difficulty": "boss",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in accounts (Q92)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Executive Memo: Segment records in accounts into 4 analytical quartiles based on balance using NTILE(4) within a CTE named cohort_analysis. Return id, account_type, balance, and quartile ordered by quartile ASC, balance DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #92 - Rachel Adams (Director of Branch Operations)]: Compute dense ranking within each segment of accounts. Return id, customer_id AS partition_key, balance AS metric_val, and DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY balance DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 102;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, account_type, balance, NTILE(4) OVER (ORDER BY balance DESC) AS quartile FROM accounts) SELECT id, account_type, balance, quartile FROM cohort_analysis ORDER BY quartile ASC, balance DESC LIMIT 25;",
+    "reference_sql": "SELECT id, customer_id AS partition_key, balance AS metric_val, DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY balance DESC) AS dense_rnk FROM accounts WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 102;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY balance DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-093",
@@ -3427,37 +3473,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 93,
     "difficulty": "boss",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q93)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Financial Growth Memo: In transactions, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(amount) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #93 - Victor Vance (Head of Risk & Compliance)]: Perform period-over-period delta analysis on transactions. Return id, amount AS current_val, and LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 103;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
+      "current_val",
       "amount",
-      "prev_amount",
-      "next_amount"
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, amount, LAG(amount) OVER (ORDER BY id ASC) AS prev_amount, LEAD(amount) OVER (ORDER BY id ASC) AS next_amount FROM transactions ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, amount AS current_val, LAG(amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM transactions WHERE id >= 1 ORDER BY id ASC LIMIT 103;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-094",
@@ -3465,37 +3511,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 94,
     "difficulty": "boss",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q94)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Data Quality Ticket: Ingest and cleanse active records from accounts. Create a Temporary Staging Table named temp_accounts_cln_94 containing id, UPPER(TRIM(account_type)) AS cleaned_name, and COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount where account_type IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #94 - Elena Rostova (VP of Retail Lending)]: Perform forward-looking trend analysis on merchants. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 104;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_accounts_cln_94 AS SELECT id, UPPER(TRIM(account_type)) AS cleaned_name, COALESCE(ROUND(balance * 1.08, 2), 0.00) AS adjusted_amount FROM accounts WHERE account_type IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_accounts_cln_94 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM merchants WHERE id >= 1 ORDER BY id ASC LIMIT 104;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-095",
@@ -3503,34 +3549,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 95,
     "difficulty": "boss",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on cards (Q95)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in transactions. Run an EXPLAIN (FORMAT JSON) on a query selecting id and amount from transactions where amount > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #95 - Arthur Pendleton (Chief Wealth Advisor)]: Calculate cumulative progression in cards. Return id, daily_limit AS baseline_val, and SUM(daily_limit) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 105;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, amount FROM transactions WHERE amount > 25;",
+    "reference_sql": "SELECT id, daily_limit AS baseline_val, SUM(daily_limit) OVER (ORDER BY id ASC) AS running_total FROM cards WHERE id >= 1 ORDER BY id ASC LIMIT 105;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-096",
@@ -3538,36 +3586,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 96,
     "difficulty": "boss",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q96)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_accounts_96(p_id INT, p_val NUMERIC) that updates balance by adding p_val for the specified id. Execute with CALL sp_reconcile_accounts_96(1, 10); then select id, account_type, balance from accounts where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #96 - Rachel Adams (Director of Branch Operations)]: Stage transformation logic for card_swipes. Create a CTE named staged_metrics selecting id, card_id::text AS staged_name, and amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 106;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "account_type",
-      "balance"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_accounts_96(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE accounts SET balance = balance + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_accounts_96(1, 10); SELECT id, account_type, balance FROM accounts WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, card_id::text AS staged_name, amount AS score FROM card_swipes WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 106;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-097",
@@ -3575,37 +3623,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 97,
     "difficulty": "boss",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q97)",
     "stakeholder": {
       "name": "Victor Vance",
       "role": "Head of Risk & Compliance",
       "department": "Risk & AML"
     },
-    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"Data Quality Alert: Standardize legacy text fields in branches. Select id, UPPER(TRIM(branch_name)) AS standardized_title, and COALESCE(id, 0) AS safe_code from branches where branch_name IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Victor Vance (Head of Risk & Compliance)\n\n\"[Task #97 - Victor Vance (Head of Risk & Compliance)]: Rank records in loans by principal_amount. Return id, loan_type AS entity_title, principal_amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY principal_amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 107;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(branch_name)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM branches WHERE branch_name IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, loan_type AS entity_title, principal_amount AS metric_score, ROW_NUMBER() OVER (ORDER BY principal_amount DESC) AS rank_num FROM loans WHERE id >= 1 ORDER BY rank_num ASC LIMIT 107;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(branch_name)) and filter with WHERE branch_name IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-098",
@@ -3613,35 +3661,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 98,
     "difficulty": "boss",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in loan_payments (Q98)",
     "stakeholder": {
       "name": "Elena Rostova",
       "role": "VP of Retail Lending",
       "department": "Lending"
     },
-    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"Audit Discrepancy: Identify all branches entries that have active corresponding associations in customers. Using a Correlated Subquery with EXISTS, return t1.id and t1.branch_name ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Elena Rostova (VP of Retail Lending)\n\n\"[Task #98 - Elena Rostova (VP of Retail Lending)]: Compute dense ranking within each segment of loan_payments. Return id, loan_id AS partition_key, payment_amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY loan_id ORDER BY payment_amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 108;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "branch_name"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.branch_name FROM branches t1 WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, loan_id AS partition_key, payment_amount AS metric_val, DENSE_RANK() OVER (PARTITION BY loan_id ORDER BY payment_amount DESC) AS dense_rnk FROM loan_payments WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 108;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM customers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-099",
@@ -3649,36 +3699,37 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 99,
     "difficulty": "boss",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q99)",
     "stakeholder": {
       "name": "Arthur Pendleton",
       "role": "Chief Wealth Advisor",
       "department": "Wealth Management"
     },
-    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"ALERT: The dashboard query on transactions is causing severe CPU spikes. Create a composite index named idx_transactions_opt_99 ON transactions(id, amount DESC). Then retrieve id, transaction_type, amount where amount > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Arthur Pendleton (Chief Wealth Advisor)\n\n\"[Task #99 - Arthur Pendleton (Chief Wealth Advisor)]: Perform period-over-period delta analysis on credit_lines. Return id, total_limit AS current_val, and LAG(total_limit, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 109;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "transaction_type",
-      "amount"
+      "current_val",
+      "total_limit",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_transactions_opt_99 ON transactions(id, amount DESC); SELECT id, transaction_type, amount FROM transactions WHERE amount > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, total_limit AS current_val, LAG(total_limit, 1) OVER (ORDER BY id ASC) AS prev_metric FROM credit_lines WHERE id >= 1 ORDER BY id ASC LIMIT 109;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "fin-L4-100",
@@ -3686,35 +3737,36 @@ export const FIN_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 100,
     "difficulty": "boss",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q100)",
     "stakeholder": {
-      "name": "Claire Dupont",
-      "role": "Treasury & Clearing Director",
-      "department": "Treasury"
+      "name": "Rachel Adams",
+      "role": "Director of Branch Operations",
+      "department": "Branch Operations"
     },
-    "request": "From: Claire Dupont (Treasury & Clearing Director)\n\n\"Infrastructure Directive: Ledger transactions is reaching multi-gigabyte scale. Create a partitioned table named transactions_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Rachel Adams (Director of Branch Operations)\n\n\"[Task #100 - Rachel Adams (Director of Branch Operations)]: Perform forward-looking trend analysis on branches. Return id, vault_cash_limit AS current_val, and LEAD(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 110;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "vault_cash_limit",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE transactions_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE transactions_part_100_low PARTITION OF transactions_part_100 FOR VALUES FROM (0) TO (100); CREATE TABLE transactions_part_100_high PARTITION OF transactions_part_100 FOR VALUES FROM (100) TO (100000); INSERT INTO transactions_part_100 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM transactions_part_100;",
+    "reference_sql": "SELECT id, vault_cash_limit AS current_val, LEAD(vault_cash_limit, 1) OVER (ORDER BY id ASC) AS next_metric FROM branches WHERE id >= 1 ORDER BY id ASC LIMIT 110;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   }
 ];

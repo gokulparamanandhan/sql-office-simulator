@@ -6,37 +6,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 1,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q1)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #1 - Dave Miller (VP of Global Fleet Operations)]: Rank records in warehouses by capacity_sqft. Return id, city AS entity_title, capacity_sqft AS metric_score, and ROW_NUMBER() OVER (ORDER BY capacity_sqft DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 11;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, city AS entity_title, capacity_sqft AS metric_score, ROW_NUMBER() OVER (ORDER BY capacity_sqft DESC) AS rank_num FROM warehouses WHERE id >= 1 ORDER BY rank_num ASC LIMIT 11;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -44,35 +44,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 2,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in carriers (Q2)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #2 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of carriers. Return id, service_level AS partition_key, rating AS metric_val, and DENSE_RANK() OVER (PARTITION BY service_level ORDER BY rating DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 12;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_level AS partition_key, rating AS metric_val, DENSE_RANK() OVER (PARTITION BY service_level ORDER BY rating DESC) AS dense_rnk FROM carriers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 12;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -80,36 +82,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 3,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q3)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_3 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #3 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on fleet_vehicles. Return id, max_weight_capacity_kg AS current_val, and LAG(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 13;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "max_weight_capacity_kg",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_3 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, max_weight_capacity_kg AS current_val, LAG(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS prev_metric FROM fleet_vehicles WHERE id >= 1 ORDER BY id ASC LIMIT 13;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -117,36 +120,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 4,
-    "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q4)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #4 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on drivers. Return id, safety_score AS current_val, and LEAD(safety_score, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 14;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "safety_score",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_4 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_4_low PARTITION OF shipments_part_4 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_4_high PARTITION OF shipments_part_4 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_4 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_4;",
+    "reference_sql": "SELECT id, safety_score AS current_val, LEAD(safety_score, 1) OVER (ORDER BY id ASC) AS next_metric FROM drivers WHERE id >= 1 ORDER BY id ASC LIMIT 14;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -154,36 +158,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 5,
-    "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on suppliers (Q5)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_5() and bind trigger trg_audit_fleet_vehicles_5 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_5(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #5 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in suppliers. Return id, lead_time_days AS baseline_val, and SUM(lead_time_days) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 15;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_5() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_5 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_5(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, lead_time_days AS baseline_val, SUM(lead_time_days) OVER (ORDER BY id ASC) AS running_total FROM suppliers WHERE id >= 1 ORDER BY id ASC LIMIT 15;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -191,37 +195,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 6,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q6)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #6 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for parts_inventory. Create a CTE named staged_metrics selecting id, part_number AS staged_name, and quantity_in_stock AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 16;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, part_number AS staged_name, quantity_in_stock AS score FROM parts_inventory WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 16;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -229,36 +232,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 7,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q7)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_7 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #7 - Frank Miller (Terminal Dispatch Manager)]: Rank records in shipments by weight_kg. Return id, destination_city AS entity_title, weight_kg AS metric_score, and ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 17;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_7 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_7 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS entity_title, weight_kg AS metric_score, ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num FROM shipments WHERE id >= 1 ORDER BY rank_num ASC LIMIT 17;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -266,37 +270,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 8,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in cargo_packages (Q8)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #8 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of cargo_packages. Return id, shipment_id AS partition_key, weight_kg AS metric_val, and DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY weight_kg DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 18;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, shipment_id AS partition_key, weight_kg AS metric_val, DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY weight_kg DESC) AS dense_rnk FROM cargo_packages WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 18;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -304,37 +308,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 9,
-    "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q9)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #9 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on freight_routes. Return id, distance_km AS current_val, and LAG(distance_km, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 19;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "distance_km",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, distance_km AS current_val, LAG(distance_km, 1) OVER (ORDER BY id ASC) AS prev_metric FROM freight_routes WHERE id >= 1 ORDER BY id ASC LIMIT 19;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -342,37 +346,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 10,
-    "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "warm-up",
+    "title": "Sequential Projection Analysis with LEAD() (Q10)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_10 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #10 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on delivery_checkpoints. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 20;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_10 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_10 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM delivery_checkpoints WHERE id >= 1 ORDER BY id ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -380,34 +384,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 11,
-    "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "warm-up",
+    "title": "Cumulative Running Total on fuel_logs (Q11)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #11 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in fuel_logs. Return id, gallons AS baseline_val, and SUM(gallons) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 21;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, gallons AS baseline_val, SUM(gallons) OVER (ORDER BY id ASC) AS running_total FROM fuel_logs WHERE id >= 1 ORDER BY id ASC LIMIT 21;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -415,36 +421,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 12,
-    "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "warm-up",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q12)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_12(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_12(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #12 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for maintenance_records. Create a CTE named staged_metrics selecting id, service_type AS staged_name, and cost AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 22;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_12(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_12(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, service_type AS staged_name, cost AS score FROM maintenance_records WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 22;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -452,37 +458,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 13,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "warm-up",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q13)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #13 - Dave Miller (VP of Global Fleet Operations)]: Rank records in customs_declarations by duty_amount. Return id, port_of_entry AS entity_title, duty_amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY duty_amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 23;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS entity_title, duty_amount AS metric_score, ROW_NUMBER() OVER (ORDER BY duty_amount DESC) AS rank_num FROM customs_declarations WHERE id >= 1 ORDER BY rank_num ASC LIMIT 23;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -490,35 +496,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 14,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "warm-up",
+    "title": "Dense Partition Ranking in warehouses (Q14)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #14 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of warehouses. Return id, manager_name AS partition_key, capacity_sqft AS metric_val, and DENSE_RANK() OVER (PARTITION BY manager_name ORDER BY capacity_sqft DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 24;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, manager_name AS partition_key, capacity_sqft AS metric_val, DENSE_RANK() OVER (PARTITION BY manager_name ORDER BY capacity_sqft DESC) AS dense_rnk FROM warehouses WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 24;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -526,36 +534,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 15,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Sequential Trend Analysis with LAG() (Q15)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_15 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #15 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on carriers. Return id, rating AS current_val, and LAG(rating, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 25;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "rating",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_15 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, rating AS current_val, LAG(rating, 1) OVER (ORDER BY id ASC) AS prev_metric FROM carriers WHERE id >= 1 ORDER BY id ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 30,
     "estimated_minutes": 8
   },
   {
@@ -564,36 +573,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 16,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q16)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #16 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on fleet_vehicles. Return id, max_weight_capacity_kg AS current_val, and LEAD(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 26;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "max_weight_capacity_kg",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_16 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_16_low PARTITION OF shipments_part_16 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_16_high PARTITION OF shipments_part_16 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_16 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_16;",
+    "reference_sql": "SELECT id, max_weight_capacity_kg AS current_val, LEAD(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS next_metric FROM fleet_vehicles WHERE id >= 1 ORDER BY id ASC LIMIT 26;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-017",
@@ -601,36 +611,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 17,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on drivers (Q17)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_17() and bind trigger trg_audit_fleet_vehicles_17 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_17(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #17 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in drivers. Return id, safety_score AS baseline_val, and SUM(safety_score) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 27;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_17() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_17 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_17(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, safety_score AS baseline_val, SUM(safety_score) OVER (ORDER BY id ASC) AS running_total FROM drivers WHERE id >= 1 ORDER BY id ASC LIMIT 27;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-018",
@@ -638,37 +648,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 18,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q18)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #18 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for suppliers. Create a CTE named staged_metrics selecting id, supplier_name AS staged_name, and lead_time_days AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 28;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, supplier_name AS staged_name, lead_time_days AS score FROM suppliers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 28;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-019",
@@ -676,36 +685,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 19,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q19)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_19 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #19 - Frank Miller (Terminal Dispatch Manager)]: Rank records in parts_inventory by quantity_in_stock. Return id, part_number AS entity_title, quantity_in_stock AS metric_score, and ROW_NUMBER() OVER (ORDER BY quantity_in_stock DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 29;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_19 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_19 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, part_number AS entity_title, quantity_in_stock AS metric_score, ROW_NUMBER() OVER (ORDER BY quantity_in_stock DESC) AS rank_num FROM parts_inventory WHERE id >= 1 ORDER BY rank_num ASC LIMIT 29;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-020",
@@ -713,37 +723,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 20,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in shipments (Q20)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #20 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of shipments. Return id, carrier_id AS partition_key, weight_kg AS metric_val, and DENSE_RANK() OVER (PARTITION BY carrier_id ORDER BY weight_kg DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 30;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, carrier_id AS partition_key, weight_kg AS metric_val, DENSE_RANK() OVER (PARTITION BY carrier_id ORDER BY weight_kg DESC) AS dense_rnk FROM shipments WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 30;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-021",
@@ -751,37 +761,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 21,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q21)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #21 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on cargo_packages. Return id, weight_kg AS current_val, and LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 31;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
+      "current_val",
       "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, weight_kg AS current_val, LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric FROM cargo_packages WHERE id >= 1 ORDER BY id ASC LIMIT 31;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-022",
@@ -789,37 +799,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 22,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q22)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_22 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #22 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on freight_routes. Return id, distance_km AS current_val, and LEAD(distance_km, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 32;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "distance_km",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_22 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_22 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, distance_km AS current_val, LEAD(distance_km, 1) OVER (ORDER BY id ASC) AS next_metric FROM freight_routes WHERE id >= 1 ORDER BY id ASC LIMIT 32;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-023",
@@ -827,34 +837,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 23,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on delivery_checkpoints (Q23)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #23 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in delivery_checkpoints. Return id, id AS baseline_val, and SUM(id) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 33;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, id AS baseline_val, SUM(id) OVER (ORDER BY id ASC) AS running_total FROM delivery_checkpoints WHERE id >= 1 ORDER BY id ASC LIMIT 33;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-024",
@@ -862,36 +874,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 24,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q24)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_24(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_24(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #24 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for fuel_logs. Create a CTE named staged_metrics selecting id, vehicle_id::text AS staged_name, and gallons AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 34;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_24(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_24(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, vehicle_id::text AS staged_name, gallons AS score FROM fuel_logs WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 34;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-025",
@@ -899,37 +911,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 25,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q25)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #25 - Dave Miller (VP of Global Fleet Operations)]: Rank records in maintenance_records by cost. Return id, service_type AS entity_title, cost AS metric_score, and ROW_NUMBER() OVER (ORDER BY cost DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 35;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS entity_title, cost AS metric_score, ROW_NUMBER() OVER (ORDER BY cost DESC) AS rank_num FROM maintenance_records WHERE id >= 1 ORDER BY rank_num ASC LIMIT 35;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-026",
@@ -937,35 +949,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 26,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in customs_declarations (Q26)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #26 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of customs_declarations. Return id, shipment_id AS partition_key, duty_amount AS metric_val, and DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY duty_amount DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 36;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id AS partition_key, duty_amount AS metric_val, DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY duty_amount DESC) AS dense_rnk FROM customs_declarations WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 36;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-027",
@@ -973,36 +987,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 27,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q27)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_27 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #27 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on warehouses. Return id, capacity_sqft AS current_val, and LAG(capacity_sqft, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 37;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "capacity_sqft",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_27 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, capacity_sqft AS current_val, LAG(capacity_sqft, 1) OVER (ORDER BY id ASC) AS prev_metric FROM warehouses WHERE id >= 1 ORDER BY id ASC LIMIT 37;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-028",
@@ -1010,36 +1025,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 28,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q28)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #28 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on carriers. Return id, rating AS current_val, and LEAD(rating, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 38;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "rating",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_28 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_28_low PARTITION OF shipments_part_28 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_28_high PARTITION OF shipments_part_28 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_28 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_28;",
+    "reference_sql": "SELECT id, rating AS current_val, LEAD(rating, 1) OVER (ORDER BY id ASC) AS next_metric FROM carriers WHERE id >= 1 ORDER BY id ASC LIMIT 38;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-029",
@@ -1047,36 +1063,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 29,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on fleet_vehicles (Q29)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_29() and bind trigger trg_audit_fleet_vehicles_29 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_29(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #29 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in fleet_vehicles. Return id, max_weight_capacity_kg AS baseline_val, and SUM(max_weight_capacity_kg) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 39;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_29() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_29 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_29(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, max_weight_capacity_kg AS baseline_val, SUM(max_weight_capacity_kg) OVER (ORDER BY id ASC) AS running_total FROM fleet_vehicles WHERE id >= 1 ORDER BY id ASC LIMIT 39;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-030",
@@ -1084,72 +1100,72 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 30,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q30)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #30 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for drivers. Create a CTE named staged_metrics selecting id, full_name AS staged_name, and safety_score AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 40;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, full_name AS staged_name, safety_score AS score FROM drivers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 40;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 45,
+    "estimated_minutes": 12
   },
   {
     "id": "log-L4-031",
     "domain": "logistics",
     "level": 4,
     "order": 31,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q31)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_31 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #31 - Frank Miller (Terminal Dispatch Manager)]: Rank records in suppliers by lead_time_days. Return id, supplier_name AS entity_title, lead_time_days AS metric_score, and ROW_NUMBER() OVER (ORDER BY lead_time_days DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 41;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_31 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_31 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, supplier_name AS entity_title, lead_time_days AS metric_score, ROW_NUMBER() OVER (ORDER BY lead_time_days DESC) AS rank_num FROM suppliers WHERE id >= 1 ORDER BY rank_num ASC LIMIT 41;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1158,36 +1174,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 32,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in parts_inventory (Q32)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #32 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of parts_inventory. Return id, warehouse_id AS partition_key, quantity_in_stock AS metric_val, and DENSE_RANK() OVER (PARTITION BY warehouse_id ORDER BY quantity_in_stock DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 42;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, warehouse_id AS partition_key, quantity_in_stock AS metric_val, DENSE_RANK() OVER (PARTITION BY warehouse_id ORDER BY quantity_in_stock DESC) AS dense_rnk FROM parts_inventory WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 42;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1196,36 +1212,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 33,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q33)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #33 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on shipments. Return id, weight_kg AS current_val, and LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 43;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
+      "current_val",
       "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, weight_kg AS current_val, LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric FROM shipments WHERE id >= 1 ORDER BY id ASC LIMIT 43;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1234,36 +1250,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 34,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q34)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_34 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #34 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on cargo_packages. Return id, weight_kg AS current_val, and LEAD(weight_kg, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 44;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "weight_kg",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_34 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_34 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, weight_kg AS current_val, LEAD(weight_kg, 1) OVER (ORDER BY id ASC) AS next_metric FROM cargo_packages WHERE id >= 1 ORDER BY id ASC LIMIT 44;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1272,33 +1288,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 35,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on freight_routes (Q35)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #35 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in freight_routes. Return id, distance_km AS baseline_val, and SUM(distance_km) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 45;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, distance_km AS baseline_val, SUM(distance_km) OVER (ORDER BY id ASC) AS running_total FROM freight_routes WHERE id >= 1 ORDER BY id ASC LIMIT 45;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1307,35 +1325,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 36,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q36)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_36(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_36(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #36 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for delivery_checkpoints. Create a CTE named staged_metrics selecting id, location_name AS staged_name, and id AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 46;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_36(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_36(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, location_name AS staged_name, id AS score FROM delivery_checkpoints WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 46;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1344,36 +1362,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 37,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q37)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #37 - Dave Miller (VP of Global Fleet Operations)]: Rank records in fuel_logs by gallons. Return id, vehicle_id::text AS entity_title, gallons AS metric_score, and ROW_NUMBER() OVER (ORDER BY gallons DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 47;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id::text AS entity_title, gallons AS metric_score, ROW_NUMBER() OVER (ORDER BY gallons DESC) AS rank_num FROM fuel_logs WHERE id >= 1 ORDER BY rank_num ASC LIMIT 47;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1382,34 +1400,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 38,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in maintenance_records (Q38)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #38 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of maintenance_records. Return id, vehicle_id AS partition_key, cost AS metric_val, and DENSE_RANK() OVER (PARTITION BY vehicle_id ORDER BY cost DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 48;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id AS partition_key, cost AS metric_val, DENSE_RANK() OVER (PARTITION BY vehicle_id ORDER BY cost DESC) AS dense_rnk FROM maintenance_records WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 48;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1418,35 +1438,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 39,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q39)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_39 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #39 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on customs_declarations. Return id, duty_amount AS current_val, and LAG(duty_amount, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 49;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "duty_amount",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_39 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, duty_amount AS current_val, LAG(duty_amount, 1) OVER (ORDER BY id ASC) AS prev_metric FROM customs_declarations WHERE id >= 1 ORDER BY id ASC LIMIT 49;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1455,35 +1476,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 40,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q40)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #40 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on warehouses. Return id, capacity_sqft AS current_val, and LEAD(capacity_sqft, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 50;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "capacity_sqft",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_40 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_40_low PARTITION OF shipments_part_40 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_40_high PARTITION OF shipments_part_40 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_40 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_40;",
+    "reference_sql": "SELECT id, capacity_sqft AS current_val, LEAD(capacity_sqft, 1) OVER (ORDER BY id ASC) AS next_metric FROM warehouses WHERE id >= 1 ORDER BY id ASC LIMIT 50;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1492,35 +1514,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 41,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on carriers (Q41)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_41() and bind trigger trg_audit_fleet_vehicles_41 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_41(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #41 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in carriers. Return id, rating AS baseline_val, and SUM(rating) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 51;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_41() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_41 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_41(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, rating AS baseline_val, SUM(rating) OVER (ORDER BY id ASC) AS running_total FROM carriers WHERE id >= 1 ORDER BY id ASC LIMIT 51;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1529,36 +1551,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 42,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q42)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #42 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for fleet_vehicles. Create a CTE named staged_metrics selecting id, vehicle_number AS staged_name, and max_weight_capacity_kg AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 52;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, vehicle_number AS staged_name, max_weight_capacity_kg AS score FROM fleet_vehicles WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 52;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1567,35 +1588,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 43,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q43)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_43 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #43 - Frank Miller (Terminal Dispatch Manager)]: Rank records in drivers by safety_score. Return id, full_name AS entity_title, safety_score AS metric_score, and ROW_NUMBER() OVER (ORDER BY safety_score DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 53;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_43 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_43 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, full_name AS entity_title, safety_score AS metric_score, ROW_NUMBER() OVER (ORDER BY safety_score DESC) AS rank_num FROM drivers WHERE id >= 1 ORDER BY rank_num ASC LIMIT 53;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1604,36 +1626,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 44,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in suppliers (Q44)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #44 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of suppliers. Return id, country AS partition_key, lead_time_days AS metric_val, and DENSE_RANK() OVER (PARTITION BY country ORDER BY lead_time_days DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 54;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, country AS partition_key, lead_time_days AS metric_val, DENSE_RANK() OVER (PARTITION BY country ORDER BY lead_time_days DESC) AS dense_rnk FROM suppliers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 54;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1642,36 +1664,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 45,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q45)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #45 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on parts_inventory. Return id, quantity_in_stock AS current_val, and LAG(quantity_in_stock, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 55;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "quantity_in_stock",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, quantity_in_stock AS current_val, LAG(quantity_in_stock, 1) OVER (ORDER BY id ASC) AS prev_metric FROM parts_inventory WHERE id >= 1 ORDER BY id ASC LIMIT 55;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1680,36 +1702,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 46,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q46)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_46 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #46 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on shipments. Return id, weight_kg AS current_val, and LEAD(weight_kg, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 56;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "weight_kg",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_46 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_46 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, weight_kg AS current_val, LEAD(weight_kg, 1) OVER (ORDER BY id ASC) AS next_metric FROM shipments WHERE id >= 1 ORDER BY id ASC LIMIT 56;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1718,33 +1740,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 47,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on cargo_packages (Q47)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #47 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in cargo_packages. Return id, weight_kg AS baseline_val, and SUM(weight_kg) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 57;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, weight_kg AS baseline_val, SUM(weight_kg) OVER (ORDER BY id ASC) AS running_total FROM cargo_packages WHERE id >= 1 ORDER BY id ASC LIMIT 57;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1753,35 +1777,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 48,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q48)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_48(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_48(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #48 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for freight_routes. Create a CTE named staged_metrics selecting id, route_name AS staged_name, and distance_km AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 58;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_48(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_48(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, route_name AS staged_name, distance_km AS score FROM freight_routes WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 58;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1790,36 +1814,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 49,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q49)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #49 - Dave Miller (VP of Global Fleet Operations)]: Rank records in delivery_checkpoints by id. Return id, location_name AS entity_title, id AS metric_score, and ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 59;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, location_name AS entity_title, id AS metric_score, ROW_NUMBER() OVER (ORDER BY id DESC) AS rank_num FROM delivery_checkpoints WHERE id >= 1 ORDER BY rank_num ASC LIMIT 59;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1828,34 +1852,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 50,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "core",
+    "title": "Dense Partition Ranking in fuel_logs (Q50)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #50 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of fuel_logs. Return id, vehicle_id AS partition_key, gallons AS metric_val, and DENSE_RANK() OVER (PARTITION BY vehicle_id ORDER BY gallons DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 60;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id AS partition_key, gallons AS metric_val, DENSE_RANK() OVER (PARTITION BY vehicle_id ORDER BY gallons DESC) AS dense_rnk FROM fuel_logs WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 60;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1864,35 +1890,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Sequential Trend Analysis with LAG() (Q51)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_51 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #51 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on maintenance_records. Return id, cost AS current_val, and LAG(cost, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 61;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "cost",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_51 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, cost AS current_val, LAG(cost, 1) OVER (ORDER BY id ASC) AS prev_metric FROM maintenance_records WHERE id >= 1 ORDER BY id ASC LIMIT 61;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1901,35 +1928,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "core",
+    "title": "Sequential Projection Analysis with LEAD() (Q52)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #52 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on customs_declarations. Return id, duty_amount AS current_val, and LEAD(duty_amount, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 62;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "duty_amount",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_52 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_52_low PARTITION OF shipments_part_52 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_52_high PARTITION OF shipments_part_52 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_52 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_52;",
+    "reference_sql": "SELECT id, duty_amount AS current_val, LEAD(duty_amount, 1) OVER (ORDER BY id ASC) AS next_metric FROM customs_declarations WHERE id >= 1 ORDER BY id ASC LIMIT 62;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1938,35 +1966,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Cumulative Running Total on warehouses (Q53)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_53() and bind trigger trg_audit_fleet_vehicles_53 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_53(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #53 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in warehouses. Return id, capacity_sqft AS baseline_val, and SUM(capacity_sqft) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 63;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_53() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_53 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_53(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, capacity_sqft AS baseline_val, SUM(capacity_sqft) OVER (ORDER BY id ASC) AS running_total FROM warehouses WHERE id >= 1 ORDER BY id ASC LIMIT 63;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -1975,36 +2003,35 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 54,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "core",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q54)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #54 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for carriers. Create a CTE named staged_metrics selecting id, carrier_name AS staged_name, and rating AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 64;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, carrier_name AS staged_name, rating AS score FROM carriers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 64;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2013,35 +2040,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 4,
     "order": 55,
-    "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "core",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q55)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_55 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #55 - Frank Miller (Terminal Dispatch Manager)]: Rank records in fleet_vehicles by max_weight_capacity_kg. Return id, vehicle_number AS entity_title, max_weight_capacity_kg AS metric_score, and ROW_NUMBER() OVER (ORDER BY max_weight_capacity_kg DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 65;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_55 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_55 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_number AS entity_title, max_weight_capacity_kg AS metric_score, ROW_NUMBER() OVER (ORDER BY max_weight_capacity_kg DESC) AS rank_num FROM fleet_vehicles WHERE id >= 1 ORDER BY rank_num ASC LIMIT 65;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
     "xp": 45,
     "estimated_minutes": 12
   },
@@ -2051,37 +2079,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 56,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in drivers (Q56)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #56 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of drivers. Return id, license_number AS partition_key, safety_score AS metric_val, and DENSE_RANK() OVER (PARTITION BY license_number ORDER BY safety_score DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 66;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, license_number AS partition_key, safety_score AS metric_val, DENSE_RANK() OVER (PARTITION BY license_number ORDER BY safety_score DESC) AS dense_rnk FROM drivers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 66;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-057",
@@ -2089,37 +2117,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 57,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q57)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #57 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on suppliers. Return id, lead_time_days AS current_val, and LAG(lead_time_days, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 67;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "lead_time_days",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, lead_time_days AS current_val, LAG(lead_time_days, 1) OVER (ORDER BY id ASC) AS prev_metric FROM suppliers WHERE id >= 1 ORDER BY id ASC LIMIT 67;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-058",
@@ -2127,37 +2155,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 58,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q58)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_58 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #58 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on parts_inventory. Return id, quantity_in_stock AS current_val, and LEAD(quantity_in_stock, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 68;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "quantity_in_stock",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_58 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_58 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, quantity_in_stock AS current_val, LEAD(quantity_in_stock, 1) OVER (ORDER BY id ASC) AS next_metric FROM parts_inventory WHERE id >= 1 ORDER BY id ASC LIMIT 68;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-059",
@@ -2165,34 +2193,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 59,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on shipments (Q59)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #59 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in shipments. Return id, weight_kg AS baseline_val, and SUM(weight_kg) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 69;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, weight_kg AS baseline_val, SUM(weight_kg) OVER (ORDER BY id ASC) AS running_total FROM shipments WHERE id >= 1 ORDER BY id ASC LIMIT 69;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-060",
@@ -2200,36 +2230,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 60,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q60)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_60(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_60(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #60 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for cargo_packages. Create a CTE named staged_metrics selecting id, shipment_id::text AS staged_name, and weight_kg AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 70;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_60(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_60(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, shipment_id::text AS staged_name, weight_kg AS score FROM cargo_packages WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 70;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-061",
@@ -2237,37 +2267,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 61,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q61)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #61 - Dave Miller (VP of Global Fleet Operations)]: Rank records in freight_routes by distance_km. Return id, route_name AS entity_title, distance_km AS metric_score, and ROW_NUMBER() OVER (ORDER BY distance_km DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 71;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, route_name AS entity_title, distance_km AS metric_score, ROW_NUMBER() OVER (ORDER BY distance_km DESC) AS rank_num FROM freight_routes WHERE id >= 1 ORDER BY rank_num ASC LIMIT 71;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-062",
@@ -2275,35 +2305,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 62,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in delivery_checkpoints (Q62)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #62 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of delivery_checkpoints. Return id, shipment_id AS partition_key, id AS metric_val, and DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY id DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 72;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id AS partition_key, id AS metric_val, DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY id DESC) AS dense_rnk FROM delivery_checkpoints WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 72;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-063",
@@ -2311,36 +2343,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 63,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q63)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_63 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #63 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on fuel_logs. Return id, gallons AS current_val, and LAG(gallons, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 73;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "gallons",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_63 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, gallons AS current_val, LAG(gallons, 1) OVER (ORDER BY id ASC) AS prev_metric FROM fuel_logs WHERE id >= 1 ORDER BY id ASC LIMIT 73;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-064",
@@ -2348,36 +2381,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 64,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q64)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #64 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on maintenance_records. Return id, cost AS current_val, and LEAD(cost, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 74;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "cost",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_64 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_64_low PARTITION OF shipments_part_64 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_64_high PARTITION OF shipments_part_64 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_64 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_64;",
+    "reference_sql": "SELECT id, cost AS current_val, LEAD(cost, 1) OVER (ORDER BY id ASC) AS next_metric FROM maintenance_records WHERE id >= 1 ORDER BY id ASC LIMIT 74;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-065",
@@ -2385,36 +2419,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 65,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on customs_declarations (Q65)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_65() and bind trigger trg_audit_fleet_vehicles_65 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_65(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #65 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in customs_declarations. Return id, duty_amount AS baseline_val, and SUM(duty_amount) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 75;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_65() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_65 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_65(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, duty_amount AS baseline_val, SUM(duty_amount) OVER (ORDER BY id ASC) AS running_total FROM customs_declarations WHERE id >= 1 ORDER BY id ASC LIMIT 75;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-066",
@@ -2422,37 +2456,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 66,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q66)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #66 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for warehouses. Create a CTE named staged_metrics selecting id, city AS staged_name, and capacity_sqft AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 76;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, city AS staged_name, capacity_sqft AS score FROM warehouses WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 76;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-067",
@@ -2460,36 +2493,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 67,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q67)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_67 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #67 - Frank Miller (Terminal Dispatch Manager)]: Rank records in carriers by rating. Return id, carrier_name AS entity_title, rating AS metric_score, and ROW_NUMBER() OVER (ORDER BY rating DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 77;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_67 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_67 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, carrier_name AS entity_title, rating AS metric_score, ROW_NUMBER() OVER (ORDER BY rating DESC) AS rank_num FROM carriers WHERE id >= 1 ORDER BY rank_num ASC LIMIT 77;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-068",
@@ -2497,37 +2531,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 68,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in fleet_vehicles (Q68)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #68 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of fleet_vehicles. Return id, vehicle_type AS partition_key, max_weight_capacity_kg AS metric_val, and DENSE_RANK() OVER (PARTITION BY vehicle_type ORDER BY max_weight_capacity_kg DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 78;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, vehicle_type AS partition_key, max_weight_capacity_kg AS metric_val, DENSE_RANK() OVER (PARTITION BY vehicle_type ORDER BY max_weight_capacity_kg DESC) AS dense_rnk FROM fleet_vehicles WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 78;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-069",
@@ -2535,37 +2569,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 69,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q69)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #69 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on drivers. Return id, safety_score AS current_val, and LAG(safety_score, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 79;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "safety_score",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, safety_score AS current_val, LAG(safety_score, 1) OVER (ORDER BY id ASC) AS prev_metric FROM drivers WHERE id >= 1 ORDER BY id ASC LIMIT 79;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-070",
@@ -2573,37 +2607,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 70,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q70)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_70 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #70 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on suppliers. Return id, lead_time_days AS current_val, and LEAD(lead_time_days, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 80;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "lead_time_days",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_70 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_70 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, lead_time_days AS current_val, LEAD(lead_time_days, 1) OVER (ORDER BY id ASC) AS next_metric FROM suppliers WHERE id >= 1 ORDER BY id ASC LIMIT 80;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-071",
@@ -2611,34 +2645,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on parts_inventory (Q71)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #71 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in parts_inventory. Return id, quantity_in_stock AS baseline_val, and SUM(quantity_in_stock) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 81;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, quantity_in_stock AS baseline_val, SUM(quantity_in_stock) OVER (ORDER BY id ASC) AS running_total FROM parts_inventory WHERE id >= 1 ORDER BY id ASC LIMIT 81;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-072",
@@ -2646,36 +2682,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q72)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_72(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_72(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #72 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for shipments. Create a CTE named staged_metrics selecting id, destination_city AS staged_name, and weight_kg AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 82;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_72(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_72(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, destination_city AS staged_name, weight_kg AS score FROM shipments WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 82;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-073",
@@ -2683,37 +2719,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q73)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #73 - Dave Miller (VP of Global Fleet Operations)]: Rank records in cargo_packages by weight_kg. Return id, shipment_id::text AS entity_title, weight_kg AS metric_score, and ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 83;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id::text AS entity_title, weight_kg AS metric_score, ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num FROM cargo_packages WHERE id >= 1 ORDER BY rank_num ASC LIMIT 83;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-074",
@@ -2721,35 +2757,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in freight_routes (Q74)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #74 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of freight_routes. Return id, route_name AS partition_key, distance_km AS metric_val, and DENSE_RANK() OVER (PARTITION BY route_name ORDER BY distance_km DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 84;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, route_name AS partition_key, distance_km AS metric_val, DENSE_RANK() OVER (PARTITION BY route_name ORDER BY distance_km DESC) AS dense_rnk FROM freight_routes WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 84;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-075",
@@ -2757,36 +2795,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q75)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_75 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #75 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on delivery_checkpoints. Return id, id AS current_val, and LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 85;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "id",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_75 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, id AS current_val, LAG(id, 1) OVER (ORDER BY id ASC) AS prev_metric FROM delivery_checkpoints WHERE id >= 1 ORDER BY id ASC LIMIT 85;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-076",
@@ -2794,36 +2833,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q76)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #76 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on fuel_logs. Return id, gallons AS current_val, and LEAD(gallons, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 86;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "gallons",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_76 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_76_low PARTITION OF shipments_part_76 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_76_high PARTITION OF shipments_part_76 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_76 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_76;",
+    "reference_sql": "SELECT id, gallons AS current_val, LEAD(gallons, 1) OVER (ORDER BY id ASC) AS next_metric FROM fuel_logs WHERE id >= 1 ORDER BY id ASC LIMIT 86;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-077",
@@ -2831,36 +2871,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Cumulative Running Total on maintenance_records (Q77)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_77() and bind trigger trg_audit_fleet_vehicles_77 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_77(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #77 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in maintenance_records. Return id, cost AS baseline_val, and SUM(cost) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 87;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_77() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_77 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_77(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, cost AS baseline_val, SUM(cost) OVER (ORDER BY id ASC) AS running_total FROM maintenance_records WHERE id >= 1 ORDER BY id ASC LIMIT 87;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-078",
@@ -2868,37 +2908,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q78)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #78 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for customs_declarations. Create a CTE named staged_metrics selecting id, port_of_entry AS staged_name, and duty_amount AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 88;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, port_of_entry AS staged_name, duty_amount AS score FROM customs_declarations WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 88;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-079",
@@ -2906,36 +2945,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q79)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_79 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #79 - Frank Miller (Terminal Dispatch Manager)]: Rank records in warehouses by capacity_sqft. Return id, city AS entity_title, capacity_sqft AS metric_score, and ROW_NUMBER() OVER (ORDER BY capacity_sqft DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 89;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_79 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_79 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, city AS entity_title, capacity_sqft AS metric_score, ROW_NUMBER() OVER (ORDER BY capacity_sqft DESC) AS rank_num FROM warehouses WHERE id >= 1 ORDER BY rank_num ASC LIMIT 89;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-080",
@@ -2943,37 +2983,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 80,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in carriers (Q80)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #80 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of carriers. Return id, service_level AS partition_key, rating AS metric_val, and DENSE_RANK() OVER (PARTITION BY service_level ORDER BY rating DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 90;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, service_level AS partition_key, rating AS metric_val, DENSE_RANK() OVER (PARTITION BY service_level ORDER BY rating DESC) AS dense_rnk FROM carriers WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 90;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-081",
@@ -2981,37 +3021,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q81)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #81 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on fleet_vehicles. Return id, max_weight_capacity_kg AS current_val, and LAG(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 91;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "max_weight_capacity_kg",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, max_weight_capacity_kg AS current_val, LAG(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS prev_metric FROM fleet_vehicles WHERE id >= 1 ORDER BY id ASC LIMIT 91;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-082",
@@ -3019,37 +3059,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q82)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_82 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #82 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on drivers. Return id, safety_score AS current_val, and LEAD(safety_score, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 92;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "safety_score",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_82 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_82 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, safety_score AS current_val, LEAD(safety_score, 1) OVER (ORDER BY id ASC) AS next_metric FROM drivers WHERE id >= 1 ORDER BY id ASC LIMIT 92;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-083",
@@ -3057,34 +3097,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on suppliers (Q83)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #83 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in suppliers. Return id, lead_time_days AS baseline_val, and SUM(lead_time_days) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 93;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, lead_time_days AS baseline_val, SUM(lead_time_days) OVER (ORDER BY id ASC) AS running_total FROM suppliers WHERE id >= 1 ORDER BY id ASC LIMIT 93;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-084",
@@ -3092,36 +3134,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q84)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_84(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_84(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #84 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for parts_inventory. Create a CTE named staged_metrics selecting id, part_number AS staged_name, and quantity_in_stock AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 94;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_84(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_84(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, part_number AS staged_name, quantity_in_stock AS score FROM parts_inventory WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 94;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-085",
@@ -3129,222 +3171,225 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q85)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #85 - Dave Miller (VP of Global Fleet Operations)]: Rank records in shipments by weight_kg. Return id, destination_city AS entity_title, weight_kg AS metric_score, and ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 95;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS entity_title, weight_kg AS metric_score, ROW_NUMBER() OVER (ORDER BY weight_kg DESC) AS rank_num FROM shipments WHERE id >= 1 ORDER BY rank_num ASC LIMIT 95;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 65,
+    "estimated_minutes": 16
   },
   {
     "id": "log-L4-086",
     "domain": "logistics",
     "level": 4,
     "order": 86,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "difficulty": "boss",
+    "title": "Dense Partition Ranking in cargo_packages (Q86)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #86 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of cargo_packages. Return id, shipment_id AS partition_key, weight_kg AS metric_val, and DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY weight_kg DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 96;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id AS partition_key, weight_kg AS metric_val, DENSE_RANK() OVER (PARTITION BY shipment_id ORDER BY weight_kg DESC) AS dense_rnk FROM cargo_packages WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 96;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-087",
     "domain": "logistics",
     "level": 4,
     "order": 87,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "boss",
+    "title": "Sequential Trend Analysis with LAG() (Q87)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_87 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #87 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on freight_routes. Return id, distance_km AS current_val, and LAG(distance_km, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 97;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "distance_km",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_87 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, distance_km AS current_val, LAG(distance_km, 1) OVER (ORDER BY id ASC) AS prev_metric FROM freight_routes WHERE id >= 1 ORDER BY id ASC LIMIT 97;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-088",
     "domain": "logistics",
     "level": 4,
     "order": 88,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "boss",
+    "title": "Sequential Projection Analysis with LEAD() (Q88)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #88 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on delivery_checkpoints. Return id, id AS current_val, and LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 98;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "id",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_88 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_88_low PARTITION OF shipments_part_88 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_88_high PARTITION OF shipments_part_88 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_88 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_88;",
+    "reference_sql": "SELECT id, id AS current_val, LEAD(id, 1) OVER (ORDER BY id ASC) AS next_metric FROM delivery_checkpoints WHERE id >= 1 ORDER BY id ASC LIMIT 98;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-089",
     "domain": "logistics",
     "level": 4,
     "order": 89,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "boss",
+    "title": "Cumulative Running Total on fuel_logs (Q89)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_89() and bind trigger trg_audit_fleet_vehicles_89 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_89(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #89 - Dave Miller (VP of Global Fleet Operations)]: Calculate cumulative progression in fuel_logs. Return id, gallons AS baseline_val, and SUM(gallons) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 99;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_89() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_89 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_89(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, gallons AS baseline_val, SUM(gallons) OVER (ORDER BY id ASC) AS running_total FROM fuel_logs WHERE id >= 1 ORDER BY id ASC LIMIT 99;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-090",
     "domain": "logistics",
     "level": 4,
     "order": 90,
-    "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "boss",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q90)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #90 - Claire Sullivan (Director of Supply Chain Logistics)]: Stage transformation logic for maintenance_records. Create a CTE named staged_metrics selecting id, service_type AS staged_name, and cost AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 100;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "index_ratio"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, service_type AS staged_name, cost AS score FROM maintenance_records WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 100;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-091",
@@ -3352,36 +3397,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 91,
     "difficulty": "boss",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q91)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_91 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #91 - Frank Miller (Terminal Dispatch Manager)]: Rank records in customs_declarations by duty_amount. Return id, port_of_entry AS entity_title, duty_amount AS metric_score, and ROW_NUMBER() OVER (ORDER BY duty_amount DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 101;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "primary_name",
-      "secondary_name"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_91 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_91 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS entity_title, duty_amount AS metric_score, ROW_NUMBER() OVER (ORDER BY duty_amount DESC) AS rank_num FROM customs_declarations WHERE id >= 1 ORDER BY rank_num ASC LIMIT 101;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-092",
@@ -3389,37 +3435,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 92,
     "difficulty": "boss",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Dense Partition Ranking in warehouses (Q92)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #92 - Sarah Jenkins (Head of Freight Compliance)]: Compute dense ranking within each segment of warehouses. Return id, manager_name AS partition_key, capacity_sqft AS metric_val, and DENSE_RANK() OVER (PARTITION BY manager_name ORDER BY capacity_sqft DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 102;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, manager_name AS partition_key, capacity_sqft AS metric_val, DENSE_RANK() OVER (PARTITION BY manager_name ORDER BY capacity_sqft DESC) AS dense_rnk FROM warehouses WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 102;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-093",
@@ -3427,37 +3473,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 93,
     "difficulty": "boss",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Sequential Trend Analysis with LAG() (Q93)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #93 - Dave Miller (VP of Global Fleet Operations)]: Perform period-over-period delta analysis on carriers. Return id, rating AS current_val, and LAG(rating, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 103;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
+      "WINDOW FUNCTION",
       "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "current_val",
+      "rating",
+      "prev_metric"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, rating AS current_val, LAG(rating, 1) OVER (ORDER BY id ASC) AS prev_metric FROM carriers WHERE id >= 1 ORDER BY id ASC LIMIT 103;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-094",
@@ -3465,37 +3511,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 94,
     "difficulty": "boss",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Sequential Projection Analysis with LEAD() (Q94)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_94 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #94 - Claire Sullivan (Director of Supply Chain Logistics)]: Perform forward-looking trend analysis on fleet_vehicles. Return id, max_weight_capacity_kg AS current_val, and LEAD(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 104;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "current_val",
+      "max_weight_capacity_kg",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_94 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_94 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT id, max_weight_capacity_kg AS current_val, LEAD(max_weight_capacity_kg, 1) OVER (ORDER BY id ASC) AS next_metric FROM fleet_vehicles WHERE id >= 1 ORDER BY id ASC LIMIT 104;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-095",
@@ -3503,34 +3549,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 95,
     "difficulty": "boss",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Cumulative Running Total on drivers (Q95)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #95 - Frank Miller (Terminal Dispatch Manager)]: Calculate cumulative progression in drivers. Return id, safety_score AS baseline_val, and SUM(safety_score) OVER (ORDER BY id ASC) AS running_total where id >= 1 ordered by id ASC LIMIT 105;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "WINDOW FUNCTION",
+      "SUM() OVER",
+      "CUMULATIVE METRICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "baseline_val",
+      "running_total"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT id, safety_score AS baseline_val, SUM(safety_score) OVER (ORDER BY id ASC) AS running_total FROM drivers WHERE id >= 1 ORDER BY id ASC LIMIT 105;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-096",
@@ -3538,36 +3586,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 96,
     "difficulty": "boss",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Modular Pipeline with Common Table Expression (CTE) (Q96)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_96(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_96(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #96 - Sarah Jenkins (Head of Freight Compliance)]: Stage transformation logic for suppliers. Create a CTE named staged_metrics selecting id, supplier_name AS staged_name, and lead_time_days AS score where id >= 1. Query from staged_metrics ordered by score DESC, id ASC LIMIT 106;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "WITH (CTE)",
+      "MODULAR SQL",
+      "PIPELINE"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "staged_name",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_96(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_96(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "WITH staged_metrics AS (SELECT id, supplier_name AS staged_name, lead_time_days AS score FROM suppliers WHERE id >= 1) SELECT id, staged_name, score FROM staged_metrics ORDER BY score DESC, id ASC LIMIT 106;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-097",
@@ -3575,37 +3623,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 97,
     "difficulty": "boss",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Analytical Ordinal Ranking with ROW_NUMBER() (Q97)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #97 - Dave Miller (VP of Global Fleet Operations)]: Rank records in parts_inventory by quantity_in_stock. Return id, part_number AS entity_title, quantity_in_stock AS metric_score, and ROW_NUMBER() OVER (ORDER BY quantity_in_stock DESC) AS rank_num where id >= 1 ordered by rank_num ASC LIMIT 107;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "WINDOW FUNCTION",
+      "ROW_NUMBER()",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "standardized_title",
-      "safe_code"
+      "entity_title",
+      "metric_score",
+      "rank_num"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, part_number AS entity_title, quantity_in_stock AS metric_score, ROW_NUMBER() OVER (ORDER BY quantity_in_stock DESC) AS rank_num FROM parts_inventory WHERE id >= 1 ORDER BY rank_num ASC LIMIT 107;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-098",
@@ -3613,35 +3661,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 98,
     "difficulty": "boss",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Dense Partition Ranking in shipments (Q98)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #98 - Claire Sullivan (Director of Supply Chain Logistics)]: Compute dense ranking within each segment of shipments. Return id, carrier_id AS partition_key, weight_kg AS metric_val, and DENSE_RANK() OVER (PARTITION BY carrier_id ORDER BY weight_kg DESC) AS dense_rnk where id >= 1 ordered by partition_key ASC, dense_rnk ASC LIMIT 108;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "WINDOW FUNCTION",
+      "DENSE_RANK()",
+      "PARTITION BY"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "partition_key",
+      "metric_val",
+      "dense_rnk"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, carrier_id AS partition_key, weight_kg AS metric_val, DENSE_RANK() OVER (PARTITION BY carrier_id ORDER BY weight_kg DESC) AS dense_rnk FROM shipments WHERE id >= 1 ORDER BY partition_key ASC, dense_rnk ASC LIMIT 108;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-099",
@@ -3649,36 +3699,37 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 99,
     "difficulty": "boss",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Sequential Trend Analysis with LAG() (Q99)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_99 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #99 - Frank Miller (Terminal Dispatch Manager)]: Perform period-over-period delta analysis on cargo_packages. Return id, weight_kg AS current_val, and LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric where id >= 1 ordered by id ASC LIMIT 109;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "WINDOW FUNCTION",
+      "LAG()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "destination_city",
-      "weight_kg"
+      "current_val",
+      "weight_kg",
+      "prev_metric"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_99 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, weight_kg AS current_val, LAG(weight_kg, 1) OVER (ORDER BY id ASC) AS prev_metric FROM cargo_packages WHERE id >= 1 ORDER BY id ASC LIMIT 109;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   },
   {
     "id": "log-L4-100",
@@ -3686,35 +3737,36 @@ export const LOG_L4_QUESTIONS: QuestionDefinition[] = [
     "level": 4,
     "order": 100,
     "difficulty": "boss",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Sequential Projection Analysis with LEAD() (Q100)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #100 - Sarah Jenkins (Head of Freight Compliance)]: Perform forward-looking trend analysis on freight_routes. Return id, distance_km AS current_val, and LEAD(distance_km, 1) OVER (ORDER BY id ASC) AS next_metric where id >= 1 ordered by id ASC LIMIT 110;\"",
+    "context_notes": "Level 4 Window function & CTE query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "WINDOW FUNCTION",
+      "LEAD()",
+      "TREND ANALYSIS"
     ],
     "expected_columns": [
       "id",
-      "status_code",
-      "amount"
+      "current_val",
+      "distance_km",
+      "next_metric"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_100 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_100_low PARTITION OF shipments_part_100 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_100_high PARTITION OF shipments_part_100 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_100 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_100;",
+    "reference_sql": "SELECT id, distance_km AS current_val, LEAD(distance_km, 1) OVER (ORDER BY id ASC) AS next_metric FROM freight_routes WHERE id >= 1 ORDER BY id ASC LIMIT 110;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Use OVER (ORDER BY ... / PARTITION BY ...)."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Applies advanced window functions and common table expressions.",
+    "xp": 95,
+    "estimated_minutes": 24
   }
 ];

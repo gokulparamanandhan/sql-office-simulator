@@ -6,559 +6,537 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "domain": "logistics",
     "level": 3,
     "order": 1,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in parts_inventory (Q1)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #1 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in parts_inventory. Select id, part_number AS item_title, and quantity_in_stock AS metric_score where quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 11;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(quantity_in_stock)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, part_number AS item_title, quantity_in_stock AS metric_score FROM parts_inventory WHERE quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 11;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-002",
     "domain": "logistics",
     "level": 3,
     "order": 2,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q2)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_2 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #2 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter shipments using an IN subquery against active ids. Return id and destination_city AS filtered_name where id IN (SELECT id FROM shipments WHERE id >= 3) ORDER BY id ASC LIMIT 12;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_2 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_2 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS filtered_name FROM shipments WHERE id IN (SELECT id FROM shipments WHERE id >= 3) ORDER BY id ASC LIMIT 12;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-003",
     "domain": "logistics",
     "level": 3,
     "order": 3,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q3)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #3 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in cargo_packages. Select id, shipment_id::text AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from cargo_packages ORDER BY id ASC LIMIT 13;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, shipment_id::text AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM cargo_packages ORDER BY id ASC LIMIT 13;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-004",
     "domain": "logistics",
     "level": 3,
     "order": 4,
-    "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "warm-up",
+    "title": "Registry Integration with UNION ALL (Q4)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #4 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from delivery_checkpoints and customs_declarations. Select location_name::text AS entity_name, 'Primary Stream' AS source_tier from delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 34 UNION ALL SELECT port_of_entry::text AS entity_name, 'Secondary Stream' AS source_tier from customs_declarations WHERE port_of_entry IS NOT NULL ORDER BY entity_name ASC LIMIT 14;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT location_name::text AS entity_name, 'Primary Stream' AS source_tier FROM delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 34 UNION ALL SELECT port_of_entry::text AS entity_name, 'Secondary Stream' AS source_tier FROM customs_declarations WHERE port_of_entry IS NOT NULL ORDER BY entity_name ASC LIMIT 14;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-005",
     "domain": "logistics",
     "level": 3,
     "order": 5,
-    "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_5 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_5 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_5 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "log-L3-006",
-    "domain": "logistics",
-    "level": 3,
-    "order": 6,
-    "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "log-L3-007",
-    "domain": "logistics",
-    "level": 3,
-    "order": 7,
-    "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "warm-up",
+    "title": "Relational Verification with EXISTS (Q5)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_7(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_7(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_7(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_7(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "log-L3-008",
-    "domain": "logistics",
-    "level": 3,
-    "order": 8,
-    "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
-  },
-  {
-    "id": "log-L3-009",
-    "domain": "logistics",
-    "level": 3,
-    "order": 9,
-    "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #5 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in fuel_logs. Return t.id and t.vehicle_id::text AS confirmed_item WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 15;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "city"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.vehicle_id::text AS confirmed_item FROM fuel_logs t WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 15;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
+  },
+  {
+    "id": "log-L3-006",
+    "domain": "logistics",
+    "level": 3,
+    "order": 6,
+    "difficulty": "warm-up",
+    "title": "Inline Derived Table Transformation in maintenance_records (Q6)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #6 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from maintenance_records. Project dt.id, dt.service_type AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 16;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "service_type",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.service_type AS derived_name, dt.score FROM (SELECT id, service_type, cost AS score FROM maintenance_records WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 16;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "log-L3-007",
+    "domain": "logistics",
+    "level": 3,
+    "order": 7,
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in customs_declarations (Q7)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #7 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in customs_declarations. Select id, port_of_entry AS item_title, and duty_amount AS metric_score where duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 17;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(duty_amount)"
+    ],
+    "reference_sql": "SELECT id, port_of_entry AS item_title, duty_amount AS metric_score FROM customs_declarations WHERE duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 17;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "log-L3-008",
+    "domain": "logistics",
+    "level": 3,
+    "order": 8,
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q8)",
+    "stakeholder": {
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
+    },
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #8 - Sarah Jenkins (Head of Freight Compliance)]: Filter parts_inventory using an IN subquery against active ids. Return id and part_number AS filtered_name where id IN (SELECT id FROM parts_inventory WHERE id >= 4) ORDER BY id ASC LIMIT 18;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, part_number AS filtered_name FROM parts_inventory WHERE id IN (SELECT id FROM parts_inventory WHERE id >= 4) ORDER BY id ASC LIMIT 18;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
+  },
+  {
+    "id": "log-L3-009",
+    "domain": "logistics",
+    "level": 3,
+    "order": 9,
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q9)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #9 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in shipments. Select id, destination_city AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from shipments ORDER BY id ASC LIMIT 19;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, destination_city AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM shipments ORDER BY id ASC LIMIT 19;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 25,
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-010",
     "domain": "logistics",
     "level": 3,
     "order": 10,
-    "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "warm-up",
+    "title": "Registry Integration with UNION ALL (Q10)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_10 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #10 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from cargo_packages and suppliers. Select shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier from cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 40 UNION ALL SELECT supplier_name::text AS entity_name, 'Secondary Stream' AS source_tier from suppliers WHERE supplier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 20;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_10 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 40 UNION ALL SELECT supplier_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM suppliers WHERE supplier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 20;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-011",
     "domain": "logistics",
     "level": 3,
     "order": 11,
-    "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "warm-up",
+    "title": "Relational Verification with EXISTS (Q11)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #11 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in delivery_checkpoints. Return t.id and t.location_name AS confirmed_item WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 21;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_11 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_11_low PARTITION OF shipments_part_11 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_11_high PARTITION OF shipments_part_11 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_11 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_11;",
+    "reference_sql": "SELECT t.id, t.location_name AS confirmed_item FROM delivery_checkpoints t WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 21;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-012",
     "domain": "logistics",
     "level": 3,
     "order": 12,
-    "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "warm-up",
+    "title": "Inline Derived Table Transformation in fuel_logs (Q12)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_12() and bind trigger trg_audit_fleet_vehicles_12 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_12(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #12 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from fuel_logs. Project dt.id, dt.vehicle_id::text AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 22;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_12() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_12 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_12(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.vehicle_id::text AS derived_name, dt.score FROM (SELECT id, vehicle_id::text, gallons AS score FROM fuel_logs WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 22;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-013",
     "domain": "logistics",
     "level": 3,
     "order": 13,
-    "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "difficulty": "warm-up",
+    "title": "Benchmark Segmentation with Subquery in maintenance_records (Q13)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #13 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in maintenance_records. Select id, service_type AS item_title, and cost AS metric_score where cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 23;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(cost)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS item_title, cost AS metric_score FROM maintenance_records WHERE cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 23;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-014",
     "domain": "logistics",
     "level": 3,
     "order": 14,
-    "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "difficulty": "warm-up",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q14)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_14 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #14 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter customs_declarations using an IN subquery against active ids. Return id and port_of_entry AS filtered_name where id IN (SELECT id FROM customs_declarations WHERE id >= 5) ORDER BY id ASC LIMIT 24;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_14 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_14 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS filtered_name FROM customs_declarations WHERE id IN (SELECT id FROM customs_declarations WHERE id >= 5) ORDER BY id ASC LIMIT 24;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-015",
     "domain": "logistics",
     "level": 3,
     "order": 15,
-    "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "warm-up",
+    "title": "Conditional Tier Classification with CASE WHEN (Q15)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #15 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in parts_inventory. Select id, part_number AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from parts_inventory ORDER BY id ASC LIMIT 25;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, part_number AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM parts_inventory ORDER BY id ASC LIMIT 25;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
     "xp": 25,
-    "estimated_minutes": 8
+    "estimated_minutes": 7
   },
   {
     "id": "log-L3-016",
@@ -566,37 +544,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 16,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q16)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #16 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from shipments and delivery_checkpoints. Select destination_city::text AS entity_name, 'Primary Stream' AS source_tier from shipments WHERE destination_city IS NOT NULL AND id <= 46 UNION ALL SELECT location_name::text AS entity_name, 'Secondary Stream' AS source_tier from delivery_checkpoints WHERE location_name IS NOT NULL ORDER BY entity_name ASC LIMIT 26;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT destination_city::text AS entity_name, 'Primary Stream' AS source_tier FROM shipments WHERE destination_city IS NOT NULL AND id <= 46 UNION ALL SELECT location_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM delivery_checkpoints WHERE location_name IS NOT NULL ORDER BY entity_name ASC LIMIT 26;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-017",
@@ -604,37 +580,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 17,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q17)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_17 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #17 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in cargo_packages. Return t.id and t.shipment_id::text AS confirmed_item WHERE EXISTS (SELECT 1 FROM cargo_packages sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 27;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_17 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_17 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.shipment_id::text AS confirmed_item FROM cargo_packages t WHERE EXISTS (SELECT 1 FROM cargo_packages sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 27;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-018",
@@ -642,34 +615,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 18,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in delivery_checkpoints (Q18)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #18 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from delivery_checkpoints. Project dt.id, dt.location_name AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 28;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "location_name",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT dt.id, dt.location_name AS derived_name, dt.score FROM (SELECT id, location_name, id AS score FROM delivery_checkpoints WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 28;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-019",
@@ -677,36 +652,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 19,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in fuel_logs (Q19)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_19(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_19(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #19 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in fuel_logs. Select id, vehicle_id::text AS item_title, and gallons AS metric_score where gallons >= (SELECT MIN(gallons) FROM fuel_logs) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 29;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "MIN(gallons)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_19(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_19(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "SELECT id, vehicle_id::text AS item_title, gallons AS metric_score FROM fuel_logs WHERE gallons >= (SELECT MIN(gallons) FROM fuel_logs) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 29;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-020",
@@ -714,37 +687,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 20,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q20)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #20 - Sarah Jenkins (Head of Freight Compliance)]: Filter maintenance_records using an IN subquery against active ids. Return id and service_type AS filtered_name where id IN (SELECT id FROM maintenance_records WHERE id >= 1) ORDER BY id ASC LIMIT 30;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS filtered_name FROM maintenance_records WHERE id IN (SELECT id FROM maintenance_records WHERE id >= 1) ORDER BY id ASC LIMIT 30;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-021",
@@ -752,35 +722,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 21,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q21)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #21 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in customs_declarations. Select id, port_of_entry AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from customs_declarations ORDER BY id ASC LIMIT 31;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM customs_declarations ORDER BY id ASC LIMIT 31;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-022",
@@ -788,36 +759,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 22,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q22)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_22 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #22 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from parts_inventory and carriers. Select part_number::text AS entity_name, 'Primary Stream' AS source_tier from parts_inventory WHERE part_number IS NOT NULL AND id <= 52 UNION ALL SELECT carrier_name::text AS entity_name, 'Secondary Stream' AS source_tier from carriers WHERE carrier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 32;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_22 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT part_number::text AS entity_name, 'Primary Stream' AS source_tier FROM parts_inventory WHERE part_number IS NOT NULL AND id <= 52 UNION ALL SELECT carrier_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM carriers WHERE carrier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 32;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-023",
@@ -825,36 +795,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 23,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q23)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #23 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in shipments. Return t.id and t.destination_city AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 33;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_23 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_23_low PARTITION OF shipments_part_23 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_23_high PARTITION OF shipments_part_23 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_23 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_23;",
+    "reference_sql": "SELECT t.id, t.destination_city AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 33;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-024",
@@ -862,36 +830,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 24,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in cargo_packages (Q24)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_24() and bind trigger trg_audit_fleet_vehicles_24 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_24(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #24 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from cargo_packages. Project dt.id, dt.shipment_id::text AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 34;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_24() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_24 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_24(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.shipment_id::text AS derived_name, dt.score FROM (SELECT id, shipment_id::text, weight_kg AS score FROM cargo_packages WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 34;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-025",
@@ -899,37 +867,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 25,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in delivery_checkpoints (Q25)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #25 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in delivery_checkpoints. Select id, location_name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM delivery_checkpoints) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 35;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(id)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, location_name AS item_title, id AS metric_score FROM delivery_checkpoints WHERE id >= (SELECT MIN(id) FROM delivery_checkpoints) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 35;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-026",
@@ -937,36 +902,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 26,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q26)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_26 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #26 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter fuel_logs using an IN subquery against active ids. Return id and vehicle_id::text AS filtered_name where id IN (SELECT id FROM fuel_logs WHERE id >= 2) ORDER BY id ASC LIMIT 36;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_26 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_26 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id::text AS filtered_name FROM fuel_logs WHERE id IN (SELECT id FROM fuel_logs WHERE id >= 2) ORDER BY id ASC LIMIT 36;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-027",
@@ -974,37 +937,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 27,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q27)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #27 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in maintenance_records. Select id, service_type AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from maintenance_records ORDER BY id ASC LIMIT 37;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, service_type AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM maintenance_records ORDER BY id ASC LIMIT 37;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-028",
@@ -1012,37 +974,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 28,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q28)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #28 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from customs_declarations and shipments. Select port_of_entry::text AS entity_name, 'Primary Stream' AS source_tier from customs_declarations WHERE port_of_entry IS NOT NULL AND id <= 58 UNION ALL SELECT destination_city::text AS entity_name, 'Secondary Stream' AS source_tier from shipments WHERE destination_city IS NOT NULL ORDER BY entity_name ASC LIMIT 38;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT port_of_entry::text AS entity_name, 'Primary Stream' AS source_tier FROM customs_declarations WHERE port_of_entry IS NOT NULL AND id <= 58 UNION ALL SELECT destination_city::text AS entity_name, 'Secondary Stream' AS source_tier FROM shipments WHERE destination_city IS NOT NULL ORDER BY entity_name ASC LIMIT 38;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-029",
@@ -1050,37 +1010,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 29,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q29)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_29 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #29 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in parts_inventory. Return t.id and t.part_number AS confirmed_item WHERE EXISTS (SELECT 1 FROM parts_inventory sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 39;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_29 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_29 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.part_number AS confirmed_item FROM parts_inventory t WHERE EXISTS (SELECT 1 FROM parts_inventory sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 39;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-030",
@@ -1088,34 +1045,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 30,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in shipments (Q30)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #30 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from shipments. Project dt.id, dt.destination_city AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 40;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "destination_city",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT dt.id, dt.destination_city AS derived_name, dt.score FROM (SELECT id, destination_city, weight_kg AS score FROM shipments WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 40;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-031",
@@ -1123,36 +1082,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 31,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in cargo_packages (Q31)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_31(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_31(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #31 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in cargo_packages. Select id, shipment_id::text AS item_title, and weight_kg AS metric_score where weight_kg >= (SELECT MIN(weight_kg) FROM cargo_packages) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 41;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "MIN(weight_kg)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_31(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_31(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "SELECT id, shipment_id::text AS item_title, weight_kg AS metric_score FROM cargo_packages WHERE weight_kg >= (SELECT MIN(weight_kg) FROM cargo_packages) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 41;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-032",
@@ -1160,37 +1117,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 32,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q32)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #32 - Sarah Jenkins (Head of Freight Compliance)]: Filter delivery_checkpoints using an IN subquery against active ids. Return id and location_name AS filtered_name where id IN (SELECT id FROM delivery_checkpoints WHERE id >= 3) ORDER BY id ASC LIMIT 42;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, location_name AS filtered_name FROM delivery_checkpoints WHERE id IN (SELECT id FROM delivery_checkpoints WHERE id >= 3) ORDER BY id ASC LIMIT 42;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-033",
@@ -1198,35 +1152,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 33,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q33)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #33 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in fuel_logs. Select id, vehicle_id::text AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from fuel_logs ORDER BY id ASC LIMIT 43;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id::text AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM fuel_logs ORDER BY id ASC LIMIT 43;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-034",
@@ -1234,36 +1189,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 34,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q34)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_34 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #34 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from maintenance_records and maintenance_records. Select service_type::text AS entity_name, 'Primary Stream' AS source_tier from maintenance_records WHERE service_type IS NOT NULL AND id <= 64 UNION ALL SELECT service_type::text AS entity_name, 'Secondary Stream' AS source_tier from maintenance_records WHERE service_type IS NOT NULL ORDER BY entity_name ASC LIMIT 44;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_34 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT service_type::text AS entity_name, 'Primary Stream' AS source_tier FROM maintenance_records WHERE service_type IS NOT NULL AND id <= 64 UNION ALL SELECT service_type::text AS entity_name, 'Secondary Stream' AS source_tier FROM maintenance_records WHERE service_type IS NOT NULL ORDER BY entity_name ASC LIMIT 44;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-035",
@@ -1271,36 +1225,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 35,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q35)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #35 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in customs_declarations. Return t.id and t.port_of_entry AS confirmed_item WHERE EXISTS (SELECT 1 FROM customs_declarations sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 45;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_35 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_35_low PARTITION OF shipments_part_35 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_35_high PARTITION OF shipments_part_35 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_35 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_35;",
+    "reference_sql": "SELECT t.id, t.port_of_entry AS confirmed_item FROM customs_declarations t WHERE EXISTS (SELECT 1 FROM customs_declarations sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 45;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-036",
@@ -1308,36 +1260,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 36,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in parts_inventory (Q36)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_36() and bind trigger trg_audit_fleet_vehicles_36 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_36(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #36 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from parts_inventory. Project dt.id, dt.part_number AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 46;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "part_number",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_36() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_36 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_36(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.part_number AS derived_name, dt.score FROM (SELECT id, part_number, quantity_in_stock AS score FROM parts_inventory WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 46;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-037",
@@ -1345,37 +1297,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 37,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in shipments (Q37)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #37 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in shipments. Select id, destination_city AS item_title, and weight_kg AS metric_score where weight_kg >= (SELECT MIN(weight_kg) FROM shipments) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 47;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(weight_kg)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS item_title, weight_kg AS metric_score FROM shipments WHERE weight_kg >= (SELECT MIN(weight_kg) FROM shipments) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 47;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-038",
@@ -1383,36 +1332,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 38,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q38)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_38 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #38 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter cargo_packages using an IN subquery against active ids. Return id and shipment_id::text AS filtered_name where id IN (SELECT id FROM cargo_packages WHERE id >= 4) ORDER BY id ASC LIMIT 48;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_38 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_38 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id::text AS filtered_name FROM cargo_packages WHERE id IN (SELECT id FROM cargo_packages WHERE id >= 4) ORDER BY id ASC LIMIT 48;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-039",
@@ -1420,37 +1367,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 39,
     "difficulty": "core",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q39)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #39 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in delivery_checkpoints. Select id, location_name AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from delivery_checkpoints ORDER BY id ASC LIMIT 49;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, location_name AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM delivery_checkpoints ORDER BY id ASC LIMIT 49;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-040",
@@ -1458,37 +1404,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 40,
     "difficulty": "core",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q40)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #40 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from fuel_logs and drivers. Select vehicle_id::text::text AS entity_name, 'Primary Stream' AS source_tier from fuel_logs WHERE vehicle_id::text IS NOT NULL AND id <= 70 UNION ALL SELECT full_name::text AS entity_name, 'Secondary Stream' AS source_tier from drivers WHERE full_name IS NOT NULL ORDER BY entity_name ASC LIMIT 50;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT vehicle_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM fuel_logs WHERE vehicle_id::text IS NOT NULL AND id <= 70 UNION ALL SELECT full_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM drivers WHERE full_name IS NOT NULL ORDER BY entity_name ASC LIMIT 50;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-041",
@@ -1496,37 +1440,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 41,
     "difficulty": "core",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q41)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_41 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #41 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in maintenance_records. Return t.id and t.service_type AS confirmed_item WHERE EXISTS (SELECT 1 FROM maintenance_records sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 51;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_41 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_41 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.service_type AS confirmed_item FROM maintenance_records t WHERE EXISTS (SELECT 1 FROM maintenance_records sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 51;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-042",
@@ -1534,34 +1475,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 42,
     "difficulty": "core",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in customs_declarations (Q42)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #42 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from customs_declarations. Project dt.id, dt.port_of_entry AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 52;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "port_of_entry",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT dt.id, dt.port_of_entry AS derived_name, dt.score FROM (SELECT id, port_of_entry, duty_amount AS score FROM customs_declarations WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 52;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-043",
@@ -1569,36 +1512,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 43,
     "difficulty": "core",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in parts_inventory (Q43)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_43(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_43(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #43 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in parts_inventory. Select id, part_number AS item_title, and quantity_in_stock AS metric_score where quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 53;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "MIN(quantity_in_stock)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_43(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_43(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "SELECT id, part_number AS item_title, quantity_in_stock AS metric_score FROM parts_inventory WHERE quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 53;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-044",
@@ -1606,37 +1547,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 44,
     "difficulty": "core",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q44)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #44 - Sarah Jenkins (Head of Freight Compliance)]: Filter shipments using an IN subquery against active ids. Return id and destination_city AS filtered_name where id IN (SELECT id FROM shipments WHERE id >= 5) ORDER BY id ASC LIMIT 54;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS filtered_name FROM shipments WHERE id IN (SELECT id FROM shipments WHERE id >= 5) ORDER BY id ASC LIMIT 54;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-045",
@@ -1644,35 +1582,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 45,
     "difficulty": "core",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q45)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #45 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in cargo_packages. Select id, shipment_id::text AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from cargo_packages ORDER BY id ASC LIMIT 55;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id::text AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM cargo_packages ORDER BY id ASC LIMIT 55;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-046",
@@ -1680,36 +1619,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 46,
     "difficulty": "core",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q46)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_46 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #46 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from delivery_checkpoints and freight_routes. Select location_name::text AS entity_name, 'Primary Stream' AS source_tier from delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 76 UNION ALL SELECT route_name::text AS entity_name, 'Secondary Stream' AS source_tier from freight_routes WHERE route_name IS NOT NULL ORDER BY entity_name ASC LIMIT 56;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_46 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT location_name::text AS entity_name, 'Primary Stream' AS source_tier FROM delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 76 UNION ALL SELECT route_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM freight_routes WHERE route_name IS NOT NULL ORDER BY entity_name ASC LIMIT 56;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-047",
@@ -1717,36 +1655,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 47,
     "difficulty": "core",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q47)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #47 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in fuel_logs. Return t.id and t.vehicle_id::text AS confirmed_item WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 57;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_47 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_47_low PARTITION OF shipments_part_47 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_47_high PARTITION OF shipments_part_47 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_47 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_47;",
+    "reference_sql": "SELECT t.id, t.vehicle_id::text AS confirmed_item FROM fuel_logs t WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 57;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-048",
@@ -1754,36 +1690,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 48,
     "difficulty": "core",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in maintenance_records (Q48)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_48() and bind trigger trg_audit_fleet_vehicles_48 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_48(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #48 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from maintenance_records. Project dt.id, dt.service_type AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 58;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "service_type",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_48() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_48 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_48(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.service_type AS derived_name, dt.score FROM (SELECT id, service_type, cost AS score FROM maintenance_records WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 58;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-049",
@@ -1791,37 +1727,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 49,
     "difficulty": "core",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in customs_declarations (Q49)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #49 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in customs_declarations. Select id, port_of_entry AS item_title, and duty_amount AS metric_score where duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 59;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(duty_amount)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS item_title, duty_amount AS metric_score FROM customs_declarations WHERE duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 59;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-050",
@@ -1829,407 +1762,394 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 50,
     "difficulty": "core",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q50)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_50 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #50 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter parts_inventory using an IN subquery against active ids. Return id and part_number AS filtered_name where id IN (SELECT id FROM parts_inventory WHERE id >= 1) ORDER BY id ASC LIMIT 60;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_50 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_50 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, part_number AS filtered_name FROM parts_inventory WHERE id IN (SELECT id FROM parts_inventory WHERE id >= 1) ORDER BY id ASC LIMIT 60;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 25,
-    "estimated_minutes": 8
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-051",
     "domain": "logistics",
     "level": 3,
     "order": 51,
-    "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "difficulty": "core",
+    "title": "Conditional Tier Classification with CASE WHEN (Q51)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #51 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in shipments. Select id, destination_city AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from shipments ORDER BY id ASC LIMIT 61;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, destination_city AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM shipments ORDER BY id ASC LIMIT 61;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-052",
     "domain": "logistics",
     "level": 3,
     "order": 52,
-    "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "difficulty": "core",
+    "title": "Registry Integration with UNION ALL (Q52)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #52 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from cargo_packages and warehouses. Select shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier from cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 82 UNION ALL SELECT city::text AS entity_name, 'Secondary Stream' AS source_tier from warehouses WHERE city IS NOT NULL ORDER BY entity_name ASC LIMIT 62;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 82 UNION ALL SELECT city::text AS entity_name, 'Secondary Stream' AS source_tier FROM warehouses WHERE city IS NOT NULL ORDER BY entity_name ASC LIMIT 62;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-053",
     "domain": "logistics",
     "level": 3,
     "order": 53,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_53 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_53 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_53 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-054",
-    "domain": "logistics",
-    "level": 3,
-    "order": 54,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-055",
-    "domain": "logistics",
-    "level": 3,
-    "order": 55,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "core",
+    "title": "Relational Verification with EXISTS (Q53)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_55(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_55(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_55(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_55(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-056",
-    "domain": "logistics",
-    "level": 3,
-    "order": 56,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-057",
-    "domain": "logistics",
-    "level": 3,
-    "order": 57,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #53 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in delivery_checkpoints. Return t.id and t.location_name AS confirmed_item WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 63;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "city"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.location_name AS confirmed_item FROM delivery_checkpoints t WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 63;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "log-L3-054",
+    "domain": "logistics",
+    "level": 3,
+    "order": 54,
+    "difficulty": "core",
+    "title": "Inline Derived Table Transformation in fuel_logs (Q54)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #54 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from fuel_logs. Project dt.id, dt.vehicle_id::text AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 64;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "text",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.vehicle_id::text AS derived_name, dt.score FROM (SELECT id, vehicle_id::text, gallons AS score FROM fuel_logs WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 64;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "log-L3-055",
+    "domain": "logistics",
+    "level": 3,
+    "order": 55,
+    "difficulty": "core",
+    "title": "Benchmark Segmentation with Subquery in maintenance_records (Q55)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #55 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in maintenance_records. Select id, service_type AS item_title, and cost AS metric_score where cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 65;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(cost)"
+    ],
+    "reference_sql": "SELECT id, service_type AS item_title, cost AS metric_score FROM maintenance_records WHERE cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 65;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "log-L3-056",
+    "domain": "logistics",
+    "level": 3,
+    "order": 56,
+    "difficulty": "core",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q56)",
+    "stakeholder": {
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
+    },
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #56 - Sarah Jenkins (Head of Freight Compliance)]: Filter customs_declarations using an IN subquery against active ids. Return id and port_of_entry AS filtered_name where id IN (SELECT id FROM customs_declarations WHERE id >= 2) ORDER BY id ASC LIMIT 66;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, port_of_entry AS filtered_name FROM customs_declarations WHERE id IN (SELECT id FROM customs_declarations WHERE id >= 2) ORDER BY id ASC LIMIT 66;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "log-L3-057",
+    "domain": "logistics",
+    "level": 3,
+    "order": 57,
+    "difficulty": "core",
+    "title": "Conditional Tier Classification with CASE WHEN (Q57)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #57 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in parts_inventory. Select id, part_number AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from parts_inventory ORDER BY id ASC LIMIT 67;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, part_number AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM parts_inventory ORDER BY id ASC LIMIT 67;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-058",
     "domain": "logistics",
     "level": 3,
     "order": 58,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "core",
+    "title": "Registry Integration with UNION ALL (Q58)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_58 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #58 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from shipments and parts_inventory. Select destination_city::text AS entity_name, 'Primary Stream' AS source_tier from shipments WHERE destination_city IS NOT NULL AND id <= 88 UNION ALL SELECT part_number::text AS entity_name, 'Secondary Stream' AS source_tier from parts_inventory WHERE part_number IS NOT NULL ORDER BY entity_name ASC LIMIT 68;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_58 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT destination_city::text AS entity_name, 'Primary Stream' AS source_tier FROM shipments WHERE destination_city IS NOT NULL AND id <= 88 UNION ALL SELECT part_number::text AS entity_name, 'Secondary Stream' AS source_tier FROM parts_inventory WHERE part_number IS NOT NULL ORDER BY entity_name ASC LIMIT 68;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-059",
     "domain": "logistics",
     "level": 3,
     "order": 59,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
-    "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
-    ],
-    "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
-    ],
-    "reference_sql": "CREATE TABLE shipments_part_59 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_59_low PARTITION OF shipments_part_59 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_59_high PARTITION OF shipments_part_59 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_59 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_59;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
-    ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-060",
-    "domain": "logistics",
-    "level": 3,
-    "order": 60,
-    "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "difficulty": "core",
+    "title": "Relational Verification with EXISTS (Q59)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_60() and bind trigger trg_audit_fleet_vehicles_60 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_60(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #59 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in cargo_packages. Return t.id and t.shipment_id::text AS confirmed_item WHERE EXISTS (SELECT 1 FROM cargo_packages sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 69;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "1"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_60() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_60 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_60(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.shipment_id::text AS confirmed_item FROM cargo_packages t WHERE EXISTS (SELECT 1 FROM cargo_packages sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 69;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
+  },
+  {
+    "id": "log-L3-060",
+    "domain": "logistics",
+    "level": 3,
+    "order": 60,
+    "difficulty": "core",
+    "title": "Inline Derived Table Transformation in delivery_checkpoints (Q60)",
+    "stakeholder": {
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
+    },
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #60 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from delivery_checkpoints. Project dt.id, dt.location_name AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 70;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "location_name",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.location_name AS derived_name, dt.score FROM (SELECT id, location_name, id AS score FROM delivery_checkpoints WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 70;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 35,
+    "estimated_minutes": 10
   },
   {
     "id": "log-L3-061",
@@ -2237,37 +2157,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 61,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in fuel_logs (Q61)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #61 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in fuel_logs. Select id, vehicle_id::text AS item_title, and gallons AS metric_score where gallons >= (SELECT MIN(gallons) FROM fuel_logs) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 71;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(gallons)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id::text AS item_title, gallons AS metric_score FROM fuel_logs WHERE gallons >= (SELECT MIN(gallons) FROM fuel_logs) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 71;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-062",
@@ -2275,36 +2192,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 62,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q62)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_62 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #62 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter maintenance_records using an IN subquery against active ids. Return id and service_type AS filtered_name where id IN (SELECT id FROM maintenance_records WHERE id >= 3) ORDER BY id ASC LIMIT 72;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_62 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_62 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS filtered_name FROM maintenance_records WHERE id IN (SELECT id FROM maintenance_records WHERE id >= 3) ORDER BY id ASC LIMIT 72;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-063",
@@ -2312,37 +2227,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 63,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q63)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #63 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in customs_declarations. Select id, port_of_entry AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from customs_declarations ORDER BY id ASC LIMIT 73;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, port_of_entry AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM customs_declarations ORDER BY id ASC LIMIT 73;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-064",
@@ -2350,37 +2264,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 64,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q64)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #64 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from parts_inventory and fuel_logs. Select part_number::text AS entity_name, 'Primary Stream' AS source_tier from parts_inventory WHERE part_number IS NOT NULL AND id <= 94 UNION ALL SELECT vehicle_id::text::text AS entity_name, 'Secondary Stream' AS source_tier from fuel_logs WHERE vehicle_id::text IS NOT NULL ORDER BY entity_name ASC LIMIT 74;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT part_number::text AS entity_name, 'Primary Stream' AS source_tier FROM parts_inventory WHERE part_number IS NOT NULL AND id <= 94 UNION ALL SELECT vehicle_id::text::text AS entity_name, 'Secondary Stream' AS source_tier FROM fuel_logs WHERE vehicle_id::text IS NOT NULL ORDER BY entity_name ASC LIMIT 74;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-065",
@@ -2388,37 +2300,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 65,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q65)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_65 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #65 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in shipments. Return t.id and t.destination_city AS confirmed_item WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 75;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_65 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_65 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.destination_city AS confirmed_item FROM shipments t WHERE EXISTS (SELECT 1 FROM shipments sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 75;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-066",
@@ -2426,34 +2335,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 66,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in cargo_packages (Q66)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #66 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from cargo_packages. Project dt.id, dt.shipment_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 76;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "text",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT dt.id, dt.shipment_id::text AS derived_name, dt.score FROM (SELECT id, shipment_id::text, weight_kg AS score FROM cargo_packages WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 76;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-067",
@@ -2461,36 +2372,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 67,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in delivery_checkpoints (Q67)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_67(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_67(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #67 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in delivery_checkpoints. Select id, location_name AS item_title, and id AS metric_score where id >= (SELECT MIN(id) FROM delivery_checkpoints) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 77;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "MIN(id)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_67(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_67(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "SELECT id, location_name AS item_title, id AS metric_score FROM delivery_checkpoints WHERE id >= (SELECT MIN(id) FROM delivery_checkpoints) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 77;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-068",
@@ -2498,37 +2407,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 68,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q68)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #68 - Sarah Jenkins (Head of Freight Compliance)]: Filter fuel_logs using an IN subquery against active ids. Return id and vehicle_id::text AS filtered_name where id IN (SELECT id FROM fuel_logs WHERE id >= 4) ORDER BY id ASC LIMIT 78;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, vehicle_id::text AS filtered_name FROM fuel_logs WHERE id IN (SELECT id FROM fuel_logs WHERE id >= 4) ORDER BY id ASC LIMIT 78;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-069",
@@ -2536,35 +2442,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 69,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q69)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #69 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in maintenance_records. Select id, service_type AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from maintenance_records ORDER BY id ASC LIMIT 79;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM maintenance_records ORDER BY id ASC LIMIT 79;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-070",
@@ -2572,36 +2479,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 70,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q70)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_70 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #70 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from customs_declarations and fleet_vehicles. Select port_of_entry::text AS entity_name, 'Primary Stream' AS source_tier from customs_declarations WHERE port_of_entry IS NOT NULL AND id <= 100 UNION ALL SELECT vehicle_number::text AS entity_name, 'Secondary Stream' AS source_tier from fleet_vehicles WHERE vehicle_number IS NOT NULL ORDER BY entity_name ASC LIMIT 80;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_70 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT port_of_entry::text AS entity_name, 'Primary Stream' AS source_tier FROM customs_declarations WHERE port_of_entry IS NOT NULL AND id <= 100 UNION ALL SELECT vehicle_number::text AS entity_name, 'Secondary Stream' AS source_tier FROM fleet_vehicles WHERE vehicle_number IS NOT NULL ORDER BY entity_name ASC LIMIT 80;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-071",
@@ -2609,36 +2515,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 71,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q71)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #71 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in parts_inventory. Return t.id and t.part_number AS confirmed_item WHERE EXISTS (SELECT 1 FROM parts_inventory sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 81;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_71 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_71_low PARTITION OF shipments_part_71 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_71_high PARTITION OF shipments_part_71 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_71 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_71;",
+    "reference_sql": "SELECT t.id, t.part_number AS confirmed_item FROM parts_inventory t WHERE EXISTS (SELECT 1 FROM parts_inventory sub WHERE sub.id = t.id AND sub.id >= 2) ORDER BY t.id ASC LIMIT 81;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-072",
@@ -2646,36 +2550,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 72,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in shipments (Q72)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_72() and bind trigger trg_audit_fleet_vehicles_72 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_72(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #72 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from shipments. Project dt.id, dt.destination_city AS derived_name, and dt.score from inline derived table where id >= 3 ordered by score DESC LIMIT 82;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "destination_city",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_72() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_72 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_72(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.destination_city AS derived_name, dt.score FROM (SELECT id, destination_city, weight_kg AS score FROM shipments WHERE id >= 3) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 82;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-073",
@@ -2683,37 +2587,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 73,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in cargo_packages (Q73)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #73 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in cargo_packages. Select id, shipment_id::text AS item_title, and weight_kg AS metric_score where weight_kg >= (SELECT MIN(weight_kg) FROM cargo_packages) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 83;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(weight_kg)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id::text AS item_title, weight_kg AS metric_score FROM cargo_packages WHERE weight_kg >= (SELECT MIN(weight_kg) FROM cargo_packages) AND id >= 4 ORDER BY metric_score DESC, id ASC LIMIT 83;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-074",
@@ -2721,36 +2622,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 74,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q74)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_74 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #74 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter delivery_checkpoints using an IN subquery against active ids. Return id and location_name AS filtered_name where id IN (SELECT id FROM delivery_checkpoints WHERE id >= 5) ORDER BY id ASC LIMIT 84;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_74 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_74 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, location_name AS filtered_name FROM delivery_checkpoints WHERE id IN (SELECT id FROM delivery_checkpoints WHERE id >= 5) ORDER BY id ASC LIMIT 84;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-075",
@@ -2758,37 +2657,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 75,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q75)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #75 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in fuel_logs. Select id, vehicle_id::text AS entry_title, and CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from fuel_logs ORDER BY id ASC LIMIT 85;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, vehicle_id::text AS entry_title, CASE WHEN id >= 10 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM fuel_logs ORDER BY id ASC LIMIT 85;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-076",
@@ -2796,37 +2694,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 76,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q76)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #76 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from maintenance_records and cargo_packages. Select service_type::text AS entity_name, 'Primary Stream' AS source_tier from maintenance_records WHERE service_type IS NOT NULL AND id <= 106 UNION ALL SELECT shipment_id::text::text AS entity_name, 'Secondary Stream' AS source_tier from cargo_packages WHERE shipment_id::text IS NOT NULL ORDER BY entity_name ASC LIMIT 86;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT service_type::text AS entity_name, 'Primary Stream' AS source_tier FROM maintenance_records WHERE service_type IS NOT NULL AND id <= 106 UNION ALL SELECT shipment_id::text::text AS entity_name, 'Secondary Stream' AS source_tier FROM cargo_packages WHERE shipment_id::text IS NOT NULL ORDER BY entity_name ASC LIMIT 86;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-077",
@@ -2834,37 +2730,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 77,
     "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
+    "title": "Relational Verification with EXISTS (Q77)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_77 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #77 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in customs_declarations. Return t.id and t.port_of_entry AS confirmed_item WHERE EXISTS (SELECT 1 FROM customs_declarations sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 87;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
+      "1"
     ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_77 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_77 ORDER BY adjusted_amount DESC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.port_of_entry AS confirmed_item FROM customs_declarations t WHERE EXISTS (SELECT 1 FROM customs_declarations sub WHERE sub.id = t.id AND sub.id >= 3) ORDER BY t.id ASC LIMIT 87;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-078",
@@ -2872,34 +2765,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 78,
     "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
+    "title": "Inline Derived Table Transformation in parts_inventory (Q78)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #78 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from parts_inventory. Project dt.id, dt.part_number AS derived_name, and dt.score from inline derived table where id >= 4 ordered by score DESC LIMIT 88;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
-      "QUERY PLAN"
+      "id",
+      "part_number",
+      "score"
     ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
+    "reference_sql": "SELECT dt.id, dt.part_number AS derived_name, dt.score FROM (SELECT id, part_number, quantity_in_stock AS score FROM parts_inventory WHERE id >= 4) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 88;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-079",
@@ -2907,36 +2802,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 79,
     "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "title": "Benchmark Segmentation with Subquery in shipments (Q79)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_79(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_79(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #79 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in shipments. Select id, destination_city AS item_title, and weight_kg AS metric_score where weight_kg >= (SELECT MIN(weight_kg) FROM shipments) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 89;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "MIN(weight_kg)"
     ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_79(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_79(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
+    "reference_sql": "SELECT id, destination_city AS item_title, weight_kg AS metric_score FROM shipments WHERE weight_kg >= (SELECT MIN(weight_kg) FROM shipments) AND id >= 5 ORDER BY metric_score DESC, id ASC LIMIT 89;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-080",
@@ -2944,37 +2837,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 80,
     "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q80)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #80 - Sarah Jenkins (Head of Freight Compliance)]: Filter cargo_packages using an IN subquery against active ids. Return id and shipment_id::text AS filtered_name where id IN (SELECT id FROM cargo_packages WHERE id >= 1) ORDER BY id ASC LIMIT 90;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
+      "id"
     ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, shipment_id::text AS filtered_name FROM cargo_packages WHERE id IN (SELECT id FROM cargo_packages WHERE id >= 1) ORDER BY id ASC LIMIT 90;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-081",
@@ -2982,35 +2872,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 81,
     "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
+    "title": "Conditional Tier Classification with CASE WHEN (Q81)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #81 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in delivery_checkpoints. Select id, location_name AS entry_title, and CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from delivery_checkpoints ORDER BY id ASC LIMIT 91;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CORRELATED SUBQUERY",
-      "EXISTS",
-      "SEMI-JOIN"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "city"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, location_name AS entry_title, CASE WHEN id >= 16 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM delivery_checkpoints ORDER BY id ASC LIMIT 91;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-082",
@@ -3018,36 +2909,35 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 82,
     "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "title": "Registry Integration with UNION ALL (Q82)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_82 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #82 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from fuel_logs and customs_declarations. Select vehicle_id::text::text AS entity_name, 'Primary Stream' AS source_tier from fuel_logs WHERE vehicle_id::text IS NOT NULL AND id <= 112 UNION ALL SELECT port_of_entry::text AS entity_name, 'Secondary Stream' AS source_tier from customs_declarations WHERE port_of_entry IS NOT NULL ORDER BY entity_name ASC LIMIT 92;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_82 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT vehicle_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM fuel_logs WHERE vehicle_id::text IS NOT NULL AND id <= 112 UNION ALL SELECT port_of_entry::text AS entity_name, 'Secondary Stream' AS source_tier FROM customs_declarations WHERE port_of_entry IS NOT NULL ORDER BY entity_name ASC LIMIT 92;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-083",
@@ -3055,36 +2945,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 83,
     "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "title": "Relational Verification with EXISTS (Q83)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #83 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in maintenance_records. Return t.id and t.service_type AS confirmed_item WHERE EXISTS (SELECT 1 FROM maintenance_records sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 93;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_83 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_83_low PARTITION OF shipments_part_83 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_83_high PARTITION OF shipments_part_83 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_83 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_83;",
+    "reference_sql": "SELECT t.id, t.service_type AS confirmed_item FROM maintenance_records t WHERE EXISTS (SELECT 1 FROM maintenance_records sub WHERE sub.id = t.id AND sub.id >= 4) ORDER BY t.id ASC LIMIT 93;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-084",
@@ -3092,36 +2980,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 84,
     "difficulty": "challenging",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in customs_declarations (Q84)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_84() and bind trigger trg_audit_fleet_vehicles_84 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_84(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #84 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from customs_declarations. Project dt.id, dt.port_of_entry AS derived_name, and dt.score from inline derived table where id >= 5 ordered by score DESC LIMIT 94;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "port_of_entry",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_84() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_84 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_84(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.port_of_entry AS derived_name, dt.score FROM (SELECT id, port_of_entry, duty_amount AS score FROM customs_declarations WHERE id >= 5) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 94;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-085",
@@ -3129,37 +3017,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 85,
     "difficulty": "challenging",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in parts_inventory (Q85)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #85 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in parts_inventory. Select id, part_number AS item_title, and quantity_in_stock AS metric_score where quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 95;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(quantity_in_stock)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, part_number AS item_title, quantity_in_stock AS metric_score FROM parts_inventory WHERE quantity_in_stock >= (SELECT MIN(quantity_in_stock) FROM parts_inventory) AND id >= 1 ORDER BY metric_score DESC, id ASC LIMIT 95;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-086",
@@ -3167,36 +3052,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 86,
     "difficulty": "challenging",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q86)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_86 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #86 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter shipments using an IN subquery against active ids. Return id and destination_city AS filtered_name where id IN (SELECT id FROM shipments WHERE id >= 2) ORDER BY id ASC LIMIT 96;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_86 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_86 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, destination_city AS filtered_name FROM shipments WHERE id IN (SELECT id FROM shipments WHERE id >= 2) ORDER BY id ASC LIMIT 96;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-087",
@@ -3204,37 +3087,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 87,
     "difficulty": "challenging",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q87)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #87 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in cargo_packages. Select id, shipment_id::text AS entry_title, and CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from cargo_packages ORDER BY id ASC LIMIT 97;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, shipment_id::text AS entry_title, CASE WHEN id >= 22 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM cargo_packages ORDER BY id ASC LIMIT 97;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-088",
@@ -3242,295 +3124,285 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 88,
     "difficulty": "challenging",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q88)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #88 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from delivery_checkpoints and suppliers. Select location_name::text AS entity_name, 'Primary Stream' AS source_tier from delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 118 UNION ALL SELECT supplier_name::text AS entity_name, 'Secondary Stream' AS source_tier from suppliers WHERE supplier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 98;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT location_name::text AS entity_name, 'Primary Stream' AS source_tier FROM delivery_checkpoints WHERE location_name IS NOT NULL AND id <= 118 UNION ALL SELECT supplier_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM suppliers WHERE supplier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 98;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 55,
+    "estimated_minutes": 15
   },
   {
     "id": "log-L3-089",
     "domain": "logistics",
     "level": 3,
     "order": 89,
-    "difficulty": "challenging",
-    "title": "Data Cleaning Pipeline: Ingestion & Imputation (CTAS)",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Ticket: Ingest and cleanse active records from fleet_vehicles. Create a Temporary Staging Table named temp_fleet_vehicles_cln_89 containing id, UPPER(TRIM(vehicle_number)) AS cleaned_name, and COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount where vehicle_number IS NOT NULL. Query all columns from the temp table ordered descending. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE TEMP TABLE",
-      "COALESCE",
-      "TRIM",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "cleaned_name",
-      "adjusted_amount"
-    ],
-    "reference_sql": "CREATE TEMP TABLE temp_fleet_vehicles_cln_89 AS SELECT id, UPPER(TRIM(vehicle_number)) AS cleaned_name, COALESCE(ROUND(max_weight_capacity_kg * 1.08, 2), 0.00) AS adjusted_amount FROM fleet_vehicles WHERE vehicle_number IS NOT NULL; SELECT id, cleaned_name, adjusted_amount FROM temp_fleet_vehicles_cln_89 ORDER BY adjusted_amount DESC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Stage the cleaned data via CREATE TEMP TABLE ... AS SELECT, then query it."
-    ],
-    "solution_explanation": "Builds an intermediate staging relation to cleanse nulls and whitespace before analytics loading.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-090",
-    "domain": "logistics",
-    "level": 3,
-    "order": 90,
-    "difficulty": "challenging",
-    "title": "Optimizer Path Profiling: EXPLAIN Plan Inspection",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Performance Directive: Diagnose sequential scan bottlenecks in shipments. Run an EXPLAIN (FORMAT JSON) on a query selecting id and weight_kg from shipments where weight_kg > 25 to inspect execution cost and planned access nodes.\"",
-    "context_notes": "",
-    "concepts": [
-      "EXPLAIN",
-      "QUERY PLANNER",
-      "COST PROFILING"
-    ],
-    "expected_columns": [
-      "QUERY PLAN"
-    ],
-    "reference_sql": "EXPLAIN (FORMAT JSON) SELECT id, weight_kg FROM shipments WHERE weight_kg > 25;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Prepend EXPLAIN (FORMAT JSON) to your query."
-    ],
-    "solution_explanation": "Extracts the PostgreSQL query planner JSON execution tree.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-091",
-    "domain": "logistics",
-    "level": 3,
-    "order": 91,
-    "difficulty": "challenging",
-    "title": "Operational Automation: Settlement Stored Procedure",
+    "difficulty": "boss",
+    "title": "Relational Verification with EXISTS (Q89)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Operations Ticket: Automate record status reconciliation. Write a Stored Procedure named sp_reconcile_fleet_vehicles_91(p_id INT, p_val NUMERIC) that updates max_weight_capacity_kg by adding p_val for the specified id. Execute with CALL sp_reconcile_fleet_vehicles_91(1, 10); then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles where id = 1.\"",
-    "context_notes": "",
-    "concepts": [
-      "CREATE PROCEDURE",
-      "CALL",
-      "TRANSACTIONAL LOGIC"
-    ],
-    "expected_columns": [
-      "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
-    ],
-    "reference_sql": "CREATE OR REPLACE PROCEDURE sp_reconcile_fleet_vehicles_91(p_id INT, p_val NUMERIC) LANGUAGE plpgsql AS $$ BEGIN UPDATE fleet_vehicles SET max_weight_capacity_kg = max_weight_capacity_kg + p_val WHERE id = p_id; END; $$; CALL sp_reconcile_fleet_vehicles_91(1, 10); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles WHERE id = 1;",
-    "validation": {
-      "order_sensitive": false,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Write CREATE OR REPLACE PROCEDURE, invoke with CALL, then verify with SELECT."
-    ],
-    "solution_explanation": "Encapsulates multi-table business updates inside a compiled procedural routine.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-092",
-    "domain": "logistics",
-    "level": 3,
-    "order": 92,
-    "difficulty": "challenging",
-    "title": "Data Scrubbing: Text Normalization and Null Filtering",
-    "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
-    },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Data Quality Alert: Standardize legacy text fields in warehouses. Select id, UPPER(TRIM(city)) AS standardized_title, and COALESCE(id, 0) AS safe_code from warehouses where city IS NOT NULL ORDER BY id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
-    "concepts": [
-      "TRIM",
-      "UPPER",
-      "IS NOT NULL",
-      "DATA CLEANING"
-    ],
-    "expected_columns": [
-      "id",
-      "standardized_title",
-      "safe_code"
-    ],
-    "reference_sql": "SELECT id, UPPER(TRIM(city)) AS standardized_title, COALESCE(id, 0) AS safe_code FROM warehouses WHERE city IS NOT NULL ORDER BY id ASC LIMIT 20;",
-    "validation": {
-      "order_sensitive": true,
-      "column_names_sensitive": false,
-      "numeric_tolerance": 0.01
-    },
-    "hints": [
-      "Use UPPER(TRIM(city)) and filter with WHERE city IS NOT NULL."
-    ],
-    "solution_explanation": "Scrubs untrimmed whitespace and imputes missing codes with default zero fallbacks.",
-    "xp": 45,
-    "estimated_minutes": 12
-  },
-  {
-    "id": "log-L3-093",
-    "domain": "logistics",
-    "level": 3,
-    "order": 93,
-    "difficulty": "challenging",
-    "title": "Anomaly Detection: Correlated Subquery with EXISTS",
-    "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
-    },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Audit Discrepancy: Identify all warehouses entries that have active corresponding associations in carriers. Using a Correlated Subquery with EXISTS, return t1.id and t1.city ordered by t1.id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #89 - Dave Miller (VP of Global Fleet Operations)]: Verify relational existence in fuel_logs. Return t.id and t.vehicle_id::text AS confirmed_item WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 99;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
       "CORRELATED SUBQUERY",
       "EXISTS",
       "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "city"
+      "1"
     ],
-    "reference_sql": "SELECT t1.id, t1.city FROM warehouses t1 WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id) ORDER BY t1.id ASC LIMIT 20;",
+    "reference_sql": "SELECT t.id, t.vehicle_id::text AS confirmed_item FROM fuel_logs t WHERE EXISTS (SELECT 1 FROM fuel_logs sub WHERE sub.id = t.id AND sub.id >= 5) ORDER BY t.id ASC LIMIT 99;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use WHERE EXISTS (SELECT 1 FROM carriers t2 WHERE t2.id = t1.id)."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies an optimized correlated semi-join to verify foreign key relationships.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "log-L3-090",
+    "domain": "logistics",
+    "level": 3,
+    "order": 90,
+    "difficulty": "boss",
+    "title": "Inline Derived Table Transformation in maintenance_records (Q90)",
+    "stakeholder": {
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
+    },
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #90 - Claire Sullivan (Director of Supply Chain Logistics)]: Query derived table from maintenance_records. Project dt.id, dt.service_type AS derived_name, and dt.score from inline derived table where id >= 1 ordered by score DESC LIMIT 100;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
+    ],
+    "expected_columns": [
+      "id",
+      "service_type",
+      "score"
+    ],
+    "reference_sql": "SELECT dt.id, dt.service_type AS derived_name, dt.score FROM (SELECT id, service_type, cost AS score FROM maintenance_records WHERE id >= 1) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 100;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "log-L3-091",
+    "domain": "logistics",
+    "level": 3,
+    "order": 91,
+    "difficulty": "boss",
+    "title": "Benchmark Segmentation with Subquery in customs_declarations (Q91)",
+    "stakeholder": {
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
+    },
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #91 - Frank Miller (Terminal Dispatch Manager)]: Isolate records in customs_declarations. Select id, port_of_entry AS item_title, and duty_amount AS metric_score where duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 101;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
+    ],
+    "expected_columns": [
+      "MIN(duty_amount)"
+    ],
+    "reference_sql": "SELECT id, port_of_entry AS item_title, duty_amount AS metric_score FROM customs_declarations WHERE duty_amount >= (SELECT MIN(duty_amount) FROM customs_declarations) AND id >= 2 ORDER BY metric_score DESC, id ASC LIMIT 101;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "log-L3-092",
+    "domain": "logistics",
+    "level": 3,
+    "order": 92,
+    "difficulty": "boss",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q92)",
+    "stakeholder": {
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
+    },
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #92 - Sarah Jenkins (Head of Freight Compliance)]: Filter parts_inventory using an IN subquery against active ids. Return id and part_number AS filtered_name where id IN (SELECT id FROM parts_inventory WHERE id >= 3) ORDER BY id ASC LIMIT 102;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
+    ],
+    "expected_columns": [
+      "id"
+    ],
+    "reference_sql": "SELECT id, part_number AS filtered_name FROM parts_inventory WHERE id IN (SELECT id FROM parts_inventory WHERE id >= 3) ORDER BY id ASC LIMIT 102;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
+  },
+  {
+    "id": "log-L3-093",
+    "domain": "logistics",
+    "level": 3,
+    "order": 93,
+    "difficulty": "boss",
+    "title": "Conditional Tier Classification with CASE WHEN (Q93)",
+    "stakeholder": {
+      "name": "Dave Miller",
+      "role": "VP of Global Fleet Operations",
+      "department": "Fleet Ops"
+    },
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #93 - Dave Miller (VP of Global Fleet Operations)]: Classify entries in shipments. Select id, destination_city AS entry_title, and CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from shipments ORDER BY id ASC LIMIT 103;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
+    "concepts": [
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
+    ],
+    "expected_columns": [
+      "id",
+      "entry_title",
+      "status_tier"
+    ],
+    "reference_sql": "SELECT id, destination_city AS entry_title, CASE WHEN id >= 13 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM shipments ORDER BY id ASC LIMIT 103;",
+    "validation": {
+      "order_sensitive": true,
+      "column_names_sensitive": false,
+      "numeric_tolerance": 0.01
+    },
+    "hints": [
+      "Apply subquery or CASE logic."
+    ],
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-094",
     "domain": "logistics",
     "level": 3,
     "order": 94,
-    "difficulty": "challenging",
-    "title": "Incident Response: High-Cardinality Index Optimization",
+    "difficulty": "boss",
+    "title": "Registry Integration with UNION ALL (Q94)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Claire Sullivan",
+      "role": "Director of Supply Chain Logistics",
+      "department": "Supply Chain"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"ALERT: The dashboard query on shipments is causing severe CPU spikes. Create a composite index named idx_shipments_opt_94 ON shipments(id, weight_kg DESC). Then retrieve id, destination_city, weight_kg where weight_kg > 30 ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #94 - Claire Sullivan (Director of Supply Chain Logistics)]: Combine registry names from cargo_packages and delivery_checkpoints. Select shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier from cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 124 UNION ALL SELECT location_name::text AS entity_name, 'Secondary Stream' AS source_tier from delivery_checkpoints WHERE location_name IS NOT NULL ORDER BY entity_name ASC LIMIT 104;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE INDEX",
-      "PERFORMANCE TUNING",
-      "COMPOSITE INDEX"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "destination_city",
-      "weight_kg"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "CREATE INDEX idx_shipments_opt_94 ON shipments(id, weight_kg DESC); SELECT id, destination_city, weight_kg FROM shipments WHERE weight_kg > 30 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT shipment_id::text::text AS entity_name, 'Primary Stream' AS source_tier FROM cargo_packages WHERE shipment_id::text IS NOT NULL AND id <= 124 UNION ALL SELECT location_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM delivery_checkpoints WHERE location_name IS NOT NULL ORDER BY entity_name ASC LIMIT 104;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the composite index first, then execute the SELECT query."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Eliminates slow sequential scans during high-concurrency production load.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-095",
     "domain": "logistics",
     "level": 3,
     "order": 95,
-    "difficulty": "challenging",
-    "title": "Storage Scale Architecture: Declarative Table Partitioning",
+    "difficulty": "boss",
+    "title": "Relational Verification with EXISTS (Q95)",
     "stakeholder": {
-      "name": "Claire Sullivan",
-      "role": "Director of Supply Chain Logistics",
-      "department": "Supply Chain"
+      "name": "Frank Miller",
+      "role": "Terminal Dispatch Manager",
+      "department": "Operations"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"Infrastructure Directive: Ledger shipments is reaching multi-gigabyte scale. Create a partitioned table named shipments_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount). Create child partitions for low (< 100) and high (>= 100) values. Insert a test row (1, 'Audited', 250.00) and query all rows.\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #95 - Frank Miller (Terminal Dispatch Manager)]: Verify relational existence in delivery_checkpoints. Return t.id and t.location_name AS confirmed_item WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 105;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "PARTITION BY RANGE",
-      "TABLE PARTITIONING",
-      "SCALE ARCHITECTURE"
+      "CORRELATED SUBQUERY",
+      "EXISTS",
+      "SEMI-JOIN"
     ],
     "expected_columns": [
-      "id",
-      "status_code",
-      "amount"
+      "1"
     ],
-    "reference_sql": "CREATE TABLE shipments_part_95 (id INT, status_code VARCHAR(100), amount NUMERIC) PARTITION BY RANGE (amount); CREATE TABLE shipments_part_95_low PARTITION OF shipments_part_95 FOR VALUES FROM (0) TO (100); CREATE TABLE shipments_part_95_high PARTITION OF shipments_part_95 FOR VALUES FROM (100) TO (100000); INSERT INTO shipments_part_95 VALUES (1, 'Audited', 250.00); SELECT id, status_code, amount FROM shipments_part_95;",
+    "reference_sql": "SELECT t.id, t.location_name AS confirmed_item FROM delivery_checkpoints t WHERE EXISTS (SELECT 1 FROM delivery_checkpoints sub WHERE sub.id = t.id AND sub.id >= 1) ORDER BY t.id ASC LIMIT 105;",
     "validation": {
-      "order_sensitive": false,
+      "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the master table PARTITION BY RANGE, create child partition tables, insert, and select."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Builds a partitioned table hierarchy to enable storage pruning on high-volume tables.",
-    "xp": 45,
-    "estimated_minutes": 12
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-096",
@@ -3538,36 +3410,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 96,
     "difficulty": "boss",
-    "title": "Regulatory Mandate: Immutable Audit Trigger",
+    "title": "Inline Derived Table Transformation in fuel_logs (Q96)",
     "stakeholder": {
-      "name": "Frank Miller",
-      "role": "Terminal Dispatch Manager",
-      "department": "Operations"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Compliance Officer Directive: Create an event trigger on fleet_vehicles to monitor record mutations. Define function fn_audit_fleet_vehicles_96() and bind trigger trg_audit_fleet_vehicles_96 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_96(). Then select id, vehicle_number, max_weight_capacity_kg from fleet_vehicles ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #96 - Sarah Jenkins (Head of Freight Compliance)]: Query derived table from fuel_logs. Project dt.id, dt.vehicle_id::text AS derived_name, and dt.score from inline derived table where id >= 2 ordered by score DESC LIMIT 106;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE TRIGGER",
-      "PL/pgSQL",
-      "AUDIT SENTINEL"
+      "DERIVED TABLE",
+      "SUBQUERY IN FROM",
+      "ANALYTICS"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg"
+      "text",
+      "score"
     ],
-    "reference_sql": "CREATE OR REPLACE FUNCTION fn_audit_fleet_vehicles_96() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$; CREATE TRIGGER trg_audit_fleet_vehicles_96 BEFORE UPDATE ON fleet_vehicles FOR EACH ROW EXECUTE FUNCTION fn_audit_fleet_vehicles_96(); SELECT id, vehicle_number, max_weight_capacity_kg FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT dt.id, dt.vehicle_id::text AS derived_name, dt.score FROM (SELECT id, vehicle_id::text, gallons AS score FROM fuel_logs WHERE id >= 2) dt ORDER BY dt.score DESC, dt.id ASC LIMIT 106;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the trigger function returning trigger, attach the trigger, then query fleet_vehicles."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Installs an event-driven database sentinel to enforce regulatory compliance.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-097",
@@ -3575,37 +3447,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 97,
     "difficulty": "boss",
-    "title": "Data Quality Defense: Division-by-Zero Protection with NULLIF",
+    "title": "Benchmark Segmentation with Subquery in maintenance_records (Q97)",
     "stakeholder": {
       "name": "Dave Miller",
       "role": "VP of Global Fleet Operations",
       "department": "Fleet Ops"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Metrics Audit: When calculating performance ratios in fleet_vehicles, avoid division-by-zero crashes. Using NULLIF and COALESCE, select id, vehicle_number, and ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"[Task #97 - Dave Miller (VP of Global Fleet Operations)]: Isolate records in maintenance_records. Select id, service_type AS item_title, and cost AS metric_score where cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 107;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "NULLIF",
-      "COALESCE",
-      "DATA CLEANING",
-      "ARITHMETIC DEFENSE"
+      "SUBQUERY",
+      "SCALAR SUBQUERY",
+      "WHERE"
     ],
     "expected_columns": [
-      "id",
-      "vehicle_number",
-      "index_ratio"
+      "MIN(cost)"
     ],
-    "reference_sql": "SELECT id, vehicle_number, ROUND((max_weight_capacity_kg / NULLIF(COALESCE(max_weight_capacity_kg, 1), 0))::numeric, 2) AS index_ratio FROM fleet_vehicles ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, service_type AS item_title, cost AS metric_score FROM maintenance_records WHERE cost >= (SELECT MIN(cost) FROM maintenance_records) AND id >= 3 ORDER BY metric_score DESC, id ASC LIMIT 107;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Wrap denominators with NULLIF(..., 0) to guard against divide-by-zero exceptions."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Applies NULLIF to defensively eliminate arithmetic divide-by-zero runtime errors.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-098",
@@ -3613,36 +3482,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 98,
     "difficulty": "boss",
-    "title": "Executive Abstraction Layer: Secure Database View",
+    "title": "Dynamic Relation Filtering with IN Subquery (Q98)",
     "stakeholder": {
       "name": "Claire Sullivan",
       "role": "Director of Supply Chain Logistics",
       "department": "Supply Chain"
     },
-    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"VP Request: Create a sanitized reporting View named v_exec_summary_warehouses_98 joining warehouses and carriers on t1.id = t2.id. Project t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, and COALESCE(t2.carrier_name, 'None') AS secondary_name. Query from the view ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Claire Sullivan (Director of Supply Chain Logistics)\n\n\"[Task #98 - Claire Sullivan (Director of Supply Chain Logistics)]: Filter customs_declarations using an IN subquery against active ids. Return id and port_of_entry AS filtered_name where id IN (SELECT id FROM customs_declarations WHERE id >= 4) ORDER BY id ASC LIMIT 108;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "CREATE VIEW",
-      "COALESCE",
-      "SECURITY ABSTRACTION"
+      "SUBQUERY",
+      "IN",
+      "FILTERING"
     ],
     "expected_columns": [
-      "id",
-      "primary_name",
-      "secondary_name"
+      "id"
     ],
-    "reference_sql": "CREATE OR REPLACE VIEW v_exec_summary_warehouses_98 AS SELECT t1.id, COALESCE(t1.city, 'Unassigned') AS primary_name, COALESCE(t2.carrier_name, 'None') AS secondary_name FROM warehouses t1 JOIN carriers t2 ON t1.id = t2.id; SELECT id, primary_name, secondary_name FROM v_exec_summary_warehouses_98 ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT id, port_of_entry AS filtered_name FROM customs_declarations WHERE id IN (SELECT id FROM customs_declarations WHERE id >= 4) ORDER BY id ASC LIMIT 108;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Create the view aliasing columns with COALESCE fallbacks, then query from it."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Abstracts joined relations behind an immutable virtual security view with null-safe column fallbacks.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-099",
@@ -3650,37 +3517,36 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 99,
     "difficulty": "boss",
-    "title": "Multi-Stage Quartile Stratification (CTE & NTILE)",
+    "title": "Conditional Tier Classification with CASE WHEN (Q99)",
     "stakeholder": {
       "name": "Frank Miller",
       "role": "Terminal Dispatch Manager",
       "department": "Operations"
     },
-    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"Executive Memo: Segment records in fleet_vehicles into 4 analytical quartiles based on max_weight_capacity_kg using NTILE(4) within a CTE named cohort_analysis. Return id, vehicle_number, max_weight_capacity_kg, and quartile ordered by quartile ASC, max_weight_capacity_kg DESC. (Limit to 25 records).\"",
-    "context_notes": "",
+    "request": "From: Frank Miller (Terminal Dispatch Manager)\n\n\"[Task #99 - Frank Miller (Terminal Dispatch Manager)]: Classify entries in parts_inventory. Select id, part_number AS entry_title, and CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier from parts_inventory ORDER BY id ASC LIMIT 109;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "WITH (CTE)",
-      "NTILE(4)",
-      "ANALYTICS"
+      "CASE WHEN",
+      "CONDITIONAL LOGIC",
+      "CLASSIFICATION"
     ],
     "expected_columns": [
       "id",
-      "vehicle_number",
-      "max_weight_capacity_kg",
-      "quartile"
+      "entry_title",
+      "status_tier"
     ],
-    "reference_sql": "WITH cohort_analysis AS (SELECT id, vehicle_number, max_weight_capacity_kg, NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile FROM fleet_vehicles) SELECT id, vehicle_number, max_weight_capacity_kg, quartile FROM cohort_analysis ORDER BY quartile ASC, max_weight_capacity_kg DESC LIMIT 25;",
+    "reference_sql": "SELECT id, part_number AS entry_title, CASE WHEN id >= 19 THEN 'Tier Alpha' ELSE 'Tier Beta' END AS status_tier FROM parts_inventory ORDER BY id ASC LIMIT 109;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Use NTILE(4) OVER (ORDER BY max_weight_capacity_kg DESC) AS quartile inside the CTE."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Combines CTE staging with statistical distribution quartiles.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   },
   {
     "id": "log-L3-100",
@@ -3688,36 +3554,34 @@ export const LOG_L3_QUESTIONS: QuestionDefinition[] = [
     "level": 3,
     "order": 100,
     "difficulty": "boss",
-    "title": "Revenue Velocity Analysis: Dual-Horizon LAG & LEAD",
+    "title": "Registry Integration with UNION ALL (Q100)",
     "stakeholder": {
-      "name": "Dave Miller",
-      "role": "VP of Global Fleet Operations",
-      "department": "Fleet Ops"
+      "name": "Sarah Jenkins",
+      "role": "Head of Freight Compliance",
+      "department": "Compliance"
     },
-    "request": "From: Dave Miller (VP of Global Fleet Operations)\n\n\"Financial Growth Memo: In shipments, compute both prior period delta (LAG) and forward horizon projection (LEAD). Project id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, and LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount ordered by id ASC. (Limit to 20 records).\"",
-    "context_notes": "",
+    "request": "From: Sarah Jenkins (Head of Freight Compliance)\n\n\"[Task #100 - Sarah Jenkins (Head of Freight Compliance)]: Combine registry names from shipments and carriers. Select destination_city::text AS entity_name, 'Primary Stream' AS source_tier from shipments WHERE destination_city IS NOT NULL AND id <= 130 UNION ALL SELECT carrier_name::text AS entity_name, 'Secondary Stream' AS source_tier from carriers WHERE carrier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 110;\"",
+    "context_notes": "Level 3 Advanced Subquery & Conditional Analytical Query.",
     "concepts": [
-      "LAG()",
-      "LEAD()",
-      "WINDOW FUNCTION"
+      "UNION ALL",
+      "SET OPERATIONS",
+      "DATA INTEGRATION"
     ],
     "expected_columns": [
-      "id",
-      "weight_kg",
-      "prev_amount",
-      "next_amount"
+      "entity_name",
+      "source_tier"
     ],
-    "reference_sql": "SELECT id, weight_kg, LAG(weight_kg) OVER (ORDER BY id ASC) AS prev_amount, LEAD(weight_kg) OVER (ORDER BY id ASC) AS next_amount FROM shipments ORDER BY id ASC LIMIT 20;",
+    "reference_sql": "SELECT destination_city::text AS entity_name, 'Primary Stream' AS source_tier FROM shipments WHERE destination_city IS NOT NULL AND id <= 130 UNION ALL SELECT carrier_name::text AS entity_name, 'Secondary Stream' AS source_tier FROM carriers WHERE carrier_name IS NOT NULL ORDER BY entity_name ASC LIMIT 110;",
     "validation": {
       "order_sensitive": true,
       "column_names_sensitive": false,
       "numeric_tolerance": 0.01
     },
     "hints": [
-      "Apply both LAG() and LEAD() over the same sorted window."
+      "Apply subquery or CASE logic."
     ],
-    "solution_explanation": "Performs simultaneous backward and forward row lookups for trajectory analysis.",
-    "xp": 75,
-    "estimated_minutes": 20
+    "solution_explanation": "Uses subqueries, conditional evaluation, and set logic to analyze database entities.",
+    "xp": 85,
+    "estimated_minutes": 22
   }
 ];
