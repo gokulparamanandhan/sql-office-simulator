@@ -112,7 +112,7 @@ export default function InterviewPrepCatalogPage() {
                 </span>
               </div>
               <p className="text-xs text-[var(--ink)] opacity-75 font-medium">
-                Free LeetCode for Data Analysts • Real Company Challenges
+                Real Technical Interview Challenges &amp; Company Screenings
               </p>
             </div>
           </div>

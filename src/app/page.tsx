@@ -480,7 +480,7 @@ export default function Home() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  New • Free LeetCode for SQL
+                  New • MAANG Interview Prep
                 </span>
                 <span className="text-xs font-black text-[var(--ink)]">
                   MAANG &amp; Startup Interview Prep

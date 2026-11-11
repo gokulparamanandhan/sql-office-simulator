@@ -280,6 +280,15 @@ export default function DashboardPage() {
               <span>{data.totalXp} XP</span>
             </div>
 
+            {/* MAANG Interview Prep Button */}
+            <Link
+              href="/interview"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-red-500 hover:bg-red-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+            >
+              <Flame className="w-4 h-4 fill-current text-white" />
+              <span>MAANG Prep</span>
+            </Link>
+
             {/* Learn SQL Academy & Theme Toggle */}
             <Link
               href="/learn"
@@ -342,6 +351,38 @@ export default function DashboardPage() {
               <div className="text-[10px] font-bold uppercase text-[var(--ink)] opacity-70">Questions</div>
             </div>
           </div>
+        </div>
+
+        {/* MAANG Interview Prep Banner */}
+        <div className="bg-[var(--sun)]/30 border-2 border-[var(--ink)] rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_var(--ink)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500 border-2 border-[var(--ink)] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_var(--ink)] text-white">
+              <Flame className="w-6 h-6 fill-current" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  New Feature
+                </span>
+                <span className="text-xs font-bold text-[var(--ink)] opacity-75">
+                  Meta • Amazon • Google • Uber • Stripe
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-[var(--ink)] mt-1">
+                MAANG &amp; Startup SQL Interview Prep
+              </h2>
+              <p className="text-xs text-[var(--ink)] opacity-85 mt-0.5 max-w-xl leading-relaxed">
+                Practice real technical interview questions with strict row-by-row grading, hidden edge cases, diff inspection, and 25-minute mock interview timers.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/interview"
+            className="btn-primary text-xs py-2.5 px-4 font-black shadow-[2px_2px_0px_var(--ink)] shrink-0 inline-flex items-center gap-2"
+          >
+            <span>Start MAANG Prep</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* Neo-Brutalist Career XP & Progression Bar (Image 4 Design) */}
