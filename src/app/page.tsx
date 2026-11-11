@@ -24,6 +24,7 @@ import {
   BookOpen,
   X,
   Compass,
+  Flame,
 } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
 
@@ -211,6 +212,15 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Interview Prep Link */}
+            <Link
+              href="/interview"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--sun)] text-xs font-black text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-600" />
+              <span>Interview Prep</span>
+            </Link>
+
             {/* Onboarding Guide Link */}
             <Link
               href="/onboarding"
@@ -458,6 +468,40 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* MAANG Interview Prep Section Banner */}
+        <section className="bg-[var(--sun)]/30 border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[4px_4px_0px_var(--ink)] flex flex-col md:flex-row items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_var(--ink)]">
+              <Flame className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  New • Free LeetCode for SQL
+                </span>
+                <span className="text-xs font-black text-[var(--ink)]">
+                  MAANG &amp; Startup Interview Prep
+                </span>
+              </div>
+              <h3 className="font-black text-base text-[var(--ink)]">
+                Ace Your Data Analyst SQL Technical Screens
+              </h3>
+              <p className="text-xs text-[var(--ink)] opacity-85 max-w-2xl leading-relaxed">
+                Practice real interview questions from Meta, Amazon, Google, Uber, Netflix, and Stripe. Solve top-N per group, cohort retention, sessionization, and gaps &amp; islands with our strict row-by-row grader.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/interview"
+              className="btn-primary text-xs py-2.5 px-4 shadow-[2px_2px_0px_var(--ink)] inline-flex items-center gap-1.5"
+            >
+              <Zap className="w-4 h-4" />
+              <span>Start Interview Prep →</span>
+            </Link>
           </div>
         </section>
 
