@@ -25,15 +25,25 @@ import {
   X,
   Compass,
   Flame,
+  Trophy,
+  AlertTriangle,
+  Bug,
+  Crown,
+  Play,
+  RotateCcw,
+  Check,
 } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
+import { CURRICULUM_TIERS, CURRICULUM_300_QUESTIONS } from "@/lib/content/curriculum-300";
+import { BADGES_DATA } from "@/lib/gamification/badges-data";
+import { LeaderboardEntry } from "@/lib/gamification/leaderboard-service";
 
 export default function Home() {
-  const [activeDomainTab, setActiveDomainTab] = useState<string>("ecommerce");
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
-  const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
-  const [selectedModalDomain, setSelectedModalDomain] = useState<any>(null);
+  const [comparisonMode, setComparisonMode] = useState<"tutorial" | "production">("production");
+  const [leaderboardPreview, setLeaderboardPreview] = useState<LeaderboardEntry[]>([]);
+  const [activeTierTab, setActiveTierTab] = useState<"basic" | "intermediate" | "advanced">("basic");
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -48,6 +58,23 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setAuthChecked(true));
+
+    fetch("/api/leaderboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data.leaderboard) {
+          setLeaderboardPreview(data.leaderboard.slice(0, 5));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Auto-toggle comparison animation every 5 seconds if user hasn't clicked
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setComparisonMode((prev) => (prev === "tutorial" ? "production" : "tutorial"));
+    }, 6000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleLogout = async () => {
@@ -56,204 +83,79 @@ export default function Home() {
     setUser(null);
   };
 
-  const domains = [
-    {
-      id: "ecommerce",
-      name: "E-Commerce",
-      tagline: "OmniCart Retail Group",
-      desc: "Analyze customer repeat rates, warehouse returns, basket sizes, and regional marketing attribution.",
-      tables: ["customers", "orders", "order_items", "products", "shipments", "returns"],
-      sampleStakeholder: "Maya Lin, Head of Growth",
-      sampleRequest: "Which regions have the highest share of customers who ordered more than once in 2025?",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "healthcare",
-      name: "Healthcare",
-      tagline: "St. Jude Clinical Network",
-      desc: "Query patient treatment histories, emergency room admission wait times, and insurance claim loss ratios.",
-      tables: ["patients", "appointments", "doctors", "diagnoses", "prescriptions", "billing"],
-      sampleStakeholder: "Dr. Robert Vance, Chief Medical Officer",
-      sampleRequest: "Identify the top 5 medication interaction alerts that were overridden in Q3.",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "finance",
-      name: "Finance & Banking",
-      tagline: "Apex Capital Bank",
-      desc: "Audit high-frequency debit card fraud spikes, cross-border remittance fees, and loan default indicators.",
-      tables: ["accounts", "customers", "transactions", "loans", "cards", "fraud_alerts"],
-      sampleStakeholder: "Elena Rostova, VP Risk Management",
-      sampleRequest: "Flag all merchant categories showing a >40% surge in chargeback disputes this month.",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "hr",
-      name: "Human Resources",
-      tagline: "Vanguard Global HR",
-      desc: "Calculate engineering attrition cohorts, compensation equity ratios, and hiring funnel velocity.",
-      tables: ["employees", "departments", "salaries", "attendance", "performance_reviews"],
-      sampleStakeholder: "Marcus Chen, Chief People Officer",
-      sampleRequest: "Calculate median tenure by department for managers vs individual contributors.",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "logistics",
-      name: "Logistics & Supply",
-      tagline: "Atlas Freight Solutions",
-      desc: "Track carrier route delays, container dwell time, fleet telematics, and warehouse dock utilization.",
-      tables: ["shipments", "vehicles", "drivers", "routes", "warehouses", "delivery_events"],
-      sampleStakeholder: "David O'Connor, Dispatch Director",
-      sampleRequest: "Rank the top 3 bottlenecks in our Midwest fulfillment hub by average dwell hours.",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "restaurants",
-      name: "Restaurants & Hospitality",
-      tagline: "Palate Group Dining",
-      desc: "Audit peak-hour table turn times, food waste margins, supplier contract variances, and tips.",
-      tables: ["restaurants", "menu_items", "orders", "staff", "shifts", "reservations"],
-      sampleStakeholder: "Chef Julian Rossi, Culinary Director",
-      sampleRequest: "Which signature entrees had the lowest margin-to-labor ratio during dinner rushes?",
-      xp: "500 Questions • 5 Levels",
-    },
-    {
-      id: "saas",
-      name: "Software (B2B SaaS)",
-      tagline: "CloudScale Platform",
-      desc: "Analyze annual recurring revenue (ARR), seat expansions, monthly churn cohorts, and feature adoption.",
-      tables: ["users", "accounts", "subscriptions", "feature_usage", "incidents", "invoices"],
-      sampleStakeholder: "Alicia Torres, VP Product",
-      sampleRequest: "Find organizations whose active seats dropped by >25% in the 30 days before renewal.",
-      xp: "500 Questions • 5 Levels",
-    },
-  ];
-
-  const levels = [
-    {
-      num: 1,
-      name: "The Startup",
-      scale: "5–20 employees",
-      rows: "1K–10K rows",
-      role: "Solo Data Generalist",
-      desc: "You are the first data hire. Answer leadership's daily questions covering every department.",
-      concepts: "SELECT, WHERE, GROUP BY, HAVING, basic INNER/LEFT JOIN, aggregates",
-    },
-    {
-      num: 2,
-      name: "Growing Company",
-      scale: "50–100 employees",
-      rows: "~100K rows",
-      role: "Junior Data Analyst",
-      desc: "Dedicated functional teams, expanding database schemas, and multi-table business reconciliations.",
-      concepts: "Multi-table JOINs, subqueries, CTEs, CASE WHEN, date/string functions, UNION",
-    },
-    {
-      num: 3,
-      name: "Scale-Up",
-      scale: "200–500 employees",
-      rows: "~1M rows",
-      role: "Senior Data Analyst",
-      desc: "Multiple international regions and high-velocity transactional databases. Analytical depth required.",
-      concepts: "Window functions (ROW_NUMBER, RANK, LAG/LEAD), conditional aggregation, cohorts",
-    },
-    {
-      num: 4,
-      name: "Enterprise",
-      scale: "1,000+ employees",
-      rows: "~5M rows",
-      role: "Lead Analytics Engineer",
-      desc: "Messy, fragmented data across merged business units. Performance-aware and investigative queries.",
-      concepts: "Recursive CTEs, complex window frames, gaps & islands, deduplication, EXPLAIN",
-    },
-    {
-      num: 5,
-      name: "Global Corporation",
-      scale: "5,000+ employees",
-      rows: "10M+ rows",
-      role: "Head of Data / Principal",
-      desc: "Multinational conglomerate, billions in revenue, slowly changing dimensions, and C-suite asks.",
-      concepts: "Query optimization, percentiles, moving averages, YoY/MoM, SCD, cross-system audits",
-    },
-  ];
-
-  const selectedDomain = domains.find((d) => d.id === activeDomainTab) || domains[0];
-
-  const handleStartLevelClick = (e: React.MouseEvent, domainItem: typeof domains[0]) => {
-    if (!user) {
-      e.preventDefault();
-      setSelectedModalDomain(domainItem);
-      setOnboardingModalOpen(true);
-    }
-  };
+  const selectedTier = CURRICULUM_TIERS.find((t) => t.id === activeTierTab) || CURRICULUM_TIERS[0];
+  const sampleTierQuestions = CURRICULUM_300_QUESTIONS.filter((q) => q.tier === activeTierTab);
 
   return (
-    <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
-      {/* Top Office Header */}
-      <header className="sticky top-0 z-50 bg-[var(--white)] border-b-2 border-[var(--sky)] px-4 sm:px-8 py-3.5 shadow-sm">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#000000] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black">
+      {/* Vintage Neo-Brutalist Header */}
+      <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b-3 border-[#000000] px-4 sm:px-8 py-3.5 shadow-[0_4px_0_0_#000000]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[var(--ocean)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
-              <Building2 className="w-5 h-5 text-[var(--ink)]" />
+            <div className="w-10 h-10 rounded-lg bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000000]">
+              <Database className="w-5 h-5 text-black" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg tracking-tight text-[var(--ink)]">
-                  SQL OFFICE SIMULATOR
+                <span className="font-black text-xl tracking-tight uppercase text-black">
+                  SQL GRIT
                 </span>
-                <span className="bg-[var(--sun)] text-[var(--ink)] border border-[var(--ink)] text-xs font-bold px-2 py-0.5 rounded-full">
-                  FREE
+                <span className="bg-[#FF5555] text-white border-2 border-black text-[10px] font-black px-2 py-0.5 rounded shadow-[1px_1px_0px_#000000] uppercase tracking-wider">
+                  DIRTY DATA ONLY
                 </span>
               </div>
-              <p className="text-xs text-[var(--ink)] opacity-75 font-medium">
-                Phase 0 Foundation • Real SQL Workplace
+              <p className="text-xs text-black/70 font-bold">
+                The 300 MAANG &amp; Startup Interview Curriculum
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Interview Prep Link */}
-            <Link
-              href="/interview"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--sun)] text-xs font-black text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+            {/* 3 Tiers Quick Link */}
+            <a
+              href="#curriculum"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-50 text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
             >
-              <Flame className="w-3.5 h-3.5 text-orange-600" />
-              <span>Interview Prep</span>
+              <Layers className="w-3.5 h-3.5 text-black" />
+              <span>300 Questions</span>
+            </a>
+
+            {/* Badges Link */}
+            <Link
+              href="/badges"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-50 text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-500" />
+              <span>Level Badges</span>
             </Link>
 
-            {/* Onboarding Guide Link */}
+            {/* Leaderboard Link */}
             <Link
-              href="/onboarding"
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] transition-colors"
+              href="/leaderboard"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-[#00E599] hover:bg-[#00D084] text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
             >
-              <BookOpen className="w-3.5 h-3.5 text-[var(--ocean-hover)]" />
-              <span>Onboarding Guide</span>
+              <Trophy className="w-3.5 h-3.5 text-black" />
+              <span>Leaderboard</span>
             </Link>
 
-            {/* Honor Pledge Badge */}
-            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-semibold text-[var(--ink)]">
-              <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
-              <span>Honor Code: Human SQL Only</span>
-            </div>
-
-            {/* Highlighted Feedback Link */}
+            {/* Feedback Link */}
             <FeedbackLink variant="button" />
 
             {/* Auth Buttons */}
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="hidden sm:inline text-xs font-bold text-[var(--ink)] bg-[var(--mist)] px-2.5 py-1.5 rounded-md border border-[var(--sky)]">
+                <span className="hidden sm:inline text-xs font-black text-black bg-[#FFF9D2] px-2.5 py-1.5 rounded-md border-2 border-black shadow-[1px_1px_0px_#000000]">
                   Hi, {user.name}
                 </span>
                 <Link
                   href="/dashboard"
-                  className="btn-primary text-xs py-2 px-3.5"
+                  className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#FDD835]"
                 >
                   Dashboard
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="btn-secondary text-xs py-2 px-3"
+                  className="px-3 py-1.5 rounded-lg border-2 border-black bg-white font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-slate-100"
                 >
                   Sign Out
                 </button>
@@ -262,15 +164,15 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="btn-secondary text-xs py-2 px-3.5"
+                  className="px-3 py-1.5 rounded-lg border-2 border-black bg-white font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-slate-100"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="btn-primary text-xs py-2 px-3.5"
+                  className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#FDD835]"
                 >
-                  Sign Up
+                  Sign Up Free
                 </Link>
               </div>
             )}
@@ -278,575 +180,559 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-12">
-        {/* User Logged-in Banner if authenticated */}
+        {/* User Logged-in Banner */}
         {user && (
-          <div className="bg-[var(--sun)]/25 border-2 border-[var(--ink)] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[2px_2px_0px_var(--ink)]">
+          <div className="bg-[#FFF9D2] border-3 border-black rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[4px_4px_0px_#000000]">
             <div className="flex items-center gap-3">
-              <span className="text-xl">💼</span>
+              <span className="text-2xl">💼</span>
               <div>
-                <span className="font-extrabold text-sm text-[var(--ink)]">
-                  Logged in as {user.name} ({user.email})
+                <span className="font-black text-sm text-black">
+                  Welcome back, {user.name}! Ready for your next dirty query challenge?
                 </span>
-                <p className="text-xs text-[var(--ink)] opacity-80">
-                  Your sandbox progress is being saved automatically. Ready for your next query challenge?
+                <p className="text-xs text-black/80 font-bold">
+                  Track your standing on the live leaderboard and unlock the Level 1, 2, and 3 badges.
                 </p>
               </div>
             </div>
             <Link
-              href="/dashboard"
-              className="btn-primary text-xs py-1.5 px-3 shrink-0"
+              href="/interview"
+              className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#00E599] font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#00D084] shrink-0"
             >
-              Continue to Career Dashboard →
+              Continue Practice →
             </Link>
           </div>
         )}
 
-        {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-2xl bg-[var(--white)] border-2 border-[var(--sky)] p-6 sm:p-10 shadow-[4px_4px_0px_var(--ocean)]">
+        {/* HERO SECTION: The Funny & Instant-Understanding Animation */}
+        <section className="relative overflow-hidden rounded-2xl bg-white border-3 border-black p-6 sm:p-10 shadow-[8px_8px_0px_#000000]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-xs font-extrabold text-[var(--ink)] shadow-[1px_1px_0px_var(--ink)]">
-                <Sparkles className="w-3.5 h-3.5 text-[var(--ink)]" />
-                <span>3,500 Real-World Business Challenges</span>
+            {/* Left Headline */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE600] border-2 border-black text-xs font-black shadow-[2px_2px_0px_#000000]">
+                <Sparkles className="w-3.5 h-3.5 text-black" />
+                <span>Zero Fake Toy Schemas • 100% Free Forever</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-[var(--ink)]">
-                Learn SQL by working inside a simulated company.
+              <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight uppercase">
+                STOP WRITING QUERIES ON FAKE CLEAN DATA.
               </h1>
 
-              <p className="text-base sm:text-lg text-[var(--ink)] opacity-90 leading-relaxed">
-                Forget artificial textbook puzzles. Inside the SQL Office Simulator, you are the company’s data analyst.
-                Executives, VPs, and managers send you urgent requests—you inspect real schemas, write SQL queries, and deliver answers.
+              <p className="text-base sm:text-lg text-black/90 font-medium leading-relaxed">
+                Solving 500 simple queries on a clean, single-table tutorial database will teach you less than solving <strong>30 messy multi-table business problems</strong> with missing values, duplicate keys, and performance bottlenecks.
               </p>
 
-              {/* Hero Call to Action Buttons */}
+              <div className="p-3.5 bg-[#F5EFEB] border-2 border-black rounded-xl text-xs font-mono font-bold space-y-1 shadow-[2px_2px_0px_#000000]">
+                <div className="text-rose-600 uppercase font-black flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4" /> The 300 Questions Master Roadmap:
+                </div>
+                <div>• Level 1: 100 Basic Questions (SELECT, WHERE, NULLs, dirty JOINs)</div>
+                <div>• Level 2: 100 Intermediate Questions (CTEs, Window Functions, DENSE_RANK)</div>
+                <div>• Level 3: 100 Advanced Questions (Shitty schemas, recursive CTEs, cohorts)</div>
+              </div>
+
+              {/* Call to Actions */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                {user ? (
-                  <>
-                    <Link
-                      href="/dashboard"
-                      className="btn-primary"
-                    >
-                      <Briefcase className="w-4 h-4 text-[var(--ink)]" />
-                      <span>Go to Career Dashboard</span>
-                      <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
-                    </Link>
-                    <a
-                      href="#domains"
-                      className="btn-secondary"
-                    >
-                      <span>Choose Industry Domain</span>
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/auth/signup"
-                      className="btn-primary"
-                    >
-                      <Sparkles className="w-4 h-4 text-[var(--ink)]" />
-                      <span>Create Free Account (Sign Up)</span>
-                      <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
-                    </Link>
-                    <Link
-                      href="/auth/login"
-                      className="btn-secondary"
-                    >
-                      <span>Sign In</span>
-                    </Link>
-                    <a
-                      href="#domains"
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-[var(--sky)] text-xs font-extrabold hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
-                    >
-                      <Compass className="w-4 h-4 text-[var(--ink)]" />
-                      <span>Explore 7 Domains</span>
-                    </a>
-                  </>
-                )}
+                <Link
+                  href="/interview"
+                  className="px-5 py-3 rounded-xl border-3 border-black bg-[#FFE600] hover:bg-[#FDD835] font-black text-sm shadow-[4px_4px_0px_#000000] flex items-center gap-2 transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
+                >
+                  <Zap className="w-4 h-4 text-black fill-black" />
+                  <span>Start Solving Dirty SQL (Free)</span>
+                  <ArrowRight className="w-4 h-4 text-black" />
+                </Link>
 
                 <Link
-                  href="/onboarding"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-[var(--sky)] text-xs font-extrabold hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
+                  href="/leaderboard"
+                  className="px-4 py-3 rounded-xl border-3 border-black bg-white hover:bg-slate-50 font-black text-sm shadow-[4px_4px_0px_#000000] flex items-center gap-2 transition-transform"
                 >
-                  <BookOpen className="w-4 h-4 text-[var(--ocean-hover)]" />
-                  <span>Onboarding Tour</span>
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                  <span>View Leaderboard</span>
                 </Link>
               </div>
 
-              {!user && (
-                <div className="flex items-center gap-2 pt-1 text-xs font-semibold text-[var(--ink)] opacity-75">
-                  <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>
-                    Free account required to enter live database sandboxes &amp; save query progress.
-                  </span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--sky)]">
-                <div>
-                  <div className="text-2xl font-black text-[var(--ink)]">7</div>
-                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
-                    Industry Domains
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-[var(--ink)]">5 Levels</div>
-                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
-                    Startup to Global Corp
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-[var(--ink)]">100% Free</div>
-                  <div className="text-xs font-semibold text-[var(--ink)] opacity-70">
-                    No Paywalls or Subscriptions
-                  </div>
-                </div>
+              <div className="flex items-center gap-4 pt-2 text-xs font-black text-black/70">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Real MAANG Questions
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> No Expensive Paywalls
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Dedicated Level Badges
+                </span>
               </div>
             </div>
 
-            {/* Simulated Slack/Inbox Card */}
-            <div className="lg:col-span-5">
-              <div className="bg-[var(--surface)] border-2 border-[var(--ink)] rounded-xl p-5 shadow-[4px_4px_0px_var(--ink)] space-y-4">
-                <div className="flex items-center justify-between border-b border-[var(--sky)] pb-3">
+            {/* Right Interactive Animation: The Joke (Tutorial SQL vs Production Reality) */}
+            <div className="lg:col-span-6">
+              <div className="bg-[#FAF8F5] border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_#000000] space-y-4">
+                {/* Animation Toggle Header */}
+                <div className="flex items-center justify-between border-b-2 border-black pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-400 border border-[var(--ink)]" />
-                    <span className="w-3 h-3 rounded-full bg-amber-400 border border-[var(--ink)]" />
-                    <span className="w-3 h-3 rounded-full bg-emerald-400 border border-[var(--ink)]" />
-                    <span className="text-xs font-bold text-[var(--ink)] ml-2">
-                      INBOX • PRIORITY REQUEST
+                    <span className="w-3 h-3 rounded-full bg-rose-400 border border-black" />
+                    <span className="w-3 h-3 rounded-full bg-amber-400 border border-black" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400 border border-black" />
+                    <span className="text-xs font-black uppercase tracking-wider ml-2">
+                      REALITY CHECK SIMULATOR
                     </span>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
-                    Level 1 • Startup
-                  </span>
+
+                  <div className="flex items-center gap-1 bg-white border-2 border-black rounded-lg p-0.5">
+                    <button
+                      onClick={() => setComparisonMode("tutorial")}
+                      className={`px-2 py-1 rounded text-[11px] font-black transition-all ${
+                        comparisonMode === "tutorial"
+                          ? "bg-rose-400 text-black shadow-[1px_1px_0px_#000000]"
+                          : "text-black/60 hover:text-black"
+                      }`}
+                    >
+                      🍼 Tutorial SQL
+                    </button>
+                    <button
+                      onClick={() => setComparisonMode("production")}
+                      className={`px-2 py-1 rounded text-[11px] font-black transition-all ${
+                        comparisonMode === "production"
+                          ? "bg-[#FFE600] text-black shadow-[1px_1px_0px_#000000]"
+                          : "text-black/60 hover:text-black"
+                      }`}
+                    >
+                      💀 Real Production SQL
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--ocean)] border-2 border-[var(--ink)] flex items-center justify-center font-bold text-sm text-[var(--ink)] shrink-0">
-                      ML
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-[var(--ink)]">Maya Lin</span>
-                        <span className="text-xs text-[var(--ink)] opacity-75">
-                          Head of Growth
-                        </span>
-                      </div>
-                      <p className="text-xs text-[var(--ink)] opacity-70">Today at 10:14 AM</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-[var(--white)] border border-[var(--sky)] rounded-lg p-3 text-xs text-[var(--ink)] leading-relaxed space-y-2">
-                    <p className="font-bold text-[var(--ink)]">
-                      Subject: Repeat buyers by region for Q3 loyalty push
-                    </p>
-                    <p>
-                      &quot;We&apos;re planning next month&apos;s loyalty campaign. Which regions have the highest share of customers who ordered more than once in 2025? Exclude cancelled orders.&quot;
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {["JOIN", "GROUP BY", "HAVING", "subquery"].map((concept) => (
-                      <span
-                        key={concept}
-                        className="text-[11px] font-bold bg-[var(--mist)] border border-[var(--sky)] text-[var(--ink)] px-2 py-0.5 rounded"
-                      >
-                        {concept}
+                {/* Animated Screen Card */}
+                {comparisonMode === "tutorial" ? (
+                  /* TUTORIAL SQL (THE LIE) */
+                  <div className="bg-[#FFF5F7] border-2 border-black rounded-xl p-4 space-y-3 transition-all animate-fadeIn">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded">
+                        WHAT OTHER PLATFORMS CHARGE $299/YR FOR:
                       </span>
-                    ))}
-                  </div>
+                      <span className="text-lg">🧸</span>
+                    </div>
 
-                  <div className="pt-2 flex items-center justify-between text-xs font-semibold text-[var(--ink)]">
-                    <span className="flex items-center gap-1 text-[var(--ink)]">
-                      <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> +20 XP on completion
-                    </span>
-                    <span className="text-[var(--ink)] opacity-70">Est. 8 mins</span>
+                    <div className="bg-white border-2 border-black rounded-lg p-3 font-mono text-[11px] text-black space-y-1 shadow-[2px_2px_0px_#000000]">
+                      <div className="text-black/50 font-bold">-- Pristine fake 3-row table:</div>
+                      <div className="text-blue-600 font-bold">SELECT * FROM employees WHERE salary &gt; 50000;</div>
+                      <div className="text-emerald-700 pt-1">
+                        ✓ 3 rows returned. Zero NULL values. Zero duplicates. Zero stress.
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FFE4E8] border border-rose-300 rounded-lg p-3 text-xs text-rose-950 font-medium">
+                      <p className="font-bold flex items-center gap-1">
+                        <span>🤖 Generic Tutorial Voice:</span>
+                      </p>
+                      <p className="italic mt-1">
+                        &quot;Congratulations! You wrote a single SELECT statement! You are now officially ready to be a Senior Data Scientist at Meta! Here is your Certificate of Participation! 🎉&quot;
+                      </p>
+                    </div>
+
+                    <div className="text-[11px] text-black/60 font-bold text-center">
+                      (Then you get into the interview and fail the first multi-table join...)
+                    </div>
                   </div>
+                ) : (
+                  /* REAL PRODUCTION SQL (THE REALITY) */
+                  <div className="bg-[#FFFDE6] border-2 border-black rounded-xl p-4 space-y-3 transition-all animate-fadeIn">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-black bg-[#FFE600] border border-black px-2 py-0.5 rounded shadow-[1px_1px_0px_#000000]">
+                        WHAT HAPPENS AT REAL JOBS &amp; MAANG INTERVIEWS:
+                      </span>
+                      <span className="text-lg">🔥💀</span>
+                    </div>
+
+                    <div className="bg-white border-2 border-black rounded-lg p-3 font-mono text-[11px] text-black space-y-1 shadow-[2px_2px_0px_#000000]">
+                      <div className="text-rose-600 font-black">
+                        -- Shitty schema alert: No foreign keys, trailing spaces, duplicate IDs!
+                      </div>
+                      <div className="text-purple-700 font-bold">
+                        WITH deduplicated_orders AS (
+                      </div>
+                      <div className="pl-3 text-black">
+                        SELECT order_id, TRIM(both &apos; &apos; from user_id) as uid,
+                      </div>
+                      <div className="pl-3 text-blue-600 font-bold">
+                        DENSE_RANK() OVER (PARTITION BY uid ORDER BY timestamp DESC)
+                      </div>
+                      <div className="text-purple-700 font-bold">)</div>
+                    </div>
+
+                    <div className="bg-[#FFEBEE] border-2 border-rose-400 rounded-lg p-3 text-xs text-rose-950 font-medium space-y-1">
+                      <div className="font-black text-rose-700 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>URGENT SLACK MESSAGE FROM VP OF FINANCE:</span>
+                      </div>
+                      <p className="italic">
+                        &quot;@here The board meeting is in 12 minutes! The investor deck says our ARR is negative $3.2M because of webhook double-charging and duplicate currency conversions! Exclude refunded transactions with missing dates and fix this query NOW!&quot;
+                      </p>
+                    </div>
+
+                    <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-300 rounded p-1.5 font-bold text-center">
+                      ✓ This is what SQL GRIT trains you to solve across 300 real levels.
+                    </div>
+                  </div>
+                )}
+
+                {/* Funny Footer Stamp */}
+                <div className="flex items-center justify-between text-xs font-black pt-1">
+                  <span className="flex items-center gap-1.5 text-black">
+                    <Flame className="w-4 h-4 text-orange-600" />
+                    <span>Real Interview Tested</span>
+                  </span>
+                  <button
+                    onClick={() =>
+                      setComparisonMode((prev) => (prev === "tutorial" ? "production" : "tutorial"))
+                    }
+                    className="underline text-black/70 hover:text-black flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Toggle Reality Check</span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* MAANG Interview Prep Section Banner */}
-        <section className="bg-[var(--sun)]/30 border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[4px_4px_0px_var(--ink)] flex flex-col md:flex-row items-center justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_var(--ink)]">
-              <Flame className="w-6 h-6 text-orange-600" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  New • MAANG Interview Prep
-                </span>
-                <span className="text-xs font-black text-[var(--ink)]">
-                  MAANG &amp; Startup Interview Prep
-                </span>
-              </div>
-              <h3 className="font-black text-base text-[var(--ink)]">
-                Ace Your Data Analyst SQL Technical Screens
-              </h3>
-              <p className="text-xs text-[var(--ink)] opacity-85 max-w-2xl leading-relaxed">
-                Practice real interview questions from Meta, Amazon, Google, Uber, Netflix, and Stripe. Solve top-N per group, cohort retention, sessionization, and gaps &amp; islands with our strict row-by-row grader.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/interview"
-              className="btn-primary text-xs py-2.5 px-4 shadow-[2px_2px_0px_var(--ink)] inline-flex items-center gap-1.5"
-            >
-              <Zap className="w-4 h-4" />
-              <span>Start Interview Prep →</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* Onboarding & Orientation Callout Banner */}
-        <section className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-[var(--ocean)] border border-[var(--ink)] flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-[var(--ink)]" />
-            </div>
-            <div>
-              <h3 className="font-black text-sm text-[var(--ink)]">
-                New Employee Orientation &amp; Platform Guide
-              </h3>
-              <p className="text-xs text-[var(--ink)] opacity-80 leading-relaxed mt-0.5">
-                Understand how the simulator works, explore the 7 industry schemas, discover the 5 company growth stages, and learn about our dual-dataset anti-cheat evaluation.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/onboarding"
-              className="btn-secondary text-xs py-2 px-3.5 whitespace-nowrap"
-            >
-              Read Onboarding Guide →
-            </Link>
-            {!user && (
-              <Link
-                href="/auth/signup"
-                className="btn-primary text-xs py-2 px-3.5 whitespace-nowrap"
-              >
-                Sign Up Free
-              </Link>
-            )}
-          </div>
-        </section>
-
-        {/* 7 Domains Section */}
-        <section id="domains" className="space-y-6">
+        {/* SECTION 2: THE 3-TIER ROADMAP (100 QUESTIONS EACH = 300 TOTAL) */}
+        <section id="curriculum" className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-[var(--ink)] opacity-75">
-                Practice in Your Target Field
+              <div className="text-xs font-mono font-black uppercase tracking-wider text-black/70 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-black" />
+                <span>The Master Curriculum</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[var(--ink)] tracking-tight">
-                7 Industry Domains Available at Launch
+              <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight">
+                3 TIERS • 100 QUESTIONS EACH • 300 TOTAL
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-[var(--ink)] opacity-80 max-w-md">
-              Each domain features 5 progressive company stages, 500 questions, and isolated PostgreSQL schemas.
+            <p className="text-xs sm:text-sm font-medium text-black/80 max-w-md">
+              Complete these 300 levels on messy real-world databases and you can crack any SQL technical screen in the world.
             </p>
           </div>
 
-          {/* Domain Tabs */}
-          <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none">
-            {domains.map((dom) => (
+          {/* Tier Navigation Tabs */}
+          <div className="flex overflow-x-auto gap-3 pb-2">
+            {CURRICULUM_TIERS.map((tier) => (
               <button
-                key={dom.id}
-                onClick={() => setActiveDomainTab(dom.id)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border-2 ${
-                  activeDomainTab === dom.id
-                    ? "bg-[var(--ocean)] text-[var(--ink)] border-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
-                    : "bg-[var(--white)] text-[var(--ink)] border-[var(--sky)] hover:bg-[var(--mist)]"
+                key={tier.id}
+                onClick={() => setActiveTierTab(tier.id)}
+                className={`px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border-3 border-black flex items-center gap-2 ${
+                  activeTierTab === tier.id
+                    ? `${tier.badgeColor} shadow-[4px_4px_0px_#000000] -translate-y-0.5`
+                    : "bg-white text-black hover:bg-slate-50 shadow-[2px_2px_0px_#000000]"
                 }`}
               >
-                {dom.name}
+                <span className="text-base">{tier.badgeIcon}</span>
+                <span>Level {tier.levelNumber}: {tier.badgeName} (100 Qs)</span>
               </button>
             ))}
           </div>
 
-          {/* Active Domain Spotlight Card */}
-          <div className="card-office bg-[var(--white)] border-2 border-[var(--ink)] shadow-[4px_4px_0px_var(--ocean)] p-6 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--sky)] pb-5">
+          {/* Active Tier Spotlight Card */}
+          <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_#000000] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-black pb-5">
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-wide text-[var(--ocean-hover)]">
-                  Simulated Organization
-                </span>
-                <h3 className="text-2xl font-black text-[var(--ink)]">{selectedDomain.name}</h3>
-                <p className="text-sm font-semibold text-[var(--ink)] opacity-75">
-                  {selectedDomain.tagline}
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--sun)] border border-[var(--ink)] text-[var(--ink)]">
-                  {selectedDomain.xp}
-                </span>
-
-                {user ? (
-                  <Link
-                    href={`/office/${selectedDomain.id}/level-1`}
-                    className="btn-primary text-xs py-2 px-4"
-                  >
-                    Start Level 1
-                  </Link>
-                ) : (
-                  <button
-                    onClick={(e) => handleStartLevelClick(e, selectedDomain)}
-                    className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
-                    title="Sign up or Sign in required to access database sandbox"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-[var(--ink)]" />
-                    <span>Start Level 1 (Sign Up Required)</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <p className="text-sm sm:text-base text-[var(--ink)] leading-relaxed">
-              {selectedDomain.desc}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-4 space-y-2">
-                <div className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-[var(--ink)]" />
-                  Primary Tables in Practice Sandbox
-                </div>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {selectedDomain.tables.map((t) => (
-                    <span
-                      key={t}
-                      className="px-2.5 py-1 bg-[var(--white)] border border-[var(--sky)] rounded text-xs font-mono font-bold text-[var(--ink)]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-lg p-4 space-y-2">
-                <div className="text-xs font-extrabold uppercase text-[var(--ink)] opacity-80 flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5 text-[var(--ink)]" />
-                  Sample Level 1 Stakeholder Request
-                </div>
-                <div className="text-xs font-bold text-[var(--ink)]">
-                  From: {selectedDomain.sampleStakeholder}
-                </div>
-                <p className="text-xs italic text-[var(--ink)] opacity-90">
-                  &quot;{selectedDomain.sampleRequest}&quot;
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5 Career Levels Progression */}
-        <section id="career" className="space-y-6">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[var(--ink)] opacity-75">
-              Realistic Career Progression
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[var(--ink)] tracking-tight">
-              5 Company Stages: From Tiny Startup to Global Corp
-            </h2>
-            <p className="text-sm text-[var(--ink)] opacity-80 mt-1">
-              Unlock rule: ≥ 70 of 100 correct, including ≥ 5 of the 10 boss questions.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {levels.map((lvl) => (
-              <div
-                key={lvl.num}
-                className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-4 flex flex-col justify-between space-y-3 hover:border-[var(--ocean)] transition-all"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="w-7 h-7 rounded-md bg-[var(--sun)] border border-[var(--ink)] flex items-center justify-center font-black text-xs text-[var(--ink)]">
-                      L{lvl.num}
-                    </span>
-                    <span className="text-[10px] font-bold text-[var(--ink)] opacity-70">
-                      100 Qs
-                    </span>
-                  </div>
-
-                  <h4 className="font-extrabold text-sm text-[var(--ink)]">{lvl.name}</h4>
-                  <div className="text-xs font-bold text-[var(--ocean-hover)]">{lvl.role}</div>
-                  <div className="text-[11px] font-semibold text-[var(--ink)] opacity-75">
-                    {lvl.scale} • {lvl.rows}
-                  </div>
-
-                  <p className="text-xs text-[var(--ink)] opacity-85 leading-snug">
-                    {lvl.desc}
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-[var(--sky)] text-[11px] font-mono text-[var(--ink)] opacity-90 leading-tight">
-                  <span className="font-bold font-sans block text-[10px] text-[var(--ink)] opacity-60 uppercase">
-                    Core Focus
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-black uppercase px-2.5 py-0.5 rounded border-2 border-black ${selectedTier.badgeColor}`}>
+                    Level {selectedTier.levelNumber} Milestone
                   </span>
-                  {lvl.concepts}
+                  <span className="text-xs font-mono font-bold text-black/70">
+                    100 Curated Challenges
+                  </span>
                 </div>
+                <h3 className="text-2xl sm:text-3xl font-black uppercase mt-1">
+                  {selectedTier.name}
+                </h3>
+                <p className="text-sm font-bold text-black/70 mt-0.5">
+                  {selectedTier.tagline}
+                </p>
               </div>
-            ))}
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/interview"
+                  className="px-4 py-2.5 bg-[#FFE600] text-black border-2 border-black rounded-xl font-black text-xs shadow-[3px_3px_0px_#000000] hover:bg-[#FDD835] flex items-center gap-1.5"
+                >
+                  <Play className="w-3.5 h-3.5 fill-black" />
+                  <span>Start Level {selectedTier.levelNumber} (100 Qs)</span>
+                </Link>
+              </div>
+            </div>
+
+            <p className="text-sm sm:text-base font-medium text-black/85 leading-relaxed">
+              {selectedTier.description}
+            </p>
+
+            {/* Focus Topics vs Messy Data Traps */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Focus Topics */}
+              <div className="bg-[#FAF8F5] border-2 border-black rounded-xl p-4 space-y-3 shadow-[2px_2px_0px_#000000]">
+                <div className="text-xs font-black uppercase text-black flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Core SQL Concepts Mastered</span>
+                </div>
+                <ul className="space-y-1.5 text-xs font-medium text-black/90">
+                  {selectedTier.focusTopics.map((topic, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="font-mono font-bold text-emerald-700">✓</span>
+                      <span>{topic}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Messy Data Traps */}
+              <div className="bg-[#FFF5F5] border-2 border-black rounded-xl p-4 space-y-3 shadow-[2px_2px_0px_#000000]">
+                <div className="text-xs font-black uppercase text-rose-700 flex items-center gap-1.5">
+                  <Bug className="w-4 h-4 text-rose-600" />
+                  <span>The Real Messy Data Traps You Will Face</span>
+                </div>
+                <ul className="space-y-1.5 text-xs font-medium text-black/90">
+                  {selectedTier.messyDataFeatures.map((trap, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="font-mono font-bold text-rose-600">⚠</span>
+                      <span>{trap}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Target Outcome & Companies */}
+            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t-2 border-black/10 text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-black uppercase text-black/70">Sample Companies:</span>
+                {selectedTier.sampleCompanies.map((c) => (
+                  <span
+                    key={c}
+                    className="px-2 py-0.5 bg-slate-100 border border-black rounded font-black text-[11px]"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+              <div className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-1 rounded-full">
+                🎯 {selectedTier.targetOutcome}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Highlighted Feedback Section */}
-        <FeedbackLink variant="banner" />
+        {/* SECTION 3: DEDICATED BADGES SHOWCASE */}
+        <section className="bg-[#FFF9D2] border-3 border-black rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_#000000] space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-mono font-black uppercase tracking-wider text-black/70 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-amber-600" />
+                <span>Dedicated Progression Badges</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">
+                EARN YOUR DEDICATED BADGE FOR EACH LEVEL
+              </h2>
+            </div>
+            <Link
+              href="/badges"
+              className="px-4 py-2 bg-white text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-slate-50 flex items-center gap-1.5"
+            >
+              <span>View All Badges &amp; Trophies →</span>
+            </Link>
+          </div>
 
-        {/* Honor Policy Section */}
-        <section className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--sun)] space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Level 1 Badge */}
+            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
+                🚜
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase bg-emerald-300 text-black px-2 py-0.5 rounded border border-black">
+                  Level 1 Dedicated Badge
+                </span>
+                <h4 className="font-black text-base mt-1">The Mud Scrapper</h4>
+                <p className="text-xs text-black/70 font-medium">
+                  Complete all 100 basic messy questions (SELECT, NULLs, dirty JOINs).
+                </p>
+              </div>
+            </div>
+
+            {/* Level 2 Badge */}
+            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
+                🧙‍♂️
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase bg-amber-300 text-black px-2 py-0.5 rounded border border-black">
+                  Level 2 Dedicated Badge
+                </span>
+                <h4 className="font-black text-base mt-1">The Window Wizard</h4>
+                <p className="text-xs text-black/70 font-medium">
+                  Complete all 100 intermediate questions (CTEs, DENSE_RANK, LEAD, LAG).
+                </p>
+              </div>
+            </div>
+
+            {/* Level 3 Badge */}
+            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
+              <div className="w-12 h-12 rounded-xl bg-rose-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
+                👹
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded border border-black">
+                  Level 3 Dedicated Badge
+                </span>
+                <h4 className="font-black text-base mt-1">The Schema Exorcist</h4>
+                <p className="text-xs text-black/70 font-medium">
+                  Complete all 100 advanced nightmare queries (recursive CTEs, sessionization).
+                </p>
+              </div>
+            </div>
+
+            {/* Final Grandmaster Badge */}
+            <div className="bg-[#FAF5FF] border-3 border-purple-950 rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
+                ⚡
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase bg-[#9D00FF] text-white px-2 py-0.5 rounded border border-black">
+                  All 300 Completed
+                </span>
+                <h4 className="font-black text-base mt-1">SQL Demigod</h4>
+                <p className="text-xs text-black/70 font-medium">
+                  100% mastery. Guaranteed to crack any SQL interview on Earth.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4: REAL LEADERBOARD PREVIEW */}
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-mono font-black uppercase tracking-wider text-black/70 flex items-center gap-1.5">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <span>Global Hall of Fame</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">
+                REAL LEADERBOARD: TOP 300 CHALLENGE SOLVERS
+              </h2>
+            </div>
+            <Link
+              href="/leaderboard"
+              className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#00D084] flex items-center gap-1.5"
+            >
+              <span>See Full Live Standings →</span>
+            </Link>
+          </div>
+
+          <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_#000000] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#FAF8F5] border-b-2 border-black text-xs font-black uppercase tracking-wider text-black">
+                    <th className="py-3 px-4 w-16 text-center">Rank</th>
+                    <th className="py-3 px-4">Learner</th>
+                    <th className="py-3 px-4 text-center">Levels Conquered</th>
+                    <th className="py-3 px-4 text-center">Total XP</th>
+                    <th className="py-3 px-4 text-center">Active Streak</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-black/10 text-xs font-medium">
+                  {leaderboardPreview.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-[#FFFDE6] transition-colors">
+                      <td className="py-3.5 px-4 text-center font-black">
+                        {entry.rank === 1 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-[#FFE600] border-2 border-black shadow-[1px_1px_0px_#000000]">
+                            1
+                          </span>
+                        ) : entry.rank === 2 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-slate-300 border-2 border-black shadow-[1px_1px_0px_#000000]">
+                            2
+                          </span>
+                        ) : entry.rank === 3 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-200 border-2 border-black shadow-[1px_1px_0px_#000000]">
+                            3
+                          </span>
+                        ) : (
+                          `#${entry.rank}`
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={entry.avatar}
+                            alt={entry.name}
+                            className="w-8 h-8 rounded-full border-2 border-black object-cover"
+                          />
+                          <div>
+                            <div className="font-black text-sm">{entry.name}</div>
+                            <div className="text-[11px] text-black/60 font-semibold">
+                              {entry.role} {entry.company && `• ${entry.company}`}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="font-black text-sm text-black">
+                          {entry.totalLevelsCompleted}
+                        </span>
+                        <span className="text-black/50 font-bold"> / 300</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-block px-2.5 py-0.5 rounded bg-[#FFE600] border border-black font-black text-xs shadow-[1px_1px_0px_#000000]">
+                          {entry.totalXp.toLocaleString()} XP
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
+                          <Flame className="w-3 h-3 fill-orange-500" />
+                          <span>{entry.streakDays}d</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* HONOR CODE MANIFESTO */}
+        <section className="bg-white border-3 border-black rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_#000000] space-y-4">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-[var(--ink)]" />
-            <h3 className="text-xl font-black text-[var(--ink)]">
-              Our Honor Policy (No Proctoring, Just Real Honesty)
+            <ShieldCheck className="w-6 h-6 text-black" />
+            <h3 className="text-xl font-black uppercase text-black">
+              THE SQL GRIT HONOR CODE: HUMAN MUSCLE ONLY
             </h3>
           </div>
-          <p className="text-sm text-[var(--ink)] leading-relaxed">
-            &ldquo;This simulator works only if you do the work yourself. Please don&apos;t use AI tools or copy solutions.
-            You&apos;re here to build real skills, and the only person you&apos;d be fooling is you. Be honest, and enjoy the learning.&rdquo;
+          <p className="text-sm text-black/90 font-medium leading-relaxed">
+            There are no proctors, no browser locks, and no webcam spyware. If you feed these 300 questions to ChatGPT, you will get a green checkmark on our site and then fail your live technical screen in front of an interviewer.
+            Solve them yourself, wrestle with the dirty schemas, and build real muscle.
           </p>
-          <div className="text-xs text-[var(--ink)] opacity-75 font-semibold">
-            We don&apos;t block copy/paste, track tab switching, or spy on your keystrokes. We treat you as a professional.
+          <div className="text-xs text-black/70 font-mono font-bold">
+            Built for serious Data Analysts, Analytics Engineers, and Data Scientists.
           </div>
         </section>
       </main>
 
-      {/* Onboarding / Account Required Modal */}
-      {onboardingModalOpen && selectedModalDomain && (
-        <div className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[var(--white)] border-3 border-[var(--ink)] rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-5 shadow-[8px_8px_0px_var(--ocean)] relative">
-            <button
-              onClick={() => setOnboardingModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-3 border-b-2 border-[var(--sky)] pb-4">
-              <div className="w-12 h-12 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center text-2xl shadow-[2px_2px_0px_var(--ink)] shrink-0">
-                🏢
-              </div>
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--ocean-hover)]">
-                  Simulated Workplace Access
-                </span>
-                <h3 className="text-lg font-black text-[var(--ink)]">
-                  Join {selectedModalDomain.name} ({selectedModalDomain.tagline})
-                </h3>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs sm:text-sm text-[var(--ink)] leading-relaxed">
-                To access the live PostgreSQL sandbox for <strong>{selectedModalDomain.name}</strong>, inspect real multi-table schemas, and start answering requests from <strong>{selectedModalDomain.sampleStakeholder}</strong>, you need to sign in or create an account.
-              </p>
-
-              <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-3.5 space-y-2 text-xs text-[var(--ink)]">
-                <div className="flex items-center gap-2 font-bold text-[var(--ocean-hover)]">
-                  <Sparkles className="w-4 h-4" />
-                  <span>What you get with your free account:</span>
-                </div>
-                <div className="space-y-1.5 pl-1 font-medium">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Access to all 7 industry domains and 3,500 questions</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>In-browser PostgreSQL queries with Monaco editor</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Dual-dataset automated testing &amp; XP tracking</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>100% Free Forever • Zero paywalls or credit cards</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5 pt-2">
-              <Link
-                href={`/auth/signup?redirect=/office/${selectedModalDomain.id}/level-1`}
-                className="w-full btn-primary text-xs py-2.5 justify-center flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-[var(--ink)]" />
-                <span>Create Free Account &amp; Start Level 1</span>
-                <ArrowRight className="w-4 h-4 text-[var(--ink)]" />
-              </Link>
-
-              <Link
-                href={`/auth/login?redirect=/office/${selectedModalDomain.id}/level-1`}
-                className="w-full btn-secondary text-xs py-2.5 justify-center flex items-center gap-2"
-              >
-                <span>Sign In to Existing Account</span>
-              </Link>
-
-              <div className="text-center pt-1">
-                <Link
-                  href="/onboarding"
-                  className="text-xs font-bold text-[var(--ocean-hover)] underline hover:text-[var(--ink)]"
-                >
-                  New to the platform? Read Full Onboarding Guide →
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-[var(--white)] border-t-2 border-[var(--sky)] py-8 px-4 sm:px-8 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs font-semibold text-[var(--ink)]">
+      {/* Retro Neo-Brutalist Footer */}
+      <footer className="mt-12 bg-white border-t-3 border-black py-8 px-4 sm:px-8 text-xs font-bold text-black/80">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[var(--ink)]" />
-            <span>SQL Office Simulator • Spec v1.1 Production</span>
+            <span className="font-black text-sm uppercase">SQL GRIT</span>
+            <span>• 300 Messy Production &amp; MAANG Interview Questions</span>
           </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-5 text-[var(--ink)]">
-            <Link href="/onboarding" className="hover:underline font-bold text-[var(--ocean-hover)]">
-              Onboarding Guide
-            </Link>
-            <span>•</span>
-            <Link href="/terms" className="hover:underline font-bold">
-              Terms &amp; Honor Code
-            </Link>
-            <span>•</span>
-            <Link href="/privacy" className="hover:underline font-bold">
-              Privacy Policy
-            </Link>
-            <span>•</span>
-            <Link href="/dashboard" className="hover:underline font-bold">
-              Dashboard
-            </Link>
-            <span>•</span>
-            <Link href="/progress" className="hover:underline font-bold">
-              Progress &amp; Mastery
-            </Link>
-            <span>•</span>
-            <Link href="/admin/login" className="hover:underline font-bold text-slate-400">
-              Admin Portal
-            </Link>
-            <span>•</span>
-            <FeedbackLink variant="pill" />
-          </div>
-
-          <div className="flex items-center gap-2 text-[var(--ink)] opacity-75">
-            <span>WCAG AA Verified</span>
-            <span>•</span>
-            <span>100% Free Forever</span>
+          <div className="flex items-center gap-4">
+            <Link href="/interview" className="hover:underline">300 Questions</Link>
+            <Link href="/leaderboard" className="hover:underline">Leaderboard</Link>
+            <Link href="/badges" className="hover:underline">Level Badges</Link>
+            <Link href="/privacy" className="hover:underline">Privacy</Link>
+            <Link href="/terms" className="hover:underline">Terms</Link>
           </div>
         </div>
       </footer>

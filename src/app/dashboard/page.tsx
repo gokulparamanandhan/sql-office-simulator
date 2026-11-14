@@ -4,13 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Building2,
   ShieldCheck,
   Zap,
   Flame,
   Award,
-  Lock,
-  Unlock,
   CheckCircle2,
   LogOut,
   ChevronRight,
@@ -19,591 +16,317 @@ import {
   Briefcase,
   Layers,
   Sparkles,
-  HelpCircle,
-  BookOpen,
+  Trophy,
+  Play,
+  RotateCcw,
 } from "lucide-react";
-import { DomainProgressSummary } from "@/lib/domains/domains-service";
-import { getCareerProgression, updateStreak } from "@/lib/gamification/gamification-service";
-import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
+import { CURRICULUM_TIERS } from "@/lib/content/curriculum-300";
+import { BADGES_DATA } from "@/lib/gamification/badges-data";
 
-interface DashboardData {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    createdAt?: string;
-    honorPledgeAccepted: boolean;
-    honorPledgeAcceptedAt?: string;
-  };
-  domains: DomainProgressSummary[];
-  totalXp: number;
-  currentRank: string;
-  streakDays: number;
-  badgesEarned: number;
-  totalBadges: number;
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDomainSlug, setSelectedDomainSlug] = useState<string>("ecommerce");
-
-  const mergeLocalProgress = (dashboard: DashboardData): DashboardData => {
-    if (typeof window === "undefined" || !dashboard.user?.id) return dashboard;
-
-    const currentUserId = dashboard.user.id;
-    const lastUserId = localStorage.getItem("sql_office_last_user_id");
-
-    // If switching users, purge legacy un-scoped cache
-    if (lastUserId && lastUserId !== currentUserId) {
-      localStorage.removeItem("sql_office_user_stats");
-      localStorage.removeItem("sql_office_ecommerce_l1_solved");
-      localStorage.removeItem("sql_office_academy_solved");
-    }
-    localStorage.setItem("sql_office_last_user_id", currentUserId);
-
-    let calculatedTotalXp = dashboard.totalXp;
-    let totalSolvedAllDomains = 0;
-    const statsKey = `sql_office_${currentUserId}_user_stats`;
-    let userStats: {
-      xp?: number;
-      streak?: number;
-      longestStreak?: number;
-      lastActiveDate?: string;
-      activeDates?: string[];
-      solvedCount?: number;
-    } = {};
-
-    try {
-      userStats = JSON.parse(
-        localStorage.getItem(statsKey) || "{}"
-      );
-      if (userStats.xp && userStats.xp > calculatedTotalXp) {
-        calculatedTotalXp = userStats.xp;
-      }
-    } catch {
-      // Ignore
-    }
-
-    const updatedDomains = dashboard.domains.map((dom) => {
-      let domainCompletedCount = 0;
-      let prevLevelCompleted = true;
-      const updatedLevels = dom.levels.map((lvl) => {
-        let solved = lvl.solvedCount;
-        try {
-          const stored = localStorage.getItem(`sql_office_${currentUserId}_${dom.slug}_l${lvl.number}_solved`);
-          if (stored) {
-            const solvedMap = JSON.parse(stored);
-            const localCount = Object.keys(solvedMap).filter((k) => solvedMap[k]).length;
-            if (localCount > solved) solved = localCount;
-          }
-        } catch {
-          // Ignore
-        }
-        domainCompletedCount += solved;
-        totalSolvedAllDomains += solved;
-
-        // Level 1 is always unlocked. Next levels unlock only after completing previous level
-        const isUnlocked = lvl.number === 1 || prevLevelCompleted;
-        prevLevelCompleted = solved >= lvl.totalQuestions;
-
-        return {
-          ...lvl,
-          solvedCount: solved,
-          unlocked: isUnlocked,
-        };
-      });
-
-      return {
-        ...dom,
-        completedQuestions: domainCompletedCount > dom.completedQuestions ? domainCompletedCount : dom.completedQuestions,
-        levels: updatedLevels,
-      };
-    });
-
-    if (calculatedTotalXp === 0 && totalSolvedAllDomains > 0) {
-      calculatedTotalXp = totalSolvedAllDomains * 10;
-    }
-
-    // Dynamic career progression based on total XP
-    const progression = getCareerProgression(calculatedTotalXp);
-
-    // Calculate updated streak and days
-    const currentStreakVal = Math.max(dashboard.streakDays || 1, userStats.streak || 1);
-    const longestStreakVal = Math.max(dashboard.streakDays || 1, userStats.longestStreak || userStats.streak || 1);
-    const streakResult = updateStreak(
-      currentStreakVal,
-      longestStreakVal,
-      userStats.lastActiveDate,
-      {
-        createdAtStr: dashboard.user.createdAt || dashboard.user.honorPledgeAcceptedAt,
-        totalXp: calculatedTotalXp,
-        activeDates: userStats.activeDates,
-      }
-    );
-
-    // Persist updated streak & stats to client localStorage
-    userStats.xp = calculatedTotalXp;
-    userStats.streak = streakResult.currentStreak;
-    userStats.longestStreak = streakResult.longestStreak;
-    userStats.lastActiveDate = streakResult.lastActiveDate;
-    userStats.activeDates = streakResult.activeDates;
-    try {
-      localStorage.setItem(statsKey, JSON.stringify(userStats));
-    } catch {
-      // Ignore
-    }
-
-    // Background sync to server API
-    fetch("/api/user/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "sync",
-        totalXp: calculatedTotalXp,
-        streakDays: streakResult.currentStreak,
-        longestStreak: streakResult.longestStreak,
-        lastActiveDate: streakResult.lastActiveDate,
-        activeDates: streakResult.activeDates,
-      }),
-    }).catch(() => {});
-
-    return {
-      ...dashboard,
-      totalXp: calculatedTotalXp,
-      currentRank: progression.currentRank,
-      streakDays: streakResult.currentStreak,
-      domains: updatedDomains,
-    };
-  };
+  const [solvedStats, setSolvedStats] = useState({
+    l1: 0,
+    l2: 0,
+    l3: 0,
+    totalSolved: 0,
+    totalXp: 0,
+    streakDays: 1,
+  });
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then(async (res) => {
-        if (res.status === 401) {
-          router.push("/auth/login");
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) {
+          router.push("/auth/login?redirect=/dashboard");
           return null;
         }
         return res.json();
       })
-      .then((resData) => {
-        if (resData) {
-          const merged = mergeLocalProgress(resData);
-          setData(merged);
+      .then((authData) => {
+        if (authData?.user) {
+          setUser(authData.user);
+          loadProgress(authData.user.id);
+        } else {
+          router.push("/auth/login?redirect=/dashboard");
         }
-        setLoading(false);
       })
       .catch(() => {
-        router.push("/auth/login");
-      });
+        router.push("/auth/login?redirect=/dashboard");
+      })
+      .finally(() => setLoading(false));
   }, [router]);
+
+  const loadProgress = (userId: string) => {
+    try {
+      const statsKey = `sql_office_${userId}_user_stats`;
+      const interviewSolvedKey = `sql_office_${userId}_interview_solved`;
+      const stats = JSON.parse(localStorage.getItem(statsKey) || "{}");
+      const interviewSolved = JSON.parse(localStorage.getItem(interviewSolvedKey) || "{}");
+
+      const interviewCount = Object.keys(interviewSolved).filter((k) => interviewSolved[k]).length;
+      const count = Math.max(stats.solvedCount || 0, interviewCount);
+
+      // Estimate tier breakdown
+      const l1 = Math.min(100, count);
+      const l2 = Math.min(100, Math.max(0, count - 100));
+      const l3 = Math.min(100, Math.max(0, count - 200));
+      const calculatedXp = stats.xp || (l1 * 25 + l2 * 45 + l3 * 80) || 50;
+
+      setSolvedStats({
+        l1,
+        l2,
+        l3,
+        totalSolved: count,
+        totalXp: calculatedXp,
+        streakDays: stats.streak || 1,
+      });
+    } catch {
+      // Ignore
+    }
+  };
 
   const handleLogout = async () => {
     localStorage.removeItem("sql_office_last_user_id");
-    localStorage.removeItem("sql_office_user_stats");
-    localStorage.removeItem("sql_office_ecommerce_l1_solved");
-    localStorage.removeItem("sql_office_academy_solved");
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/auth/login");
   };
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center p-4">
-        <div className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-xl p-8 max-w-sm w-full text-center space-y-4 shadow-[4px_4px_0px_var(--ocean)]">
-          <div className="w-12 h-12 mx-auto rounded-full bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center animate-bounce">
-            <Building2 className="w-6 h-6 text-[var(--ink)]" />
-          </div>
-          <h3 className="font-black text-lg text-[var(--ink)]">Loading Your Office...</h3>
-          <p className="text-xs text-[var(--ink)] opacity-75">
-            Connecting to simulated company records...
-          </p>
-        </div>
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-mono text-xs font-black">
+        Loading Career Dashboard...
       </div>
     );
   }
 
-  if (!data) return null;
-
-  const currentDomain =
-    data.domains.find((d) => d.slug === selectedDomainSlug) || data.domains[0];
-  const progression = getCareerProgression(data.totalXp);
+  const completionPct = Math.round((solvedStats.totalSolved / 300) * 100);
 
   return (
-    <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
-      {/* Top Workplace Header */}
-      <header className="sticky top-0 z-50 bg-[var(--white)] border-b-2 border-[var(--sky)] px-4 sm:px-8 py-3.5 shadow-sm">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#000000] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black">
+      {/* Top Header */}
+      <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b-3 border-[#000000] px-4 sm:px-8 py-3.5 shadow-[0_4px_0_0_#000000]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[var(--ocean)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
-                <Building2 className="w-5 h-5 text-[var(--ink)]" />
-              </div>
-              <div>
-                <span className="font-extrabold text-base tracking-tight text-[var(--ink)]">
-                  SQL OFFICE
-                </span>
-                <span className="hidden sm:inline-block ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[var(--sun)] border border-[var(--ink)]">
-                  SIMULATOR
-                </span>
-              </div>
+            <Link
+              href="/"
+              className="w-10 h-10 rounded-lg bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000000]"
+            >
+              <Database className="w-5 h-5 text-black" />
             </Link>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-xl tracking-tight uppercase text-black">
+                  SQL GRIT
+                </span>
+                <span className="bg-[#FFE600] text-black border-2 border-black text-[10px] font-black px-2 py-0.5 rounded shadow-[1px_1px_0px_#000000] uppercase tracking-wider">
+                  Learner Dashboard
+                </span>
+              </div>
+              <p className="text-xs text-black/70 font-bold">
+                Logged in as {user.name} ({user.email})
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Honor Pledge Badge & Admin QA */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--mist)] border border-[var(--sky)] text-xs font-bold text-[var(--ink)]">
-                <ShieldCheck className="w-4 h-4 text-[var(--ink)]" />
-                <span>Honor Pledged</span>
-              </div>
-              {data.user.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="px-2.5 py-1 rounded-full border border-amber-500 bg-amber-100 hover:bg-amber-200 text-[11px] font-bold text-amber-950 transition-colors"
-                  title="QA Reports & Platform Thresholds"
-                >
-                  Admin Console
-                </Link>
-              )}
-            </div>
-
-            {/* Streak & XP */}
-            <div className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--sky)] px-3 py-1 rounded-full text-xs font-bold text-[var(--ink)]">
-              <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
-              <span>{data.streakDays} Day Streak</span>
-              <span className="text-[var(--sky)]">•</span>
-              <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span>{data.totalXp} XP</span>
-            </div>
-
-            {/* MAANG Interview Prep Button */}
             <Link
               href="/interview"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-red-500 hover:bg-red-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+              className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
             >
-              <Flame className="w-4 h-4 fill-current text-white" />
-              <span>MAANG Prep</span>
+              <Zap className="w-4 h-4 text-black fill-black" />
+              <span>Practice 300 Qs</span>
             </Link>
 
-            {/* Learn SQL Academy & Theme Toggle */}
             <Link
-              href="/learn"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--sun)] text-xs font-extrabold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] hover:brightness-105 transition-all"
+              href="/leaderboard"
+              className="px-3 py-1.5 rounded-lg border-2 border-black bg-[#00E599] hover:bg-[#00D084] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
             >
-              <BookOpen className="w-4 h-4 text-[var(--ink)]" />
-              <span>Learn SQL</span>
+              <Trophy className="w-4 h-4 text-black" />
+              <span>Leaderboard</span>
             </Link>
-            <FeedbackLink variant="button" />
-            <ThemeToggle />
 
-            {/* User Profile Pill & Logout */}
-            <div className="flex items-center gap-2">
-              <div className="hidden md:block text-right">
-                <div className="text-xs font-extrabold text-[var(--ink)]">{data.user.name}</div>
-                <div className="text-[10px] font-bold text-[var(--ocean-hover)]">{progression.currentRank}</div>
-              </div>
-              <button
-                onClick={handleLogout}
-                title="Log Out"
-                className="p-2 rounded-lg bg-[var(--white)] border border-[var(--sky)] hover:bg-[var(--mist)] transition-colors text-[var(--ink)]"
-              >
-                <LogOut className="w-4 h-4 text-[var(--ink)]" />
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-100 text-xs font-black shadow-[2px_2px_0px_#000000]"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Dashboard Space */}
+      {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
-        {/* Welcome Banner */}
-        <div className="bg-[var(--white)] border-2 border-[var(--sky)] rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--ocean)] flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[var(--sun)] border border-[var(--ink)]">
-              <Sparkles className="w-3.5 h-3.5 text-[var(--ink)]" />
-              <span>Your Simulated Workplace</span>
+        {/* Welcome Card */}
+        <div className="bg-white border-3 border-black rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_#000000] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#FFE600] border-2 border-black text-xs font-black shadow-[1px_1px_0px_#000000]">
+              <Sparkles className="w-3.5 h-3.5 text-black" />
+              <span>Your Dirty SQL Career Progress</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[var(--ink)] tracking-tight">
-              Welcome to the Team, {data.user.name.split(" ")[0]}!
+            <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-tight">
+              WELCOME BACK, {user.name}
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--ink)] opacity-85 max-w-xl">
-              You are currently a <strong>{progression.currentRank}</strong>. Choose an industry domain below to enter your company office, meet your stakeholders, and start answering real requests.
+            <p className="text-xs sm:text-sm font-medium text-black/80 leading-relaxed">
+              You are mastering SQL through 300 real-world, un-sanitized business challenges.
+              Track your completion of <strong>Level 1 (Basic)</strong>, <strong>Level 2 (Intermediate)</strong>, and <strong>Level 3 (Advanced)</strong>.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-[var(--surface)] border border-[var(--sky)] p-4 rounded-xl shrink-0">
+          <div className="flex items-center gap-4 bg-[#FAF8F5] border-2 border-black rounded-xl p-4 shadow-[2px_2px_0px_#000000] shrink-0">
             <div className="text-center">
-              <div className="text-2xl font-black text-[var(--ink)]">{data.domains.length}</div>
-              <div className="text-[10px] font-bold uppercase text-[var(--ink)] opacity-70">Domains</div>
+              <div className="text-2xl font-black text-black">{solvedStats.totalSolved} / 300</div>
+              <div className="text-[10px] font-black uppercase text-black/60">Levels Conquered</div>
             </div>
-            <div className="h-8 w-px bg-[var(--sky)]" />
+            <div className="h-8 w-[2px] bg-black/20" />
             <div className="text-center">
-              <div className="text-2xl font-black text-[var(--ink)]">35</div>
-              <div className="text-[10px] font-bold uppercase text-[var(--ink)] opacity-70">Company Levels</div>
+              <div className="text-2xl font-black text-amber-600">{solvedStats.totalXp}</div>
+              <div className="text-[10px] font-black uppercase text-black/60">Total XP</div>
             </div>
-            <div className="h-8 w-px bg-[var(--sky)]" />
+            <div className="h-8 w-[2px] bg-black/20" />
             <div className="text-center">
-              <div className="text-2xl font-black text-[var(--ink)]">3,500</div>
-              <div className="text-[10px] font-bold uppercase text-[var(--ink)] opacity-70">Questions</div>
+              <div className="text-2xl font-black text-orange-600 flex items-center justify-center gap-1">
+                <Flame className="w-5 h-5 fill-orange-500" />
+                <span>{solvedStats.streakDays}d</span>
+              </div>
+              <div className="text-[10px] font-black uppercase text-black/60">Active Streak</div>
             </div>
           </div>
         </div>
 
-        {/* MAANG Interview Prep Banner */}
-        <div className="bg-[var(--sun)]/30 border-2 border-[var(--ink)] rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_var(--ink)] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500 border-2 border-[var(--ink)] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_var(--ink)] text-white">
-              <Flame className="w-6 h-6 fill-current" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  New Feature
-                </span>
-                <span className="text-xs font-bold text-[var(--ink)] opacity-75">
-                  Meta • Amazon • Google • Uber • Stripe
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-[var(--ink)] mt-1">
-                MAANG &amp; Startup SQL Interview Prep
-              </h2>
-              <p className="text-xs text-[var(--ink)] opacity-85 mt-0.5 max-w-xl leading-relaxed">
-                Practice real technical interview questions with strict row-by-row grading, hidden edge cases, diff inspection, and 25-minute mock interview timers.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/interview"
-            className="btn-primary text-xs py-2.5 px-4 font-black shadow-[2px_2px_0px_var(--ink)] shrink-0 inline-flex items-center gap-2"
-          >
-            <span>Start MAANG Prep</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Neo-Brutalist Career XP & Progression Bar (Image 4 Design) */}
-        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[6px_6px_0px_var(--ink)] space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
-                <Zap className="w-5 h-5 text-[var(--ink)] fill-[var(--ink)]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-[var(--ink)] opacity-70">
-                    Current Career Rank
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-[var(--accent-teal)] border border-[var(--ink)] text-[10px] font-black text-[var(--ink)]">
-                    {progression.currentRank}
-                  </span>
-                </div>
-                <h2 className="text-xl font-black text-[var(--ink)] mt-0.5">
-                  Level {progression.currentLevel} • {data.totalXp.toLocaleString()} Total XP Earned
-                </h2>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] text-xs font-extrabold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]">
-                <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
-                <span>{data.streakDays} Day Streak</span>
-              </div>
-              <div className="text-right hidden md:block">
-                <span className="text-xs font-black text-[var(--ink)]">
-                  {progression.isMaxLevel
-                    ? `${data.totalXp.toLocaleString()} XP (Max Rank)`
-                    : `${data.totalXp.toLocaleString()} / ${progression.nextLevelXp.toLocaleString()} XP`}
-                </span>
-                <div className="text-[10px] font-bold text-[var(--ink)] opacity-70">
-                  {progression.isMaxLevel
-                    ? "Max milestone reached"
-                    : `${progression.xpToNextMilestone.toLocaleString()} XP to next milestone`}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Prominent High-Contrast Progress Bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-black text-[var(--ink)]">
-              <span>
-                {progression.isMaxLevel
-                  ? "MAX CAREER RANK ACHIEVED"
-                  : `PROGRESS TO LEVEL ${progression.nextLevel}`}
-              </span>
-              <span className="font-mono">{progression.progressPct}%</span>
-            </div>
-            <div className="w-full h-5 bg-[var(--paper-beige)] border-2 border-[var(--ink)] rounded-lg overflow-hidden shadow-[2px_2px_0px_var(--ink)] p-0.5">
-              <div
-                className="h-full bg-[var(--accent-teal)] rounded-sm border-r-2 border-[var(--ink)] transition-all duration-500"
-                style={{
-                  width: `${Math.max(progression.progressPct > 0 ? 3 : 0, progression.progressPct)}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Domain Navigation Tabs */}
+        {/* 3-Tier Progression Cards */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-[var(--ink)] tracking-tight">
-              Select Your Industry Domain
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight flex items-center gap-2">
+              <Layers className="w-5 h-5 text-black" />
+              <span>The 300 Questions Master Roadmap</span>
             </h2>
-            <span className="text-xs font-semibold text-[var(--ink)] opacity-75">
-              Switch anytime • Progress saved per domain
-            </span>
+            <Link
+              href="/interview"
+              className="text-xs font-black underline text-black/80 hover:text-black"
+            >
+              Open Interview Hub →
+            </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-            {data.domains.map((dom) => (
-              <button
-                key={dom.slug}
-                onClick={() => setSelectedDomainSlug(dom.slug)}
-                className={`p-3 rounded-xl border-2 text-left transition-all ${
-                  selectedDomainSlug === dom.slug
-                    ? "bg-[var(--accent-teal)] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)]"
-                    : "bg-[var(--white)] border-[var(--ink)] hover:bg-[var(--paper-beige)] shadow-[2px_2px_0px_var(--ink)]"
-                }`}
-              >
-                <div className="text-xs font-black text-[var(--ink)] truncate">{dom.name}</div>
-                <div className="text-[11px] font-bold text-[var(--ink)] opacity-90 mt-0.5">
-                  L{dom.currentLevel} • {dom.completedQuestions}/500
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {CURRICULUM_TIERS.map((tier) => {
+              const solvedInTier =
+                tier.levelNumber === 1
+                  ? solvedStats.l1
+                  : tier.levelNumber === 2
+                  ? solvedStats.l2
+                  : solvedStats.l3;
+              const tierPct = Math.round((solvedInTier / tier.questionsCount) * 100);
 
-        {/* Selected Domain Overview & Company Stages */}
-        <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--ink)] space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[var(--ink)] pb-5">
-            <div>
-              <div className="text-xs font-extrabold uppercase tracking-wide text-[var(--accent-teal)]">
-                Active Domain
-              </div>
-              <h3 className="text-2xl font-black text-[var(--ink)]">{currentDomain.name}</h3>
-              <p className="text-xs sm:text-sm text-[var(--ink)] opacity-80 mt-1">
-                {currentDomain.description}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-xs font-bold text-[var(--ink)]">Domain Progress</div>
-                <div className="text-base font-black text-[var(--ink)]">
-                  {currentDomain.completedQuestions} / 500 Solved
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 5 Levels in this Domain */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-extrabold uppercase tracking-wider text-[var(--ink)] opacity-80">
-              Company Progression: Levels 1–5
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {currentDomain.levels.map((lvl) => (
+              return (
                 <div
-                  key={lvl.number}
-                  className={`rounded-2xl border-2 p-4 flex flex-col justify-between space-y-4 transition-all ${
-                    lvl.unlocked
-                      ? "bg-[var(--white)] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)] hover:shadow-[6px_6px_0px_var(--ink)]"
-                      : "bg-[var(--paper-beige)] border-[var(--ink)] opacity-70"
-                  }`}
+                  key={tier.id}
+                  className="bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0px_#000000] flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span
-                        className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center font-black text-xs ${
-                          lvl.unlocked
-                            ? "bg-[var(--sun)] border-[var(--ink)] text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]"
-                            : "bg-slate-200 border-slate-400 text-slate-600"
-                        }`}
-                      >
-                        L{lvl.number}
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border-2 ${tier.badgeColor}`}>
+                        Level {tier.levelNumber}
                       </span>
-                      {lvl.unlocked ? (
-                        <span className="flex items-center gap-1 text-[11px] font-extrabold text-[var(--ink)] bg-[#bbf7d0] border border-[var(--ink)] px-2 py-0.5 rounded-full">
-                          <Unlock className="w-3 h-3 text-[var(--ink)]" />
-                          Unlocked
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-full">
-                          <Lock className="w-3 h-3 text-slate-600" />
-                          Locked
-                        </span>
-                      )}
+                      <span className="text-xs font-black">
+                        {solvedInTier} / {tier.questionsCount} Solved
+                      </span>
                     </div>
 
-                    <h5 className="font-black text-sm text-[var(--ink)] leading-snug">{lvl.name}</h5>
-                    <p className="text-xs text-[var(--ink)] opacity-80 leading-relaxed">
-                      {lvl.company}
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">{tier.badgeIcon}</span>
+                      <div>
+                        <h3 className="font-black text-lg uppercase leading-tight">{tier.badgeName}</h3>
+                        <p className="text-xs font-bold text-black/60">{tier.tagline}</p>
+                      </div>
+                    </div>
+
+                    <div className="w-full h-3 bg-slate-100 border-2 border-black rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#00E599]"
+                        style={{ width: `${tierPct}%` }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-black/80 font-medium leading-relaxed">
+                      {tier.description}
                     </p>
                   </div>
 
-                  <div className="space-y-3 pt-2 border-t-2 border-[var(--ink)]">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-bold text-[var(--ink)]">
-                        <span>Solved</span>
-                        <span className="font-mono font-black">
-                          {lvl.solvedCount} / {lvl.totalQuestions}
-                        </span>
-                      </div>
-                      <div className="w-full h-2.5 bg-[var(--paper-beige)] border border-[var(--ink)] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[var(--accent-teal)] transition-all duration-300"
-                          style={{
-                            width: `${Math.min(100, Math.round((lvl.solvedCount / lvl.totalQuestions) * 100))}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {lvl.unlocked ? (
-                      <Link
-                        href={`/office/${currentDomain.slug}/level-${lvl.number}`}
-                        className="w-full btn-primary text-xs py-2 shadow-[2px_2px_0px_var(--ink)] active:translate-x-[1px] active:translate-y-[1px]"
-                      >
-                        <span>Enter Office</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-[var(--ink)]" />
-                      </Link>
-                    ) : (
-                      <div className="text-[10px] text-center font-semibold text-slate-600 bg-slate-100 p-2 rounded border border-slate-300">
-                        Unlocks after completing Level {lvl.number - 1}
-                      </div>
-                    )}
-                  </div>
+                  <Link
+                    href={`/interview?tier=${tier.name}`}
+                    className="w-full py-2 bg-[#FFE600] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#FDD835] text-center flex items-center justify-center gap-1.5 transition-transform"
+                  >
+                    <Play className="w-3 h-3 fill-black" />
+                    <span>Practice Level {tier.levelNumber}</span>
+                  </Link>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Footer Honor Reminder */}
-        <div className="bg-[var(--mist)] border border-[var(--sky)] rounded-xl p-4 text-center text-xs font-bold text-[var(--ink)]">
-          &ldquo;Mastering SQL gives you a direct, unfiltered conversation with business reality.&rdquo; — The SQL Office Simulator Team
-        </div>
+        {/* Dedicated Level Badges Section */}
+        <div className="bg-[#FFF9D2] border-3 border-black rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_#000000] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-amber-600" />
+              <h3 className="font-black text-lg uppercase">Dedicated Level Badges</h3>
+            </div>
+            <Link
+              href="/badges"
+              className="text-xs font-black underline text-black/80 hover:text-black"
+            >
+              View Badge Details →
+            </Link>
+          </div>
 
-        <footer className="pt-4 pb-6 text-center text-xs text-[var(--ink)] opacity-75 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/terms" className="hover:underline font-bold">
-            Terms & Honor Code
-          </Link>
-          <span>•</span>
-          <Link href="/privacy" className="hover:underline font-bold">
-            Privacy Policy
-          </Link>
-          <span>•</span>
-          <FeedbackLink variant="pill" />
-          <span>•</span>
-          <span>© 2026 SQL Office Simulator • 100% Free Forever</span>
-        </footer>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className={`p-4 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_#000000] text-center space-y-1.5 ${solvedStats.l1 >= 100 ? "border-emerald-600 bg-emerald-50" : ""}`}>
+              <div className="text-3xl">🚜</div>
+              <div className="font-black text-xs">The Mud Scrapper</div>
+              <div className="text-[10px] font-bold text-black/60">
+                {solvedStats.l1 >= 100 ? "✓ UNLOCKED" : `${solvedStats.l1}/100 Solved`}
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_#000000] text-center space-y-1.5 ${solvedStats.l2 >= 100 ? "border-amber-600 bg-amber-50" : ""}`}>
+              <div className="text-3xl">🧙‍♂️</div>
+              <div className="font-black text-xs">The Window Wizard</div>
+              <div className="text-[10px] font-bold text-black/60">
+                {solvedStats.l2 >= 100 ? "✓ UNLOCKED" : `${solvedStats.l2}/100 Solved`}
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_#000000] text-center space-y-1.5 ${solvedStats.l3 >= 100 ? "border-rose-600 bg-rose-50" : ""}`}>
+              <div className="text-3xl">👹</div>
+              <div className="font-black text-xs">The Schema Exorcist</div>
+              <div className="text-[10px] font-bold text-black/60">
+                {solvedStats.l3 >= 100 ? "✓ UNLOCKED" : `${solvedStats.l3}/100 Solved`}
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_#000000] text-center space-y-1.5 ${solvedStats.totalSolved >= 300 ? "border-purple-600 bg-purple-50" : ""}`}>
+              <div className="text-3xl">⚡</div>
+              <div className="font-black text-xs">SQL Demigod</div>
+              <div className="text-[10px] font-bold text-black/60">
+                {solvedStats.totalSolved >= 300 ? "✓ UNLOCKED" : `${solvedStats.totalSolved}/300 Total`}
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

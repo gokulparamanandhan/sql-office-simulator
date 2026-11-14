@@ -1,49 +1,38 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FAFAF9",
+  themeColor: "#FFE600",
 };
 
 export const metadata: Metadata = {
-  title: "SQL Office Simulator | Learn SQL by Working in a Real Company",
+  title: "SQL GRIT | 300 Dirty Production & MAANG SQL Interview Challenges",
   description:
-    "A free, learn-by-doing SQL platform where you practice by answering realistic business requests from executives across 7 industry domains and 5 career levels.",
+    "Forget toy databases with 5 rows. Master 300 real-world, multi-table SQL challenges with messy production data, missing values, duplicate keys, and MAANG interview problems across Basic, Intermediate, and Advanced.",
   keywords: [
-    "SQL simulator",
-    "learn SQL",
-    "SQL interview practice",
-    "data analyst practice",
+    "SQL interview",
+    "dirty SQL data",
+    "MAANG SQL questions",
+    "data analyst SQL practice",
+    "advanced SQL",
+    "window functions",
+    "CTEs",
     "PostgreSQL",
-    "interactive SQL",
   ],
-  authors: [{ name: "SQL Office Simulator" }],
+  authors: [{ name: "SQL GRIT" }],
   openGraph: {
-    title: "SQL Office Simulator | Learn SQL by Working in a Real Company",
+    title: "SQL GRIT | 300 Dirty Production & MAANG SQL Interview Challenges",
     description:
-      "Practice SQL on real business questions from colleagues, managers, and executives. 100% free forever.",
+      "Solving 500 simple queries on a clean single-table tutorial database teaches you nothing. Practice real interview SQL on messy production schemas. 100% free.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SQL Office Simulator",
-    description: "Learn SQL by working in simulated companies across 7 industry domains.",
+    title: "SQL GRIT | Master Real Production SQL",
+    description: "300 real interview questions on messy multi-table databases for Data Analysts & Data Scientists.",
   },
 };
 
@@ -53,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen bg-[var(--surface)] text-[var(--ink)] antialiased">
+    <html lang="en">
+      <body className="min-h-screen bg-[#FDFBF7] text-[#000000] font-sans antialiased selection:bg-[#FFE600] selection:text-black">
         {children}
       </body>
     </html>
