@@ -2,53 +2,70 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Building2,
   ArrowLeft,
   CheckCircle2,
   Play,
-  RotateCcw,
-  Sparkles,
-  ChevronRight,
   Database,
   Layers,
   Zap,
   Flame,
   Award,
-  AlertCircle,
-  Code2,
   Search,
   Filter,
-  Check,
-  Calendar,
-  Briefcase,
-  HelpCircle,
-  TrendingUp,
-  Clock,
-  BookOpen,
   Trophy,
-  AlertTriangle,
-  Bug,
 } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
 import { INTERVIEW_QUESTIONS, INTERVIEW_COMPANIES, INTERVIEW_CATEGORIES } from "@/lib/content/interview-questions";
 
 export default function InterviewPrepCatalogPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTier, setSelectedTier] = useState<string>("All");
   const [selectedCompany, setSelectedCompany] = useState<string>("All");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
-  const [showPlaybook, setShowPlaybook] = useState<boolean>(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Load solved map from localStorage
+  // Authentication gate: redirect to signup if unauthenticated
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.authenticated) {
+          router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+        } else {
+          setAuthChecked(true);
+        }
+      })
+      .catch(() => {
+        router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+      });
+  }, [router]);
+
+  // Load solved map and tier query from URL
   useEffect(() => {
     try {
       const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
       const stored = localStorage.getItem(`sql_office_${currentUserId}_interview_solved`);
       if (stored) {
         setSolvedMap(JSON.parse(stored));
+      }
+
+      // Pre-select tier if present in URL
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tierParam = urlParams.get("tier");
+        if (tierParam) {
+          if (tierParam.includes("1") || tierParam.toLowerCase().includes("basic")) {
+            setSelectedTier("Level 1: Basic");
+          } else if (tierParam.includes("2") || tierParam.toLowerCase().includes("inter")) {
+            setSelectedTier("Level 2: Intermediate");
+          } else if (tierParam.includes("3") || tierParam.toLowerCase().includes("adv")) {
+            setSelectedTier("Level 3: Advanced");
+          }
+        }
       }
     } catch {
       // Ignore
@@ -64,7 +81,10 @@ export default function InterviewPrepCatalogPage() {
         q.topics.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
         q.companies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // Tier (mapped from difficulty or custom tags)
+      // Tier:
+      // Level 1: Basic (Easy) - 100 questions
+      // Level 2: Intermediate (Medium) - 100 questions
+      // Level 3: Advanced (Hard) - 100 questions
       const matchesTier =
         selectedTier === "All" ||
         (selectedTier === "Level 1: Basic" && q.difficulty === "Easy") ||
@@ -75,17 +95,13 @@ export default function InterviewPrepCatalogPage() {
       const matchesCompany =
         selectedCompany === "All" || q.companies.includes(selectedCompany);
 
-      // Difficulty
-      const matchesDifficulty =
-        selectedDifficulty === "All" || q.difficulty === selectedDifficulty;
-
       // Category
       const matchesCategory =
         selectedCategory === "All" || q.category === selectedCategory;
 
-      return matchesSearch && matchesTier && matchesCompany && matchesDifficulty && matchesCategory;
+      return matchesSearch && matchesTier && matchesCompany && matchesCategory;
     });
-  }, [searchQuery, selectedTier, selectedCompany, selectedDifficulty, selectedCategory]);
+  }, [searchQuery, selectedTier, selectedCompany, selectedCategory]);
 
   const totalQuestions = INTERVIEW_QUESTIONS.length;
   const solvedCount = Object.keys(solvedMap).filter((k) => solvedMap[k]).length;
@@ -144,13 +160,6 @@ export default function InterviewPrepCatalogPage() {
               <span>Leaderboard</span>
             </Link>
 
-            <button
-              onClick={() => setShowPlaybook(!showPlaybook)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black shadow-[2px_2px_0px_#000000] transition-all"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>30-Day Game Plan</span>
-            </button>
             <FeedbackLink variant="button" />
           </div>
         </div>
@@ -158,65 +167,6 @@ export default function InterviewPrepCatalogPage() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
-        {/* 30-Day Strategy Playbook Banner / Drawer */}
-        {showPlaybook && (
-          <div className="bg-white border-3 border-black rounded-2xl p-6 shadow-[6px_6px_0px_#000000] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b-2 border-black">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FFE600] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000000]">
-                  <Calendar className="w-5 h-5 text-black" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg uppercase">
-                    30-Day MAANG &amp; Startup SQL Interview Game Plan
-                  </h3>
-                  <p className="text-xs text-black/70 font-bold">
-                    Follow this exact sequence to crack the 300 technical challenges.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPlaybook(false)}
-                className="text-xs font-black px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border-2 border-black rounded-lg shadow-[1px_1px_0px_#000000]"
-              >
-                Close Plan
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-              <div className="bg-[#FAF8F5] border-2 border-black rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#000000]">
-                <div className="text-xs font-black uppercase text-emerald-700 flex items-center gap-1.5">
-                  <span>Day 1–10: Level 1 (Basic)</span>
-                </div>
-                <div className="font-black text-sm">Mud Scrapper Track (100 Qs)</div>
-                <p className="text-xs text-black/80 font-medium">
-                  Master dirty WHERE filters, NULL coercion (`COALESCE`), string trimming, duplicate keys, and basic multi-table joins.
-                </p>
-              </div>
-
-              <div className="bg-[#FFF9D2] border-2 border-black rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#000000]">
-                <div className="text-xs font-black uppercase text-amber-700 flex items-center gap-1.5">
-                  <span>Day 11–20: Level 2 (Intermediate)</span>
-                </div>
-                <div className="font-black text-sm">Window Wizard Track (100 Qs)</div>
-                <p className="text-xs text-black/80 font-medium">
-                  Master CTE pipelines, `ROW_NUMBER`, `DENSE_RANK` with ties, `LEAD`/`LAG` deltas, and preventing join fanout.
-                </p>
-              </div>
-
-              <div className="bg-[#FFF5F5] border-2 border-black rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#000000]">
-                <div className="text-xs font-black uppercase text-rose-700 flex items-center gap-1.5">
-                  <span>Day 21–30: Level 3 (Advanced)</span>
-                </div>
-                <div className="font-black text-sm">Schema Exorcist Track (100 Qs)</div>
-                <p className="text-xs text-black/80 font-medium">
-                  Recursive CTEs, 30-min sessionization, gaps and islands, cohort retention matrices, and query tuning.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-white border-3 border-black p-6 sm:p-8 shadow-[6px_6px_0px_#000000]">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -274,10 +224,10 @@ export default function InterviewPrepCatalogPage() {
             {/* Tier Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {[
-                { label: "All Tiers", val: "All" },
-                { label: "Level 1: Basic (100 Qs)", val: "Level 1: Basic" },
-                { label: "Level 2: Intermediate (100 Qs)", val: "Level 2: Intermediate" },
-                { label: "Level 3: Advanced (100 Qs)", val: "Level 3: Advanced" },
+                { label: `All Tiers (${totalQuestions})`, val: "All" },
+                { label: `Level 1: Basic (${easyTotal} Qs)`, val: "Level 1: Basic" },
+                { label: `Level 2: Intermediate (${medTotal} Qs)`, val: "Level 2: Intermediate" },
+                { label: `Level 3: Advanced (${hardTotal} Qs)`, val: "Level 3: Advanced" },
               ].map((tier) => (
                 <button
                   key={tier.val}

@@ -24,6 +24,20 @@ export default function BadgesShowcasePage() {
   const [l2Solved, setL2Solved] = useState<number>(0);
   const [l3Solved, setL3Solved] = useState<number>(0);
 
+  // Auth gate: redirect to signup if unauthenticated
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.authenticated) {
+          window.location.href = `/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`;
+        }
+      })
+      .catch(() => {
+        window.location.href = `/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`;
+      });
+  }, []);
+
   useEffect(() => {
     try {
       const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";

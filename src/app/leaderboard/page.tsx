@@ -167,6 +167,26 @@ export default function LeaderboardPage() {
           </div>
         )}
 
+        {/* Empty State when no users on board */}
+        {!loading && leaderboard.length === 0 && (
+          <div className="bg-white border-3 border-black rounded-2xl p-10 text-center space-y-4 shadow-[6px_6px_0px_#000000]">
+            <div className="text-5xl">🏆</div>
+            <h3 className="font-black text-2xl uppercase">No Ranked Learners Yet!</h3>
+            <p className="text-sm font-medium text-black/75 max-w-md mx-auto leading-relaxed">
+              Be the first to solve a query and claim the #1 spot on the global leaderboard.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/interview"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#FFE600] text-black border-2 border-black rounded-xl font-black text-xs shadow-[3px_3px_0px_#000000] hover:bg-[#FDD835]"
+              >
+                <Zap className="w-4 h-4 fill-black" />
+                <span>Start Solving to Rank #1 →</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Podium: Top 3 Solvers */}
         {topThree.length >= 3 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">

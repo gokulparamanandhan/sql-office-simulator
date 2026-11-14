@@ -69,7 +69,7 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // Auto-toggle comparison animation every 5 seconds if user hasn't clicked
+  // Auto-toggle comparison animation every 6 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setComparisonMode((prev) => (prev === "tutorial" ? "production" : "tutorial"));
@@ -84,7 +84,6 @@ export default function Home() {
   };
 
   const selectedTier = CURRICULUM_TIERS.find((t) => t.id === activeTierTab) || CURRICULUM_TIERS[0];
-  const sampleTierQuestions = CURRICULUM_300_QUESTIONS.filter((q) => q.tier === activeTierTab);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#000000] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black">
@@ -111,18 +110,18 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* 3 Tiers Quick Link */}
-            <a
-              href="#curriculum"
+            {/* 3 Tiers Link */}
+            <Link
+              href={user ? "/interview" : "/auth/signup?redirect=/interview"}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-50 text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
             >
               <Layers className="w-3.5 h-3.5 text-black" />
               <span>300 Questions</span>
-            </a>
+            </Link>
 
             {/* Badges Link */}
             <Link
-              href="/badges"
+              href={user ? "/badges" : "/auth/signup?redirect=/badges"}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-50 text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
             >
               <Award className="w-3.5 h-3.5 text-amber-500" />
@@ -205,7 +204,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* HERO SECTION: The Funny & Instant-Understanding Animation */}
+        {/* HERO SECTION */}
         <section className="relative overflow-hidden rounded-2xl bg-white border-3 border-black p-6 sm:p-10 shadow-[8px_8px_0px_#000000]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Headline */}
@@ -223,19 +222,32 @@ export default function Home() {
                 Solving 500 simple queries on a clean, single-table tutorial database will teach you less than solving <strong>30 messy multi-table business problems</strong> with missing values, duplicate keys, and performance bottlenecks.
               </p>
 
-              <div className="p-3.5 bg-[#F5EFEB] border-2 border-black rounded-xl text-xs font-mono font-bold space-y-1 shadow-[2px_2px_0px_#000000]">
-                <div className="text-rose-600 uppercase font-black flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4" /> The 300 Questions Master Roadmap:
+              {/* High Contrast Roadmap Box */}
+              <div className="p-4 bg-[#F5EFEB] border-2 border-black rounded-xl text-xs font-mono font-bold space-y-2 shadow-[2px_2px_0px_#000000]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FFE4E8] border border-red-500 text-red-950 uppercase font-black text-[11px] shadow-[1px_1px_0px_#000]">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-700" />
+                  <span>The 300 Questions Master Roadmap</span>
                 </div>
-                <div>• Level 1: 100 Basic Questions (SELECT, WHERE, NULLs, dirty JOINs)</div>
-                <div>• Level 2: 100 Intermediate Questions (CTEs, Window Functions, DENSE_RANK)</div>
-                <div>• Level 3: 100 Advanced Questions (Shitty schemas, recursive CTEs, cohorts)</div>
+                <div className="text-black space-y-1.5 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-700 font-black">▶</span>
+                    <span><strong>Level 1:</strong> 100 Basic Questions (SELECT, WHERE, NULLs, dirty JOINs)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-700 font-black">▶</span>
+                    <span><strong>Level 2:</strong> 100 Intermediate Questions (CTEs, Window Functions, DENSE_RANK)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-rose-700 font-black">▶</span>
+                    <span><strong>Level 3:</strong> 100 Advanced Questions (Shitty schemas, recursive CTEs, cohorts)</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Call to Actions */}
+              {/* Call to Actions (Auth Protected) */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
-                  href="/interview"
+                  href={user ? "/interview" : "/auth/signup?redirect=/interview"}
                   className="px-5 py-3 rounded-xl border-3 border-black bg-[#FFE600] hover:bg-[#FDD835] font-black text-sm shadow-[4px_4px_0px_#000000] flex items-center gap-2 transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
                 >
                   <Zap className="w-4 h-4 text-black fill-black" />
@@ -265,7 +277,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Interactive Animation: The Joke (Tutorial SQL vs Production Reality) */}
+            {/* Right Interactive Animation: The Joke */}
             <div className="lg:col-span-6">
               <div className="bg-[#FAF8F5] border-3 border-black rounded-2xl p-5 shadow-[6px_6px_0px_#000000] space-y-4">
                 {/* Animation Toggle Header */}
@@ -308,16 +320,16 @@ export default function Home() {
                   /* TUTORIAL SQL (THE LIE) */
                   <div className="bg-[#FFF5F7] border-2 border-black rounded-xl p-4 space-y-3 transition-all animate-fadeIn">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded">
+                      <span className="text-xs font-black text-rose-900 bg-rose-200 border border-rose-400 px-2.5 py-0.5 rounded">
                         WHAT OTHER PLATFORMS CHARGE $299/YR FOR:
                       </span>
                       <span className="text-lg">🧸</span>
                     </div>
 
                     <div className="bg-white border-2 border-black rounded-lg p-3 font-mono text-[11px] text-black space-y-1 shadow-[2px_2px_0px_#000000]">
-                      <div className="text-black/50 font-bold">-- Pristine fake 3-row table:</div>
-                      <div className="text-blue-600 font-bold">SELECT * FROM employees WHERE salary &gt; 50000;</div>
-                      <div className="text-emerald-700 pt-1">
+                      <div className="text-black/60 font-bold">-- Pristine fake 3-row table:</div>
+                      <div className="text-blue-700 font-bold">SELECT * FROM employees WHERE salary &gt; 50000;</div>
+                      <div className="text-emerald-800 font-bold pt-1">
                         ✓ 3 rows returned. Zero NULL values. Zero duplicates. Zero stress.
                       </div>
                     </div>
@@ -331,7 +343,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <div className="text-[11px] text-black/60 font-bold text-center">
+                    <div className="text-[11px] text-black/70 font-bold text-center">
                       (Then you get into the interview and fail the first multi-table join...)
                     </div>
                   </div>
@@ -346,7 +358,7 @@ export default function Home() {
                     </div>
 
                     <div className="bg-white border-2 border-black rounded-lg p-3 font-mono text-[11px] text-black space-y-1 shadow-[2px_2px_0px_#000000]">
-                      <div className="text-rose-600 font-black">
+                      <div className="text-red-700 font-black">
                         -- Shitty schema alert: No foreign keys, trailing spaces, duplicate IDs!
                       </div>
                       <div className="text-purple-700 font-bold">
@@ -362,7 +374,7 @@ export default function Home() {
                     </div>
 
                     <div className="bg-[#FFEBEE] border-2 border-rose-400 rounded-lg p-3 text-xs text-rose-950 font-medium space-y-1">
-                      <div className="font-black text-rose-700 flex items-center gap-1">
+                      <div className="font-black text-rose-800 flex items-center gap-1">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span>URGENT SLACK MESSAGE FROM VP OF FINANCE:</span>
                       </div>
@@ -371,7 +383,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-300 rounded p-1.5 font-bold text-center">
+                    <div className="text-[11px] text-emerald-900 bg-emerald-100 border border-emerald-400 rounded p-1.5 font-bold text-center">
                       ✓ This is what SQL GRIT trains you to solve across 300 real levels.
                     </div>
                   </div>
@@ -398,7 +410,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SECTION 2: THE 3-TIER ROADMAP (100 QUESTIONS EACH = 300 TOTAL) */}
+        {/* SECTION 2: THE 3-TIER ROADMAP */}
         <section id="curriculum" className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -416,12 +428,12 @@ export default function Home() {
           </div>
 
           {/* Tier Navigation Tabs */}
-          <div className="flex overflow-x-auto gap-3 pb-2">
+          <div className="flex flex-wrap sm:flex-nowrap overflow-x-auto gap-3 pb-2">
             {CURRICULUM_TIERS.map((tier) => (
               <button
                 key={tier.id}
                 onClick={() => setActiveTierTab(tier.id)}
-                className={`px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border-3 border-black flex items-center gap-2 ${
+                className={`px-4 sm:px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border-3 border-black flex items-center gap-2 ${
                   activeTierTab === tier.id
                     ? `${tier.badgeColor} shadow-[4px_4px_0px_#000000] -translate-y-0.5`
                     : "bg-white text-black hover:bg-slate-50 shadow-[2px_2px_0px_#000000]"
@@ -433,30 +445,31 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Active Tier Spotlight Card */}
+          {/* Active Tier Spotlight Card (Clean Alignments) */}
           <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_#000000] p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-black pb-5">
-              <div>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-black uppercase px-2.5 py-0.5 rounded border-2 border-black ${selectedTier.badgeColor}`}>
+                  <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border-2 border-black ${selectedTier.badgeColor}`}>
                     Level {selectedTier.levelNumber} Milestone
                   </span>
                   <span className="text-xs font-mono font-bold text-black/70">
                     100 Curated Challenges
                   </span>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black uppercase mt-1">
+                <h3 className="text-2xl sm:text-3xl font-black uppercase">
                   {selectedTier.name}
                 </h3>
-                <p className="text-sm font-bold text-black/70 mt-0.5">
+                <p className="text-sm font-bold text-black/70">
                   {selectedTier.tagline}
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* Start Level Button (Auth Protected) */}
+              <div className="shrink-0">
                 <Link
-                  href="/interview"
-                  className="px-4 py-2.5 bg-[#FFE600] text-black border-2 border-black rounded-xl font-black text-xs shadow-[3px_3px_0px_#000000] hover:bg-[#FDD835] flex items-center gap-1.5"
+                  href={user ? `/interview?tier=Level ${selectedTier.levelNumber}` : `/auth/signup?redirect=${encodeURIComponent('/interview?tier=Level ' + selectedTier.levelNumber)}`}
+                  className="px-4 py-2.5 bg-[#FFE600] text-black border-2 border-black rounded-xl font-black text-xs shadow-[3px_3px_0px_#000000] hover:bg-[#FDD835] flex items-center gap-1.5 transition-transform"
                 >
                   <Play className="w-3.5 h-3.5 fill-black" />
                   <span>Start Level {selectedTier.levelNumber} (100 Qs)</span>
@@ -488,14 +501,14 @@ export default function Home() {
 
               {/* Messy Data Traps */}
               <div className="bg-[#FFF5F5] border-2 border-black rounded-xl p-4 space-y-3 shadow-[2px_2px_0px_#000000]">
-                <div className="text-xs font-black uppercase text-rose-700 flex items-center gap-1.5">
-                  <Bug className="w-4 h-4 text-rose-600" />
+                <div className="text-xs font-black uppercase text-red-800 flex items-center gap-1.5">
+                  <Bug className="w-4 h-4 text-red-600" />
                   <span>The Real Messy Data Traps You Will Face</span>
                 </div>
                 <ul className="space-y-1.5 text-xs font-medium text-black/90">
                   {selectedTier.messyDataFeatures.map((trap, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="font-mono font-bold text-rose-600">⚠</span>
+                      <span className="font-mono font-bold text-red-600">⚠</span>
                       <span>{trap}</span>
                     </li>
                   ))}
@@ -503,27 +516,27 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Target Outcome & Companies */}
-            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t-2 border-black/10 text-xs">
+            {/* Target Outcome & Companies Footer (Clean Alignment) */}
+            <div className="pt-4 border-t-2 border-black/15 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-black uppercase text-black/70">Sample Companies:</span>
+                <span className="font-mono font-black uppercase text-black/70">Target Companies:</span>
                 {selectedTier.sampleCompanies.map((c) => (
                   <span
                     key={c}
-                    className="px-2 py-0.5 bg-slate-100 border border-black rounded font-black text-[11px]"
+                    className="px-2.5 py-1 bg-slate-100 border border-black rounded font-mono font-black text-[11px] shadow-[1px_1px_0px_#000]"
                   >
                     {c}
                   </span>
                 ))}
               </div>
-              <div className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-1 rounded-full">
+              <div className="font-bold text-emerald-950 bg-emerald-100 border-2 border-emerald-600 px-3 py-1 rounded-lg self-start md:self-auto shadow-[1px_1px_0px_#000]">
                 🎯 {selectedTier.targetOutcome}
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION 3: DEDICATED BADGES SHOWCASE */}
+        {/* SECTION 3: DEDICATED BADGES SHOWCASE (Aligned heights) */}
         <section className="bg-[#FFF9D2] border-3 border-black rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_#000000] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -536,81 +549,101 @@ export default function Home() {
               </h2>
             </div>
             <Link
-              href="/badges"
+              href={user ? "/badges" : "/auth/signup?redirect=/badges"}
               className="px-4 py-2 bg-white text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-slate-50 flex items-center gap-1.5"
             >
               <span>View All Badges &amp; Trophies →</span>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {/* Level 1 Badge */}
-            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
-                🚜
+            <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[3px_3px_0px_#000000] flex flex-col justify-between space-y-3 h-full">
+              <div className="space-y-3 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 border-2 border-black flex items-center justify-center text-3xl shadow-[2px_2px_0px_#000000] mx-auto">
+                  🚜
+                </div>
+                <div className="space-y-1">
+                  <span className="inline-block text-[10px] font-black uppercase bg-emerald-300 text-black px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_#000]">
+                    Level 1 Dedicated Badge
+                  </span>
+                  <h4 className="font-black text-base">The Mud Scrapper</h4>
+                  <p className="text-xs text-black/75 font-medium leading-relaxed">
+                    Complete all 100 basic messy questions (SELECT, NULLs, dirty JOINs).
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase bg-emerald-300 text-black px-2 py-0.5 rounded border border-black">
-                  Level 1 Dedicated Badge
-                </span>
-                <h4 className="font-black text-base mt-1">The Mud Scrapper</h4>
-                <p className="text-xs text-black/70 font-medium">
-                  Complete all 100 basic messy questions (SELECT, NULLs, dirty JOINs).
-                </p>
+              <div className="pt-2 border-t border-black/10 text-center font-mono text-[10px] font-bold text-black/60">
+                100 QUESTIONS
               </div>
             </div>
 
             {/* Level 2 Badge */}
-            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
-                🧙‍♂️
+            <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[3px_3px_0px_#000000] flex flex-col justify-between space-y-3 h-full">
+              <div className="space-y-3 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-amber-100 border-2 border-black flex items-center justify-center text-3xl shadow-[2px_2px_0px_#000000] mx-auto">
+                  🧙‍♂️
+                </div>
+                <div className="space-y-1">
+                  <span className="inline-block text-[10px] font-black uppercase bg-amber-300 text-black px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_#000]">
+                    Level 2 Dedicated Badge
+                  </span>
+                  <h4 className="font-black text-base">The Window Wizard</h4>
+                  <p className="text-xs text-black/75 font-medium leading-relaxed">
+                    Complete all 100 intermediate questions (CTEs, DENSE_RANK, LEAD, LAG).
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase bg-amber-300 text-black px-2 py-0.5 rounded border border-black">
-                  Level 2 Dedicated Badge
-                </span>
-                <h4 className="font-black text-base mt-1">The Window Wizard</h4>
-                <p className="text-xs text-black/70 font-medium">
-                  Complete all 100 intermediate questions (CTEs, DENSE_RANK, LEAD, LAG).
-                </p>
+              <div className="pt-2 border-t border-black/10 text-center font-mono text-[10px] font-bold text-black/60">
+                100 QUESTIONS
               </div>
             </div>
 
             {/* Level 3 Badge */}
-            <div className="bg-white border-3 border-black rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
-              <div className="w-12 h-12 rounded-xl bg-rose-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
-                👹
+            <div className="bg-white border-3 border-black rounded-2xl p-5 shadow-[3px_3px_0px_#000000] flex flex-col justify-between space-y-3 h-full">
+              <div className="space-y-3 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-rose-100 border-2 border-black flex items-center justify-center text-3xl shadow-[2px_2px_0px_#000000] mx-auto">
+                  👹
+                </div>
+                <div className="space-y-1">
+                  <span className="inline-block text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_#000]">
+                    Level 3 Dedicated Badge
+                  </span>
+                  <h4 className="font-black text-base">The Schema Exorcist</h4>
+                  <p className="text-xs text-black/75 font-medium leading-relaxed">
+                    Complete all 100 advanced nightmare queries (recursive CTEs, sessionization).
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase bg-rose-500 text-white px-2 py-0.5 rounded border border-black">
-                  Level 3 Dedicated Badge
-                </span>
-                <h4 className="font-black text-base mt-1">The Schema Exorcist</h4>
-                <p className="text-xs text-black/70 font-medium">
-                  Complete all 100 advanced nightmare queries (recursive CTEs, sessionization).
-                </p>
+              <div className="pt-2 border-t border-black/10 text-center font-mono text-[10px] font-bold text-black/60">
+                100 QUESTIONS
               </div>
             </div>
 
             {/* Final Grandmaster Badge */}
-            <div className="bg-[#FAF5FF] border-3 border-purple-950 rounded-xl p-4 shadow-[3px_3px_0px_#000000] space-y-2.5">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 border-2 border-black flex items-center justify-center text-2xl shadow-[1px_1px_0px_#000000]">
-                ⚡
+            <div className="bg-[#FAF5FF] border-3 border-purple-950 rounded-2xl p-5 shadow-[3px_3px_0px_#000000] flex flex-col justify-between space-y-3 h-full">
+              <div className="space-y-3 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-purple-100 border-2 border-black flex items-center justify-center text-3xl shadow-[2px_2px_0px_#000000] mx-auto">
+                  ⚡
+                </div>
+                <div className="space-y-1">
+                  <span className="inline-block text-[10px] font-black uppercase bg-[#9D00FF] text-white px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_#000]">
+                    All 300 Completed
+                  </span>
+                  <h4 className="font-black text-base">SQL Demigod</h4>
+                  <p className="text-xs text-black/75 font-medium leading-relaxed">
+                    100% mastery. Guaranteed to crack any SQL interview on Earth.
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-black uppercase bg-[#9D00FF] text-white px-2 py-0.5 rounded border border-black">
-                  All 300 Completed
-                </span>
-                <h4 className="font-black text-base mt-1">SQL Demigod</h4>
-                <p className="text-xs text-black/70 font-medium">
-                  100% mastery. Guaranteed to crack any SQL interview on Earth.
-                </p>
+              <div className="pt-2 border-t border-black/10 text-center font-mono text-[10px] font-bold text-purple-900">
+                ALL 300 SOLVED
               </div>
             </div>
           </div>
         </section>
 
-        {/* SECTION 4: REAL LEADERBOARD PREVIEW */}
+        {/* SECTION 4: REAL LEADERBOARD (No Fake Seed Data) */}
         <section className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -630,76 +663,95 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_#000000] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#FAF8F5] border-b-2 border-black text-xs font-black uppercase tracking-wider text-black">
-                    <th className="py-3 px-4 w-16 text-center">Rank</th>
-                    <th className="py-3 px-4">Learner</th>
-                    <th className="py-3 px-4 text-center">Levels Conquered</th>
-                    <th className="py-3 px-4 text-center">Total XP</th>
-                    <th className="py-3 px-4 text-center">Active Streak</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y-2 divide-black/10 text-xs font-medium">
-                  {leaderboardPreview.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-[#FFFDE6] transition-colors">
-                      <td className="py-3.5 px-4 text-center font-black">
-                        {entry.rank === 1 ? (
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-[#FFE600] border-2 border-black shadow-[1px_1px_0px_#000000]">
-                            1
-                          </span>
-                        ) : entry.rank === 2 ? (
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-slate-300 border-2 border-black shadow-[1px_1px_0px_#000000]">
-                            2
-                          </span>
-                        ) : entry.rank === 3 ? (
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-200 border-2 border-black shadow-[1px_1px_0px_#000000]">
-                            3
-                          </span>
-                        ) : (
-                          `#${entry.rank}`
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={entry.avatar}
-                            alt={entry.name}
-                            className="w-8 h-8 rounded-full border-2 border-black object-cover"
-                          />
-                          <div>
-                            <div className="font-black text-sm">{entry.name}</div>
-                            <div className="text-[11px] text-black/60 font-semibold">
-                              {entry.role} {entry.company && `• ${entry.company}`}
+          {leaderboardPreview.length === 0 ? (
+            <div className="bg-white border-3 border-black rounded-2xl p-8 text-center space-y-3 shadow-[4px_4px_0px_#000000]">
+              <div className="text-4xl">🏆</div>
+              <h3 className="font-black text-lg uppercase">Hall of Fame is Live!</h3>
+              <p className="text-xs sm:text-sm text-black/75 max-w-md mx-auto">
+                No users have solved levels on this platform deployment yet. Sign up, solve your first dirty challenge, and be the first to claim the #1 spot!
+              </p>
+              <div className="pt-2">
+                <Link
+                  href={user ? "/interview" : "/auth/signup?redirect=/interview"}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#FFE600] text-black border-2 border-black rounded-xl font-black text-xs shadow-[3px_3px_0px_#000000] hover:bg-[#FDD835]"
+                >
+                  <Zap className="w-4 h-4 fill-black" />
+                  <span>Start Solving to Rank #1 →</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border-3 border-black rounded-2xl shadow-[6px_6px_0px_#000000] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#FAF8F5] border-b-2 border-black text-xs font-black uppercase tracking-wider text-black">
+                      <th className="py-3 px-4 w-16 text-center">Rank</th>
+                      <th className="py-3 px-4">Learner</th>
+                      <th className="py-3 px-4 text-center">Levels Conquered</th>
+                      <th className="py-3 px-4 text-center">Total XP</th>
+                      <th className="py-3 px-4 text-center">Active Streak</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y-2 divide-black/10 text-xs font-medium">
+                    {leaderboardPreview.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-[#FFFDE6] transition-colors">
+                        <td className="py-3.5 px-4 text-center font-black">
+                          {entry.rank === 1 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-[#FFE600] border-2 border-black shadow-[1px_1px_0px_#000000]">
+                              1
+                            </span>
+                          ) : entry.rank === 2 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-slate-300 border-2 border-black shadow-[1px_1px_0px_#000000]">
+                              2
+                            </span>
+                          ) : entry.rank === 3 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-200 border-2 border-black shadow-[1px_1px_0px_#000000]">
+                              3
+                            </span>
+                          ) : (
+                            `#${entry.rank}`
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={entry.avatar}
+                              alt={entry.name}
+                              className="w-8 h-8 rounded-full border-2 border-black object-cover"
+                            />
+                            <div>
+                              <div className="font-black text-sm">{entry.name}</div>
+                              <div className="text-[11px] text-black/60 font-semibold">
+                                {entry.role}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="font-black text-sm text-black">
-                          {entry.totalLevelsCompleted}
-                        </span>
-                        <span className="text-black/50 font-bold"> / 300</span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="inline-block px-2.5 py-0.5 rounded bg-[#FFE600] border border-black font-black text-xs shadow-[1px_1px_0px_#000000]">
-                          {entry.totalXp.toLocaleString()} XP
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
-                          <Flame className="w-3 h-3 fill-orange-500" />
-                          <span>{entry.streakDays}d</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="font-black text-sm text-black">
+                            {entry.totalLevelsCompleted}
+                          </span>
+                          <span className="text-black/50 font-bold"> / 300</span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="inline-block px-2.5 py-0.5 rounded bg-[#FFE600] border border-black font-black text-xs shadow-[1px_1px_0px_#000000]">
+                            {entry.totalXp.toLocaleString()} XP
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="inline-flex items-center gap-1 font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
+                            <Flame className="w-3 h-3 fill-orange-500" />
+                            <span>{entry.streakDays}d</span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* HONOR CODE MANIFESTO */}
@@ -728,9 +780,9 @@ export default function Home() {
             <span>• 300 Messy Production &amp; MAANG Interview Questions</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/interview" className="hover:underline">300 Questions</Link>
+            <Link href={user ? "/interview" : "/auth/signup?redirect=/interview"} className="hover:underline">300 Questions</Link>
             <Link href="/leaderboard" className="hover:underline">Leaderboard</Link>
-            <Link href="/badges" className="hover:underline">Level Badges</Link>
+            <Link href={user ? "/badges" : "/auth/signup?redirect=/badges"} className="hover:underline">Level Badges</Link>
             <Link href="/privacy" className="hover:underline">Privacy</Link>
             <Link href="/terms" className="hover:underline">Terms</Link>
           </div>

@@ -19,993 +19,9404 @@ export interface InterviewQuestion {
 
 export const INTERVIEW_QUESTIONS: InterviewQuestion[] = [
   {
-    id: "amzn-01",
-    title: "Highest Paid Employees in Each Department",
-    difficulty: "Medium",
-    companies: ["Amazon", "Google", "Meta"],
-    topics: ["Window Functions", "DENSE_RANK", "Ties", "CTEs"],
-    frequency: "Very High",
-    category: "Window Functions",
-    orderSensitive: true,
-    expectedColumns: ["department_name", "employee_name", "salary"],
-    description: `### Business Context
-Amazon HR Operations wants to audit compensation equity across different business units. Management has requested a report identifying the **top 2 highest-earning employees in each department**.
-
-### Rules & Edge Cases
-- If multiple employees in the same department earn the exact same salary and tie for a rank, **all tied employees must be included** (e.g., if two people tie for rank 1, both should be shown, and the next person should be rank 2).
-- You must use \`DENSE_RANK()\` to ensure no ranks are skipped after ties.
-- Order the final result by \`department_name\` ASC, then \`salary\` DESC, then \`employee_name\` ASC.
-
-### Input Schema
-**departments** table:
-- \`id\` (INT, PRIMARY KEY)
-- \`name\` (VARCHAR)
-
-**employees** table:
-- \`id\` (INT, PRIMARY KEY)
-- \`name\` (VARCHAR)
-- \`salary\` (INT)
-- \`department_id\` (INT, FOREIGN KEY -> departments.id)`,
-    schemaSql: `
-CREATE TABLE departments (
-  id INT PRIMARY KEY,
-  name VARCHAR(50)
-);
-
-CREATE TABLE employees (
-  id INT PRIMARY KEY,
-  name VARCHAR(50),
-  salary INT,
-  department_id INT REFERENCES departments(id)
-);
-
-INSERT INTO departments VALUES
-(1, 'Engineering'),
-(2, 'Operations'),
-(3, 'Marketing');
-
-INSERT INTO employees VALUES
-(1, 'Alice Chen', 165000, 1),
-(2, 'Bob Miller', 155000, 1),
-(3, 'Charlie Dave', 165000, 1),
-(4, 'Diana Ross', 140000, 1),
-(5, 'Evan Wright', 95000, 2),
-(6, 'Fiona Gallagher', 95000, 2),
-(7, 'George Clark', 85000, 2),
-(8, 'Hannah Abbott', 110000, 3),
-(9, 'Ian Malcolm', 115000, 3),
-(10, 'Julia Roberts', 115000, 3);
-`,
-    hiddenTestSql: `
-INSERT INTO employees VALUES
-(11, 'Kevin Bacon', 165000, 1),
-(12, 'Laura Croft', 95000, 2);
-`,
-    starterSql: `-- Write a query to find the top 2 highest-earning employees in each department.
--- Handle ties using DENSE_RANK().
--- Output: department_name, employee_name, salary
-
-SELECT 
-  -- Your code here
-FROM employees;
-`,
-    referenceSql: `WITH ranked_salaries AS (
-  SELECT 
-    d.name AS department_name,
-    e.name AS employee_name,
-    e.salary,
-    DENSE_RANK() OVER (
-      PARTITION BY e.department_id 
-      ORDER BY e.salary DESC
-    ) AS rnk
-  FROM employees e
-  JOIN departments d ON e.department_id = d.id
-)
-SELECT 
-  department_name,
-  employee_name,
-  salary
-FROM ranked_salaries
-WHERE rnk <= 2
-ORDER BY department_name ASC, salary DESC, employee_name ASC;`,
-    hints: [
-      "Use DENSE_RANK() rather than ROW_NUMBER() or RANK(). ROW_NUMBER assigns arbitrary ordering to ties, while RANK() skips ranks (e.g., 1, 1, 3).",
-      "You cannot filter by a window function in the WHERE clause directly. Wrap the ranked calculation in a Common Table Expression (CTE) using `WITH ... AS (...)`.",
-      "Make sure you join `employees` with `departments` on `e.department_id = d.id` and partition by `e.department_id` or `d.name`."
+    "id": "basic-001",
+    "title": "Citadel: Dirty String Filtering #1",
+    "difficulty": "Easy",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
     ],
-    explanation: `### Why this is a favorite FAANG interview question
-This question tests two critical SQL concepts:
-1. **Window Function nuances:** Knowing the difference between \`ROW_NUMBER()\` (strict sequential numbering), \`RANK()\` (skips ranks on ties, e.g. 1, 1, 3), and \`DENSE_RANK()\` (preserves consecutive ranks on ties, e.g. 1, 1, 2).
-2. **Execution Order of SQL Clauses:** In SQL, the \`WHERE\` clause executes **before** window functions are evaluated. Therefore, writing \`WHERE DENSE_RANK() OVER(...) <= 2\` produces a syntax error. You must calculate the rank inside a Common Table Expression (CTE) or subquery first, then filter \`WHERE rnk <= 2\` in the outer query.`
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Citadel data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 1).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Citadel Query Challenge 1 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Citadel, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "uber-01",
-    title: "Driver Trip Cancellation Rate",
-    difficulty: "Medium",
-    companies: ["Uber", "Lyft", "DoorDash"],
-    topics: ["Conditional Aggregation", "CASE WHEN", "Joins", "Rounding"],
-    frequency: "Very High",
-    category: "Business Analytics",
-    orderSensitive: true,
-    expectedColumns: ["request_date", "cancellation_rate"],
-    description: `### Business Context
-Uber Operations is monitoring market health in major metropolitan areas. Compute the **cancellation rate of requests by unbanned users (both client and driver must be unbanned)** for each day between **'2024-06-01' and '2024-06-03'** inclusive.
-
-### Definitions & Requirements
-- **Cancellation Rate** is defined as: \`Total Cancelled Trips (by client or driver) / Total Requested Trips\`.
-- Round the cancellation rate to **2 decimal places** as a numeric (e.g. \`0.33\`).
-- If a client **OR** driver on a trip is banned (\`banned = 'Yes'\`), that trip **must be completely excluded** from both the numerator and denominator.
-- Trips with status \`'completed'\` are not cancelled. Trips with status \`'cancelled_by_driver'\` or \`'cancelled_by_client'\` are cancelled.
-- Order by \`request_date\` ASC.
-
-### Input Schema
-**trips** table:
-- \`id\` (INT, PRIMARY KEY)
-- \`client_id\` (INT)
-- \`driver_id\` (INT)
-- \`city_id\` (INT)
-- \`status\` (VARCHAR: 'completed', 'cancelled_by_driver', 'cancelled_by_client')
-- \`request_date\` (DATE)
-
-**users** table:
-- \`id\` (INT, PRIMARY KEY)
-- \`banned\` (VARCHAR: 'No', 'Yes')
-- \`role\` (VARCHAR: 'client', 'driver')`,
-    schemaSql: `
-CREATE TABLE users (
-  id INT PRIMARY KEY,
-  banned VARCHAR(5),
-  role VARCHAR(10)
-);
-
-CREATE TABLE trips (
-  id INT PRIMARY KEY,
-  client_id INT REFERENCES users(id),
-  driver_id INT REFERENCES users(id),
-  city_id INT,
-  status VARCHAR(30),
-  request_date DATE
-);
-
-INSERT INTO users VALUES
-(1, 'No', 'client'),
-(2, 'Yes', 'client'),
-(3, 'No', 'client'),
-(4, 'No', 'client'),
-(10, 'No', 'driver'),
-(11, 'No', 'driver'),
-(12, 'No', 'driver'),
-(13, 'Yes', 'driver');
-
-INSERT INTO trips VALUES
-(1, 1, 10, 1, 'completed', '2024-06-01'),
-(2, 2, 11, 1, 'cancelled_by_driver', '2024-06-01'),
-(3, 3, 12, 6, 'completed', '2024-06-01'),
-(4, 4, 10, 6, 'cancelled_by_client', '2024-06-01'),
-(5, 1, 11, 1, 'completed', '2024-06-02'),
-(6, 3, 10, 6, 'completed', '2024-06-02'),
-(7, 4, 12, 6, 'completed', '2024-06-02'),
-(8, 2, 12, 12, 'completed', '2024-06-03'),
-(9, 3, 10, 12, 'completed', '2024-06-03'),
-(10, 4, 13, 12, 'cancelled_by_driver', '2024-06-03'),
-(11, 1, 12, 1, 'cancelled_by_client', '2024-06-03');
-`,
-    hiddenTestSql: `
-INSERT INTO trips VALUES
-(12, 3, 11, 1, 'cancelled_by_driver', '2024-06-02');
-`,
-    starterSql: `-- Calculate the daily trip cancellation rate for unbanned users between 2024-06-01 and 2024-06-03.
--- Output: request_date, cancellation_rate (rounded to 2 decimal places)
-
-SELECT 
-  -- Your code here
-FROM trips;
-`,
-    referenceSql: `SELECT 
-  t.request_date,
-  ROUND(
-    SUM(CASE WHEN t.status IN ('cancelled_by_driver', 'cancelled_by_client') THEN 1.0 ELSE 0.0 END) / COUNT(*),
-    2
-  ) AS cancellation_rate
-FROM trips t
-JOIN users c ON t.client_id = c.id AND c.banned = 'No'
-JOIN users d ON t.driver_id = d.id AND d.banned = 'No'
-WHERE t.request_date BETWEEN '2024-06-01' AND '2024-06-03'
-GROUP BY t.request_date
-ORDER BY t.request_date ASC;`,
-    hints: [
-      "Join the `users` table twice: once as `c` on `t.client_id = c.id` and once as `d` on `t.driver_id = d.id`.",
-      "Filter out banned users using `c.banned = 'No' AND d.banned = 'No'`.",
-      "To avoid integer division in SQL, multiply by `1.0` or use `1.0 ELSE 0.0` inside `SUM(CASE WHEN ...)` before dividing by `COUNT(*)`."
+    "id": "basic-002",
+    "title": "Spotify: NULL Handling & Coalesce #2",
+    "difficulty": "Easy",
+    "companies": [
+      "Spotify",
+      "Microsoft"
     ],
-    explanation: `### Why this is a LeetCode Hard classic
-This question appears in almost every ride-sharing or marketplace company interview (Uber, Lyft, Instacart).
-Common pitfalls interviewers watch for:
-1. **Joining users twice:** The trips table links to two different records in the users table. Candidates who only join once or use OR will get corrupt numbers.
-2. **Integer Division trap:** In PostgreSQL, integer division \`3 / 10\` results in \`0\`. You must cast to decimal using \`1.0\` or \`::DECIMAL\` before dividing.
-3. **Filtering dates:** Using \`BETWEEN '2024-06-01' AND '2024-06-03'\` properly covers the range.`
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Spotify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 2).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Spotify Query Challenge 2 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Spotify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "meta-01",
-    title: "App Click-Through Rate (CTR) by Device",
-    difficulty: "Easy",
-    companies: ["Meta", "Google", "Pinterest"],
-    topics: ["Conditional Aggregation", "CASE WHEN", "Percentages"],
-    frequency: "Very High",
-    category: "Aggregations",
-    orderSensitive: true,
-    expectedColumns: ["device_type", "total_impressions", "total_clicks", "ctr_percentage"],
-    description: `### Business Context
-The Meta Ads Growth engineering team is analyzing user engagement performance across mobile and desktop devices. Calculate the **Click-Through Rate (CTR)** for each device type in the month of **July 2024**.
-
-### Metric Formula
-- \`total_impressions\`: Count of events where \`event_type = 'impression'\`.
-- \`total_clicks\`: Count of events where \`event_type = 'click'\`.
-- \`ctr_percentage\`: \`(total_clicks / total_impressions) * 100.0\`, rounded to **2 decimal places**.
-- If a device has 0 impressions, display \`0.00\` to prevent division-by-zero errors.
-- Sort the results by \`ctr_percentage\` DESC, then \`device_type\` ASC.
-
-### Input Schema
-**ad_events** table:
-- \`event_id\` (INT, PRIMARY KEY)
-- \`ad_id\` (INT)
-- \`device_type\` (VARCHAR: 'mobile_ios', 'mobile_android', 'desktop', 'tablet')
-- \`event_type\` (VARCHAR: 'impression', 'click')
-- \`event_time\` (TIMESTAMP)`,
-    schemaSql: `
-CREATE TABLE ad_events (
-  event_id INT PRIMARY KEY,
-  ad_id INT,
-  device_type VARCHAR(20),
-  event_type VARCHAR(20),
-  event_time TIMESTAMP
-);
-
-INSERT INTO ad_events VALUES
-(1, 101, 'mobile_ios', 'impression', '2024-07-02 10:15:00'),
-(2, 101, 'mobile_ios', 'click', '2024-07-02 10:15:05'),
-(3, 101, 'mobile_ios', 'impression', '2024-07-02 11:20:00'),
-(4, 102, 'mobile_android', 'impression', '2024-07-03 12:00:00'),
-(5, 102, 'mobile_android', 'impression', '2024-07-03 12:05:00'),
-(6, 102, 'mobile_android', 'click', '2024-07-03 12:05:10'),
-(7, 103, 'desktop', 'impression', '2024-07-04 09:30:00'),
-(8, 103, 'desktop', 'impression', '2024-07-04 09:45:00'),
-(9, 103, 'desktop', 'impression', '2024-07-04 10:00:00'),
-(10, 103, 'desktop', 'click', '2024-07-04 10:00:15'),
-(11, 104, 'tablet', 'impression', '2024-07-05 14:00:00'),
-(12, 105, 'mobile_ios', 'impression', '2024-06-30 23:59:00'); -- Excluded (June)
-`,
-    hiddenTestSql: `
-INSERT INTO ad_events VALUES
-(13, 106, 'tablet', 'click', '2024-07-06 15:00:00'),
-(14, 107, 'desktop', 'click', '2024-07-07 16:00:00');
-`,
-    starterSql: `-- Calculate total impressions, total clicks, and CTR percentage by device_type for July 2024.
--- Output: device_type, total_impressions, total_clicks, ctr_percentage
-
-SELECT 
-  -- Your code here
-FROM ad_events;
-`,
-    referenceSql: `SELECT 
-  device_type,
-  SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END) AS total_impressions,
-  SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END) AS total_clicks,
-  ROUND(
-    CASE 
-      WHEN SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END) = 0 THEN 0.00
-      ELSE (SUM(CASE WHEN event_type = 'click' THEN 1.0 ELSE 0.0 END) / 
-            SUM(CASE WHEN event_type = 'impression' THEN 1.0 ELSE 0.0 END)) * 100.0
-    END,
-    2
-  ) AS ctr_percentage
-FROM ad_events
-WHERE event_time >= '2024-07-01 00:00:00' AND event_time < '2024-08-01 00:00:00'
-GROUP BY device_type
-ORDER BY ctr_percentage DESC, device_type ASC;`,
-    hints: [
-      "Use conditional aggregation with `SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END)` to count impressions and clicks in one pass.",
-      "Filter for July 2024 using `event_time >= '2024-07-01' AND event_time < '2024-08-01'` rather than string formatting for best performance.",
-      "Check for zero impressions before dividing to avoid division-by-zero runtime crashes."
+    "id": "basic-003",
+    "title": "Pinterest: Multi-Table Inner Join #3",
+    "difficulty": "Easy",
+    "companies": [
+      "Pinterest",
+      "Palantir"
     ],
-    explanation: `### Key Interview Takeaways
-- **Single-Pass Aggregation:** Using \`SUM(CASE WHEN ...)\` allows you to compute both counters in a single scan of the table instead of doing costly self-joins or multiple subqueries.
-- **Division-by-Zero defense:** In production telemetry, some segments may have zero impressions or clicks. Demonstrating awareness of \`NULLIF()\` or defensive \`CASE WHEN\` scores huge bonus points with interviewers.`
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Pinterest data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 3).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Pinterest Query Challenge 3 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Pinterest, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "stripe-01",
-    title: "User Consecutive Active Days (Gaps & Islands)",
-    difficulty: "Hard",
-    companies: ["Stripe", "Spotify", "Duolingo", "ByteDance"],
-    topics: ["Gaps and Islands", "Window Functions", "ROW_NUMBER", "Date Arithmetic"],
-    frequency: "High",
-    category: "Gaps & Islands",
-    orderSensitive: true,
-    expectedColumns: ["user_id", "streak_length"],
-    description: `### Business Context
-Stripe is analyzing merchant portal engagement to identify power users. A user is on an **active streak** if they log in on consecutive calendar days. 
-
-Find all users who have had an active login streak of **at least 3 consecutive days**, and output their **maximum streak length**.
-
-### Rules & Edge Cases
-- If a user logged in multiple times on the same date, count that date **only once** (distinct dates).
-- Multiple streaks can occur; return the **longest consecutive streak length** for each eligible user.
-- Sort the results by \`streak_length\` DESC, then \`user_id\` ASC.
-
-### Input Schema
-**user_logins** table:
-- \`login_id\` (INT, PRIMARY KEY)
-- \`user_id\` (INT)
-- \`login_date\` (DATE)`,
-    schemaSql: `
-CREATE TABLE user_logins (
-  login_id INT PRIMARY KEY,
-  user_id INT,
-  login_date DATE
-);
-
-INSERT INTO user_logins VALUES
-(1, 101, '2024-05-01'),
-(2, 101, '2024-05-02'),
-(3, 101, '2024-05-03'), -- User 101 streak 3
-(4, 101, '2024-05-05'),
-(5, 102, '2024-05-01'),
-(6, 102, '2024-05-03'),
-(7, 102, '2024-05-05'), -- User 102 no streak
-(8, 103, '2024-05-10'),
-(9, 103, '2024-05-11'),
-(10, 103, '2024-05-12'),
-(11, 103, '2024-05-13'),
-(12, 103, '2024-05-13'), -- Duplicate same day
-(13, 103, '2024-05-14'), -- User 103 streak 5
-(14, 104, '2024-05-01'),
-(15, 104, '2024-05-02'); -- Streak 2 (less than 3)
-`,
-    hiddenTestSql: `
-INSERT INTO user_logins VALUES
-(16, 105, '2024-05-20'),
-(17, 105, '2024-05-21'),
-(18, 105, '2024-05-22'),
-(19, 105, '2024-05-23');
-`,
-    starterSql: `-- Find users with a consecutive login streak of at least 3 days.
--- Return the maximum streak length per user.
--- Output: user_id, streak_length
-
-SELECT 
-  -- Your code here
-FROM user_logins;
-`,
-    referenceSql: `WITH distinct_dates AS (
-  SELECT DISTINCT user_id, login_date
-  FROM user_logins
-),
-numbered AS (
-  SELECT 
-    user_id,
-    login_date,
-    login_date - (ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date))::INT AS island_grp
-  FROM distinct_dates
-),
-streaks AS (
-  SELECT 
-    user_id,
-    island_grp,
-    COUNT(*) AS streak_length
-  FROM numbered
-  GROUP BY user_id, island_grp
-  HAVING COUNT(*) >= 3
-)
-SELECT 
-  user_id,
-  MAX(streak_length) AS streak_length
-FROM streaks
-GROUP BY user_id
-ORDER BY streak_length DESC, user_id ASC;`,
-    hints: [
-      "First de-duplicate logins with `SELECT DISTINCT user_id, login_date` because users may log in multiple times in one day.",
-      "The classic Gaps & Islands trick: subtract `ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date)` days from `login_date`. If days are consecutive, `login_date - row_number` produces a constant group anchor date!",
-      "Group by `user_id` and the anchor date to count streak length, filter `HAVING COUNT(*) >= 3`, and finally take the `MAX(streak_length)` per user."
+    "id": "basic-004",
+    "title": "Twitter / X: Customer Anti-Join #4",
+    "difficulty": "Easy",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
     ],
-    explanation: `### The Famous "Gaps and Islands" Pattern
-This is widely regarded as one of the hardest SQL interview problems because it requires non-intuitive mathematical grouping:
-1. **The Math:** If a sequence of dates is consecutive ($D, D+1, D+2$) and row numbers are consecutive ($1, 2, 3$), then $(D+k) - k = D$.
-2. The difference between each date and its row number stays **identical** as long as there is no gap!
-3. The moment a user misses a day, the difference shifts to a new constant value, creating a new "island".
-4. Grouping by this difference cleanly segments consecutive clusters.`
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Twitter / X data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 4).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Twitter / X Query Challenge 4 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Twitter / X, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "netflix-01",
-    title: "7-Day Rolling Watch Time per Account",
-    difficulty: "Medium",
-    companies: ["Netflix", "YouTube", "Hulu"],
-    topics: ["Window Functions", "Rolling Window", "ROWS BETWEEN", "Date Partition"],
-    frequency: "High",
-    category: "Window Functions",
-    orderSensitive: true,
-    expectedColumns: ["account_id", "stream_date", "daily_minutes", "rolling_7d_minutes"],
-    description: `### Business Context
-Netflix Data Science wants to track streaming engagement velocity. For each user account, calculate the **7-day rolling total watch time in minutes** (the sum of watch time for the current day and the previous 6 days).
-
-### Requirements
-- If an account has fewer than 6 previous days of data, sum whatever days exist up to the current day.
-- Output: \`account_id\`, \`stream_date\`, \`daily_minutes\`, \`rolling_7d_minutes\`.
-- Sort by \`account_id\` ASC, \`stream_date\` ASC.
-
-### Input Schema
-**account_streams** table:
-- \`stream_id\` (INT, PRIMARY KEY)
-- \`account_id\` (INT)
-- \`stream_date\` (DATE)
-- \`minutes_watched\` (INT)`,
-    schemaSql: `
-CREATE TABLE account_streams (
-  stream_id INT PRIMARY KEY,
-  account_id INT,
-  stream_date DATE,
-  minutes_watched INT
-);
-
-INSERT INTO account_streams VALUES
-(1, 10, '2024-04-01', 120),
-(2, 10, '2024-04-02', 80),
-(3, 10, '2024-04-03', 150),
-(4, 10, '2024-04-04', 60),
-(5, 10, '2024-04-05', 90),
-(6, 10, '2024-04-06', 200),
-(7, 10, '2024-04-07', 180),
-(8, 10, '2024-04-08', 110), -- Day 8 rolling drops Day 1
-(9, 20, '2024-04-01', 45),
-(10, 20, '2024-04-02', 60),
-(11, 20, '2024-04-03', 90);
-`,
-    hiddenTestSql: `
-INSERT INTO account_streams VALUES
-(12, 10, '2024-04-09', 140),
-(13, 20, '2024-04-04', 120);
-`,
-    starterSql: `-- Calculate the 7-day rolling total watch time per account.
--- Output: account_id, stream_date, daily_minutes, rolling_7d_minutes
-
-SELECT 
-  -- Your code here
-FROM account_streams;
-`,
-    referenceSql: `WITH daily_totals AS (
-  SELECT 
-    account_id,
-    stream_date,
-    SUM(minutes_watched) AS daily_minutes
-  FROM account_streams
-  GROUP BY account_id, stream_date
-)
-SELECT 
-  account_id,
-  stream_date,
-  daily_minutes,
-  SUM(daily_minutes) OVER (
-    PARTITION BY account_id 
-    ORDER BY stream_date 
-    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
-  ) AS rolling_7d_minutes
-FROM daily_totals
-ORDER BY account_id ASC, stream_date ASC;`,
-    hints: [
-      "First group by `account_id` and `stream_date` in a CTE in case an account streamed multiple times on the same date.",
-      "Use window aggregation: `SUM(daily_minutes) OVER (...)`.",
-      "Specify the frame clause: `ROWS BETWEEN 6 PRECEDING AND CURRENT ROW` to capture the current day plus the preceding 6 rows."
+    "id": "basic-005",
+    "title": "Walmart: Category Aggregations #5",
+    "difficulty": "Easy",
+    "companies": [
+      "Walmart",
+      "Coinbase"
     ],
-    explanation: `### The Power of the Window Frame Clause
-Most candidates know \`SUM() OVER (PARTITION BY ... ORDER BY ...)\`, but they don't realize the default frame without \`ROWS\` is \`RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\`, which computes a cumulative running total rather than a rolling 7-day window.
-Explicitly defining \`ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\` is the hallmark of an advanced SQL practitioner.`
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Walmart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 5).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Walmart Query Challenge 5 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Walmart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "airbnb-01",
-    title: "First-Time Host 30-Day Booking Conversion",
-    difficulty: "Medium",
-    companies: ["Airbnb", "Expedia", "Booking.com"],
-    topics: ["Cohorts & Retention", "MIN Window", "Date Arithmetic", "LEFT JOIN"],
-    frequency: "High",
-    category: "Cohorts & Retention",
-    orderSensitive: true,
-    expectedColumns: ["signup_month", "total_new_hosts", "converted_hosts", "conversion_rate"],
-    description: `### Business Context
-Airbnb Host Acquisition wants to measure host activation speed. Specifically, they want to know: of all new hosts who created their first listing in a given month, what percentage secured their **first guest booking within 30 days of listing creation**?
-
-### Metrics & Constraints
-- Focus on listings created in **January 2024 ('2024-01')** and **February 2024 ('2024-02')**.
-- A host's listing date is their earliest listing creation date (\`created_at\`).
-- A host converted if their earliest booking date is within **30 days** (i.e. \`first_booking_date - first_listing_date <= 30\`).
-- \`conversion_rate\`: \`ROUND((converted_hosts * 100.0 / total_new_hosts), 2)\`.
-- Order by \`signup_month\` ASC.
-
-### Input Schema
-**hosts** table:
-- \`host_id\` (INT, PRIMARY KEY)
-- \`created_at\` (DATE)
-
-**bookings** table:
-- \`booking_id\` (INT, PRIMARY KEY)
-- \`host_id\` (INT REFERENCES hosts(host_id))
-- \`booking_date\` (DATE)`,
-    schemaSql: `
-CREATE TABLE hosts (
-  host_id INT PRIMARY KEY,
-  created_at DATE
-);
-
-CREATE TABLE bookings (
-  booking_id INT PRIMARY KEY,
-  host_id INT REFERENCES hosts(host_id),
-  booking_date DATE
-);
-
-INSERT INTO hosts VALUES
-(1, '2024-01-05'),
-(2, '2024-01-12'),
-(3, '2024-01-20'),
-(4, '2024-01-25'),
-(5, '2024-02-02'),
-(6, '2024-02-15'),
-(7, '2024-03-01'); -- Excluded (March)
-
-INSERT INTO bookings VALUES
-(101, 1, '2024-01-15'), -- Host 1: 10 days (Converted)
-(102, 2, '2024-03-01'), -- Host 2: > 30 days (Not converted)
-(103, 3, '2024-02-05'), -- Host 3: 16 days (Converted)
--- Host 4: No bookings (Not converted)
-(104, 5, '2024-02-10'), -- Host 5: 8 days (Converted)
-(105, 6, '2024-02-28'); -- Host 6: 13 days (Converted)
-`,
-    hiddenTestSql: `
-INSERT INTO hosts VALUES (8, '2024-02-20');
-INSERT INTO bookings VALUES (106, 8, '2024-03-29'); -- Host 8: > 30 days
-`,
-    starterSql: `-- Calculate the 30-day booking conversion rate for hosts created in Jan and Feb 2024.
--- Output: signup_month, total_new_hosts, converted_hosts, conversion_rate
-
-SELECT 
-  -- Your code here
-FROM hosts;
-`,
-    referenceSql: `WITH host_cohorts AS (
-  SELECT 
-    host_id,
-    created_at,
-    TO_CHAR(created_at, 'YYYY-MM') AS signup_month
-  FROM hosts
-  WHERE created_at >= '2024-01-01' AND created_at < '2024-03-01'
-),
-first_bookings AS (
-  SELECT 
-    host_id,
-    MIN(booking_date) AS first_booking_date
-  FROM bookings
-  GROUP BY host_id
-)
-SELECT 
-  h.signup_month,
-  COUNT(h.host_id) AS total_new_hosts,
-  SUM(CASE WHEN b.first_booking_date IS NOT NULL AND (b.first_booking_date - h.created_at) <= 30 THEN 1 ELSE 0 END) AS converted_hosts,
-  ROUND(
-    SUM(CASE WHEN b.first_booking_date IS NOT NULL AND (b.first_booking_date - h.created_at) <= 30 THEN 1.0 ELSE 0.0 END) * 100.0 / COUNT(h.host_id),
-    2
-  ) AS conversion_rate
-FROM host_cohorts h
-LEFT JOIN first_bookings b ON h.host_id = b.host_id
-GROUP BY h.signup_month
-ORDER BY h.signup_month ASC;`,
-    hints: [
-      "Use `TO_CHAR(created_at, 'YYYY-MM')` to extract the signup cohort month.",
-      "Calculate each host's first booking date in a separate CTE using `MIN(booking_date)`.",
-      "Use a `LEFT JOIN` between hosts and first bookings so hosts who never received a booking are preserved in `total_new_hosts`."
+    "id": "basic-006",
+    "title": "Instacart: Threshold Group Filtering #6",
+    "difficulty": "Easy",
+    "companies": [
+      "Instacart",
+      "Shopify"
     ],
-    explanation: `### Why Cohort Analysis is Essential for Data Analysts
-Cohort analysis is asked in almost every product and growth analyst interview. 
-The critical mistake candidates make is using an \`INNER JOIN\` to connect users to their actions. An inner join silently deletes all users who never took an action, resulting in a false 100% conversion rate! Always use \`LEFT JOIN\` for funnel denominators.`
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Instacart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 6).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Instacart Query Challenge 6 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Instacart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "spotify-01",
-    title: "Top 3 Streaming Artists by Country",
-    difficulty: "Medium",
-    companies: ["Spotify", "Apple", "Tidal"],
-    topics: ["Window Functions", "DENSE_RANK", "Multi-table Joins", "Aggregations"],
-    frequency: "High",
-    category: "Window Functions",
-    orderSensitive: true,
-    expectedColumns: ["country", "artist_name", "total_streams", "country_rank"],
-    description: `### Business Context
-Spotify's Global Music Editorial team wants to curate localized homepage charts. Find the **top 3 most-streamed artists in each country**, along with their total stream count.
-
-### Requirements
-- Rank artists within each country by \`total_streams\` DESC.
-- Handle ties with \`DENSE_RANK()\`. If there are ties, also sort by \`artist_name\` ASC.
-- Include only ranks 1, 2, and 3.
-- Order the final output by \`country\` ASC, \`country_rank\` ASC, \`artist_name\` ASC.
-
-### Input Schema
-**artists** table:
-- \`artist_id\` (INT, PRIMARY KEY)
-- \`artist_name\` (VARCHAR)
-
-**tracks** table:
-- \`track_id\` (INT, PRIMARY KEY)
-- \`artist_id\` (INT REFERENCES artists(artist_id))
-
-**streams** table:
-- \`stream_id\` (INT, PRIMARY KEY)
-- \`track_id\` (INT REFERENCES tracks(track_id))
-- \`country\` (VARCHAR)
-- \`stream_count\` (INT)`,
-    schemaSql: `
-CREATE TABLE artists (
-  artist_id INT PRIMARY KEY,
-  artist_name VARCHAR(50)
-);
-
-CREATE TABLE tracks (
-  track_id INT PRIMARY KEY,
-  artist_id INT REFERENCES artists(artist_id)
-);
-
-CREATE TABLE streams (
-  stream_id INT PRIMARY KEY,
-  track_id INT REFERENCES tracks(track_id),
-  country VARCHAR(10),
-  stream_count INT
-);
-
-INSERT INTO artists VALUES
-(1, 'Taylor Swift'),
-(2, 'Drake'),
-(3, 'The Weeknd'),
-(4, 'Bad Bunny'),
-(5, 'Ed Sheeran');
-
-INSERT INTO tracks VALUES
-(101, 1),
-(102, 1),
-(103, 2),
-(104, 3),
-(105, 4),
-(106, 5);
-
-INSERT INTO streams VALUES
-(1, 101, 'US', 5000),
-(2, 102, 'US', 3000), -- Taylor Swift US total: 8000
-(3, 103, 'US', 7000), -- Drake US total: 7000
-(4, 104, 'US', 6500), -- The Weeknd US total: 6500
-(5, 105, 'US', 4000), -- Bad Bunny US total: 4000
-(6, 101, 'UK', 4000), -- Taylor Swift UK: 4000
-(7, 106, 'UK', 4500), -- Ed Sheeran UK: 4500
-(8, 103, 'UK', 3200), -- Drake UK: 3200
-(9, 104, 'UK', 2000); -- The Weeknd UK: 2000
-`,
-    hiddenTestSql: `
-INSERT INTO streams VALUES
-(10, 105, 'UK', 4000); -- Bad Bunny UK tie with Taylor Swift
-`,
-    starterSql: `-- Find the top 3 most-streamed artists in each country.
--- Output: country, artist_name, total_streams, country_rank
-
-SELECT 
-  -- Your code here
-FROM streams;
-`,
-    referenceSql: `WITH artist_country_streams AS (
-  SELECT 
-    s.country,
-    a.artist_name,
-    SUM(s.stream_count) AS total_streams
-  FROM streams s
-  JOIN tracks t ON s.track_id = t.track_id
-  JOIN artists a ON t.artist_id = a.artist_id
-  GROUP BY s.country, a.artist_name
-),
-ranked_artists AS (
-  SELECT 
-    country,
-    artist_name,
-    total_streams,
-    DENSE_RANK() OVER (
-      PARTITION BY country 
-      ORDER BY total_streams DESC
-    ) AS country_rank
-  FROM artist_country_streams
-)
-SELECT 
-  country,
-  artist_name,
-  total_streams,
-  country_rank
-FROM ranked_artists
-WHERE country_rank <= 3
-ORDER BY country ASC, country_rank ASC, artist_name ASC;`,
-    hints: [
-      "An artist can have multiple tracks. First aggregate total streams by artist and country using `SUM(s.stream_count)` with `GROUP BY s.country, a.artist_name`.",
-      "In the second CTE, apply `DENSE_RANK() OVER (PARTITION BY country ORDER BY total_streams DESC)`.",
-      "Filter for `country_rank <= 3` in the outer SELECT."
+    "id": "basic-007",
+    "title": "Databricks: Duplicate Key Deduplication #7",
+    "difficulty": "Easy",
+    "companies": [
+      "Databricks",
+      "Lyft"
     ],
-    explanation: `### Aggregation Before Windowing
-A frequent mistake made by candidates is trying to put \`SUM()\` and \`DENSE_RANK()\` in the same query level without grouping first. 
-In SQL, you must first aggregate streams to the (country, artist) level, and then rank those aggregated rows.`
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Databricks data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 7).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Databricks Query Challenge 7 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Databricks, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "goog-01",
-    title: "Search Session Inactivity & Sessionization",
-    difficulty: "Hard",
-    companies: ["Google", "Microsoft", "Meta"],
-    topics: ["Sessionization", "LAG", "Cumulative Sum", "Window Functions"],
-    frequency: "High",
-    category: "Business Analytics",
-    orderSensitive: true,
-    expectedColumns: ["user_id", "session_id", "session_start", "total_queries"],
-    description: `### Business Context
-Google Search Quality team groups user search queries into distinct **sessions**. A session expires if a user is inactive for **more than 30 minutes** (1800 seconds) between successive searches.
-
-Calculate the number of queries performed in each search session for every user.
-
-### Requirements
-- Use \`LAG(search_timestamp)\` to calculate the time difference in seconds from the user's previous search.
-- If the difference is \`NULL\` (first search) or \`> 30 minutes (1800 seconds)\`, start a new session.
-- Generate a unique sequential \`session_id\` per user starting at 1.
-- Output: \`user_id\`, \`session_id\`, \`session_start\` (first search timestamp of session), \`total_queries\`.
-- Order by \`user_id\` ASC, \`session_id\` ASC.
-
-### Input Schema
-**search_logs** table:
-- \`query_id\` (INT, PRIMARY KEY)
-- \`user_id\` (INT)
-- \`query_text\` (VARCHAR)
-- \`search_timestamp\` (TIMESTAMP)`,
-    schemaSql: `
-CREATE TABLE search_logs (
-  query_id INT PRIMARY KEY,
-  user_id INT,
-  query_text VARCHAR(100),
-  search_timestamp TIMESTAMP
-);
-
-INSERT INTO search_logs VALUES
-(1, 1, 'python tutorial', '2024-05-01 10:00:00'),
-(2, 1, 'pandas dataframe', '2024-05-01 10:15:00'), -- 15 mins (same session 1)
-(3, 1, 'sql window functions', '2024-05-01 10:25:00'), -- 10 mins (same session 1)
-(4, 1, 'pasta recipes', '2024-05-01 12:00:00'), -- 95 mins gap (new session 2)
-(5, 1, 'carbonara authentic', '2024-05-01 12:10:00'), -- 10 mins (same session 2)
-(6, 2, 'weather tokyo', '2024-05-01 08:00:00'),
-(7, 2, 'flight tickets tokyo', '2024-05-01 09:30:00'); -- 90 mins gap (new session 2)
-`,
-    hiddenTestSql: `
-INSERT INTO search_logs VALUES
-(8, 2, 'hotels shinjuku', '2024-05-01 09:40:00');
-`,
-    starterSql: `-- Group search events into sessions based on a 30-minute inactivity threshold.
--- Output: user_id, session_id, session_start, total_queries
-
-SELECT 
-  -- Your code here
-FROM search_logs;
-`,
-    referenceSql: `WITH step1_prev AS (
-  SELECT 
-    user_id,
-    query_id,
-    search_timestamp,
-    LAG(search_timestamp) OVER (
-      PARTITION BY user_id 
-      ORDER BY search_timestamp
-    ) AS prev_ts
-  FROM search_logs
-),
-step2_flag AS (
-  SELECT 
-    user_id,
-    query_id,
-    search_timestamp,
-    CASE 
-      WHEN prev_ts IS NULL OR EXTRACT(EPOCH FROM (search_timestamp - prev_ts)) > 1800 THEN 1 
-      ELSE 0 
-    END AS is_new_session
-  FROM step1_prev
-),
-step3_session_ids AS (
-  SELECT 
-    user_id,
-    query_id,
-    search_timestamp,
-    SUM(is_new_session) OVER (
-      PARTITION BY user_id 
-      ORDER BY search_timestamp 
-      ROWS UNBOUNDED PRECEDING
-    ) AS session_id
-  FROM step2_flag
-)
-SELECT 
-  user_id,
-  session_id,
-  MIN(search_timestamp) AS session_start,
-  COUNT(*) AS total_queries
-FROM step3_session_ids
-GROUP BY user_id, session_id
-ORDER BY user_id ASC, session_id ASC;`,
-    hints: [
-      "Use `LAG(search_timestamp) OVER (PARTITION BY user_id ORDER BY search_timestamp)` to find the prior timestamp.",
-      "Calculate seconds difference using `EXTRACT(EPOCH FROM (search_timestamp - prev_ts))`. If > 1800 or NULL, mark `is_new_session = 1`, else `0`.",
-      "The master sessionization trick: use a running sum `SUM(is_new_session) OVER (PARTITION BY user_id ORDER BY search_timestamp)` to convert flags into a unique session ID!"
+    "id": "basic-008",
+    "title": "LinkedIn: Date Range Filtering #8",
+    "difficulty": "Easy",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
     ],
-    explanation: `### The Golden Technique of Sessionization
-Sessionization is one of the highest-rated interview problems at Google, Netflix, and Meta.
-The magic formula:
-1. Identify session boundaries using \`LAG\` with a time threshold (e.g. 30 mins).
-2. Flag each boundary with \`1\`, non-boundaries with \`0\`.
-3. Take the **running sum** (\`SUM() OVER (... ROWS UNBOUNDED PRECEDING)\`) of those 1s. Every time a new session starts, the cumulative sum increments by 1 and stays constant until the next session. This generates clean session IDs without loops!`
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe LinkedIn data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 8).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- LinkedIn Query Challenge 8 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at LinkedIn, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "wmt-01",
-    title: "Inventory Restock & Safety Stock Deficit Alert",
-    difficulty: "Easy",
-    companies: ["Walmart", "Target", "Amazon"],
-    topics: ["Arithmetic", "CASE WHEN", "Filtering", "Joins"],
-    frequency: "High",
-    category: "Business Analytics",
-    orderSensitive: true,
-    expectedColumns: ["product_id", "product_name", "current_stock", "reorder_point", "units_to_order"],
-    description: `### Business Context
-Walmart Supply Chain Logistics monitors warehouse stock levels to prevent stockouts. A product needs to be reordered when its \`current_stock\` drops strictly below its calculated **Reorder Point**.
-
-### Formula & Logic
-- **Reorder Point (ROP)** = \`(daily_sales_velocity * lead_time_days) + safety_stock\`.
-- If \`current_stock < reorder_point\`, the inventory is at risk.
-- \`units_to_order\` is calculated as \`reorder_point - current_stock\`.
-- Return only products requiring reorders (\`current_stock < reorder_point\`).
-- Sort by \`units_to_order\` DESC, then \`product_id\` ASC.
-
-### Input Schema
-**inventory** table:
-- \`product_id\` (INT, PRIMARY KEY)
-- \`product_name\` (VARCHAR)
-- \`current_stock\` (INT)
-- \`daily_sales_velocity\` (INT)
-- \`lead_time_days\` (INT)
-- \`safety_stock\` (INT)`,
-    schemaSql: `
-CREATE TABLE inventory (
-  product_id INT PRIMARY KEY,
-  product_name VARCHAR(100),
-  current_stock INT,
-  daily_sales_velocity INT,
-  lead_time_days INT,
-  safety_stock INT
-);
-
-INSERT INTO inventory VALUES
-(101, 'Great Value 2% Milk 1 Gal', 45, 20, 3, 25), -- ROP = (20*3)+25 = 85. Stock 45 < 85 -> Need 40
-(102, 'Wonder Bread White Loaf', 110, 15, 2, 20), -- ROP = (15*2)+20 = 50. Stock 110 >= 50 -> OK
-(103, 'Organic Bananas 3lb', 15, 30, 2, 40),       -- ROP = (30*2)+40 = 100. Stock 15 < 100 -> Need 85
-(104, 'Paper Towels 12-Pack', 70, 10, 5, 30),      -- ROP = (10*5)+30 = 80. Stock 70 < 80 -> Need 10
-(105, 'Large Eggs Grade A Dozen', 150, 25, 2, 30); -- ROP = (25*2)+30 = 80. Stock 150 >= 80 -> OK
-`,
-    hiddenTestSql: `
-INSERT INTO inventory VALUES
-(106, 'Cheddar Cheese Block', 12, 10, 4, 15); -- ROP = 55. Need 43
-`,
-    starterSql: `-- Identify products below the reorder point and calculate units_to_order.
--- Output: product_id, product_name, current_stock, reorder_point, units_to_order
-
-SELECT 
-  -- Your code here
-FROM inventory;
-`,
-    referenceSql: `WITH calculations AS (
-  SELECT 
-    product_id,
-    product_name,
-    current_stock,
-    (daily_sales_velocity * lead_time_days) + safety_stock AS reorder_point
-  FROM inventory
-)
-SELECT 
-  product_id,
-  product_name,
-  current_stock,
-  reorder_point,
-  (reorder_point - current_stock) AS units_to_order
-FROM calculations
-WHERE current_stock < reorder_point
-ORDER BY units_to_order DESC, product_id ASC;`,
-    hints: [
-      "Calculate the reorder point in a CTE or subquery: `(daily_sales_velocity * lead_time_days) + safety_stock`.",
-      "Filter in the outer query where `current_stock < reorder_point`.",
-      "Calculate `units_to_order` as `reorder_point - current_stock`."
+    "id": "basic-009",
+    "title": "Microsoft: Conditional Column Tagging #9",
+    "difficulty": "Easy",
+    "companies": [
+      "Microsoft",
+      "Meta"
     ],
-    explanation: `### Practical Supply Chain SQL
-Interviewers love this question because it tests whether you can translate a real operations KPI into a maintainable query without repeating formula expressions across the \`SELECT\` and \`WHERE\` clauses.`
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Microsoft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 9).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Microsoft Query Challenge 9 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Microsoft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
   },
   {
-    id: "jpm-01",
-    title: "Fraudulent Transaction Burst Detection",
-    difficulty: "Medium",
-    companies: ["JPMorgan", "Visa", "Capital One"],
-    topics: ["Self-Joins", "Window Functions", "Timestamp Differences", "Risk Analytics"],
-    frequency: "Medium",
-    category: "Business Analytics",
-    orderSensitive: true,
-    expectedColumns: ["account_id", "t1_id", "t2_id", "t1_amount", "t2_amount", "seconds_apart"],
-    description: `### Business Context
-JPMorgan Chase Fraud Detection monitors debit card activities for rapid successive transactions. A **Suspicious Burst** occurs when the same \`account_id\` executes two consecutive transactions where:
-1. Both transactions have an amount of **at least $500** (\`amount >= 500\`).
-2. The second transaction occurs within **300 seconds (5 minutes)** of the first transaction (\`t2_time - t1_time <= 300 seconds\`).
-
-### Requirements
-- Output: \`account_id\`, \`t1_id\` (earlier transaction), \`t2_id\` (later transaction), \`t1_amount\`, \`t2_amount\`, \`seconds_apart\`.
-- \`seconds_apart\` must be an integer.
-- Order by \`account_id\` ASC, \`t1_id\` ASC.
-
-### Input Schema
-**transactions** table:
-- \`transaction_id\` (INT, PRIMARY KEY)
-- \`account_id\` (INT)
-- \`amount\` (DECIMAL(10,2))
-- \`transaction_time\` (TIMESTAMP)`,
-    schemaSql: `
-CREATE TABLE transactions (
-  transaction_id INT PRIMARY KEY,
-  account_id INT,
-  amount DECIMAL(10,2),
-  transaction_time TIMESTAMP
-);
-
-INSERT INTO transactions VALUES
-(1, 1001, 650.00, '2024-06-01 14:00:00'),
-(2, 1001, 800.00, '2024-06-01 14:03:30'), -- 210 secs apart (BURST FLAG)
-(3, 1001, 120.00, '2024-06-01 14:04:00'), -- < 500
-(4, 1002, 550.00, '2024-06-01 15:00:00'),
-(5, 1002, 750.00, '2024-06-01 15:10:00'), -- 600 secs apart (> 300)
-(6, 1003, 900.00, '2024-06-01 16:20:00'),
-(7, 1003, 1200.00, '2024-06-01 16:22:15'); -- 135 secs apart (BURST FLAG)
-`,
-    hiddenTestSql: `
-INSERT INTO transactions VALUES
-(8, 1004, 520.00, '2024-06-01 18:00:00'),
-(9, 1004, 580.00, '2024-06-01 18:04:00'); -- 240 secs apart
-`,
-    starterSql: `-- Detect suspicious transaction bursts >= $500 occurring within 300 seconds of each other.
--- Output: account_id, t1_id, t2_id, t1_amount, t2_amount, seconds_apart
-
-SELECT 
-  -- Your code here
-FROM transactions;
-`,
-    referenceSql: `WITH ordered_txs AS (
-  SELECT 
-    account_id,
-    transaction_id,
-    amount,
-    transaction_time,
-    LEAD(transaction_id) OVER (PARTITION BY account_id ORDER BY transaction_time) AS next_id,
-    LEAD(amount) OVER (PARTITION BY account_id ORDER BY transaction_time) AS next_amount,
-    LEAD(transaction_time) OVER (PARTITION BY account_id ORDER BY transaction_time) AS next_time
-  FROM transactions
-  WHERE amount >= 500
-)
-SELECT 
-  account_id,
-  transaction_id AS t1_id,
-  next_id AS t2_id,
-  amount AS t1_amount,
-  next_amount AS t2_amount,
-  EXTRACT(EPOCH FROM (next_time - transaction_time))::INT AS seconds_apart
-FROM ordered_txs
-WHERE next_id IS NOT NULL 
-  AND EXTRACT(EPOCH FROM (next_time - transaction_time)) <= 300
-ORDER BY account_id ASC, t1_id ASC;`,
-    hints: [
-      "Filter for `amount >= 500` first so you only examine qualified transactions.",
-      "Use `LEAD()` over `(PARTITION BY account_id ORDER BY transaction_time)` to peek at the immediate next transaction.",
-      "Extract the seconds between timestamps using `EXTRACT(EPOCH FROM (next_time - transaction_time))` and filter `<= 300`."
+    "id": "basic-010",
+    "title": "Palantir: Basic Scalar Subquery #10",
+    "difficulty": "Easy",
+    "companies": [
+      "Palantir",
+      "Google"
     ],
-    explanation: `### FinTech Fraud Pattern
-Using \`LEAD()\` or \`LAG()\` is far more performant than doing an $O(N^2)$ self-join on timestamps. In high-frequency banking platforms, window functions scale linearly $O(N \\log N)$ with ordering.`
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Palantir data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 10).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Palantir Query Challenge 10 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Palantir, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-011",
+    "title": "Robinhood: Dirty String Filtering #11",
+    "difficulty": "Easy",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Robinhood data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 11).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Robinhood Query Challenge 11 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Robinhood, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-012",
+    "title": "Coinbase: NULL Handling & Coalesce #12",
+    "difficulty": "Easy",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Coinbase data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 12).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Coinbase Query Challenge 12 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Coinbase, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-013",
+    "title": "Shopify: Multi-Table Inner Join #13",
+    "difficulty": "Easy",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Shopify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 13).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Shopify Query Challenge 13 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Shopify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-014",
+    "title": "Lyft: Customer Anti-Join #14",
+    "difficulty": "Easy",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Lyft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 14).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Lyft Query Challenge 14 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Lyft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-015",
+    "title": "Amazon: Category Aggregations #15",
+    "difficulty": "Easy",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Amazon data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 15).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Amazon Query Challenge 15 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Amazon, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-016",
+    "title": "Meta: Threshold Group Filtering #16",
+    "difficulty": "Easy",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Meta data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 16).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Meta Query Challenge 16 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Meta, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-017",
+    "title": "Google: Duplicate Key Deduplication #17",
+    "difficulty": "Easy",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Google data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 17).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Google Query Challenge 17 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Google, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-018",
+    "title": "Uber: Date Range Filtering #18",
+    "difficulty": "Easy",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Uber data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 18).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Uber Query Challenge 18 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Uber, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-019",
+    "title": "Netflix: Conditional Column Tagging #19",
+    "difficulty": "Easy",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Netflix data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 19).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Netflix Query Challenge 19 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Netflix, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-020",
+    "title": "Stripe: Basic Scalar Subquery #20",
+    "difficulty": "Easy",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Stripe data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 20).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Stripe Query Challenge 20 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Stripe, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-021",
+    "title": "Apple: Dirty String Filtering #21",
+    "difficulty": "Easy",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Apple data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 21).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Apple Query Challenge 21 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Apple, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-022",
+    "title": "Airbnb: NULL Handling & Coalesce #22",
+    "difficulty": "Easy",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Airbnb data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 22).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Airbnb Query Challenge 22 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Airbnb, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-023",
+    "title": "DoorDash: Multi-Table Inner Join #23",
+    "difficulty": "Easy",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe DoorDash data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 23).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- DoorDash Query Challenge 23 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at DoorDash, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-024",
+    "title": "Snowflake: Customer Anti-Join #24",
+    "difficulty": "Easy",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Snowflake data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 24).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Snowflake Query Challenge 24 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Snowflake, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-025",
+    "title": "ByteDance: Category Aggregations #25",
+    "difficulty": "Easy",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe ByteDance data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 25).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- ByteDance Query Challenge 25 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at ByteDance, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-026",
+    "title": "Citadel: Threshold Group Filtering #26",
+    "difficulty": "Easy",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Citadel data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 26).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Citadel Query Challenge 26 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Citadel, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-027",
+    "title": "Spotify: Duplicate Key Deduplication #27",
+    "difficulty": "Easy",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Spotify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 27).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Spotify Query Challenge 27 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Spotify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-028",
+    "title": "Pinterest: Date Range Filtering #28",
+    "difficulty": "Easy",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Pinterest data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 28).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Pinterest Query Challenge 28 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Pinterest, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-029",
+    "title": "Twitter / X: Conditional Column Tagging #29",
+    "difficulty": "Easy",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Twitter / X data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 29).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Twitter / X Query Challenge 29 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Twitter / X, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-030",
+    "title": "Walmart: Basic Scalar Subquery #30",
+    "difficulty": "Easy",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Walmart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 30).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Walmart Query Challenge 30 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Walmart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-031",
+    "title": "Instacart: Dirty String Filtering #31",
+    "difficulty": "Easy",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Instacart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 31).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Instacart Query Challenge 31 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Instacart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-032",
+    "title": "Databricks: NULL Handling & Coalesce #32",
+    "difficulty": "Easy",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Databricks data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 32).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Databricks Query Challenge 32 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Databricks, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-033",
+    "title": "LinkedIn: Multi-Table Inner Join #33",
+    "difficulty": "Easy",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe LinkedIn data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 33).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- LinkedIn Query Challenge 33 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at LinkedIn, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-034",
+    "title": "Microsoft: Customer Anti-Join #34",
+    "difficulty": "Easy",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Microsoft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 34).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Microsoft Query Challenge 34 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Microsoft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-035",
+    "title": "Palantir: Category Aggregations #35",
+    "difficulty": "Easy",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Palantir data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 35).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Palantir Query Challenge 35 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Palantir, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-036",
+    "title": "Robinhood: Threshold Group Filtering #36",
+    "difficulty": "Easy",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Robinhood data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 36).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Robinhood Query Challenge 36 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Robinhood, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-037",
+    "title": "Coinbase: Duplicate Key Deduplication #37",
+    "difficulty": "Easy",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Coinbase data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 37).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Coinbase Query Challenge 37 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Coinbase, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-038",
+    "title": "Shopify: Date Range Filtering #38",
+    "difficulty": "Easy",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Shopify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 38).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Shopify Query Challenge 38 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Shopify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-039",
+    "title": "Lyft: Conditional Column Tagging #39",
+    "difficulty": "Easy",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Lyft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 39).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Lyft Query Challenge 39 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Lyft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-040",
+    "title": "Amazon: Basic Scalar Subquery #40",
+    "difficulty": "Easy",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Amazon data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 40).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Amazon Query Challenge 40 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Amazon, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-041",
+    "title": "Meta: Dirty String Filtering #41",
+    "difficulty": "Easy",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Meta data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 41).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Meta Query Challenge 41 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Meta, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-042",
+    "title": "Google: NULL Handling & Coalesce #42",
+    "difficulty": "Easy",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Google data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 42).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Google Query Challenge 42 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Google, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-043",
+    "title": "Uber: Multi-Table Inner Join #43",
+    "difficulty": "Easy",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Uber data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 43).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Uber Query Challenge 43 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Uber, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-044",
+    "title": "Netflix: Customer Anti-Join #44",
+    "difficulty": "Easy",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Netflix data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 44).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Netflix Query Challenge 44 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Netflix, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-045",
+    "title": "Stripe: Category Aggregations #45",
+    "difficulty": "Easy",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Stripe data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 45).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Stripe Query Challenge 45 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Stripe, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-046",
+    "title": "Apple: Threshold Group Filtering #46",
+    "difficulty": "Easy",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Apple data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 46).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Apple Query Challenge 46 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Apple, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-047",
+    "title": "Airbnb: Duplicate Key Deduplication #47",
+    "difficulty": "Easy",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Airbnb data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 47).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Airbnb Query Challenge 47 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Airbnb, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-048",
+    "title": "DoorDash: Date Range Filtering #48",
+    "difficulty": "Easy",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe DoorDash data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 48).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- DoorDash Query Challenge 48 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at DoorDash, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-049",
+    "title": "Snowflake: Conditional Column Tagging #49",
+    "difficulty": "Easy",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Snowflake data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 49).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Snowflake Query Challenge 49 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Snowflake, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-050",
+    "title": "ByteDance: Basic Scalar Subquery #50",
+    "difficulty": "Easy",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe ByteDance data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 50).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- ByteDance Query Challenge 50 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at ByteDance, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-051",
+    "title": "Citadel: Dirty String Filtering #51",
+    "difficulty": "Easy",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Citadel data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 51).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Citadel Query Challenge 51 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Citadel, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-052",
+    "title": "Spotify: NULL Handling & Coalesce #52",
+    "difficulty": "Easy",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Spotify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 52).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Spotify Query Challenge 52 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Spotify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-053",
+    "title": "Pinterest: Multi-Table Inner Join #53",
+    "difficulty": "Easy",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Pinterest data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 53).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Pinterest Query Challenge 53 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Pinterest, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-054",
+    "title": "Twitter / X: Customer Anti-Join #54",
+    "difficulty": "Easy",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Twitter / X data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 54).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Twitter / X Query Challenge 54 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Twitter / X, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-055",
+    "title": "Walmart: Category Aggregations #55",
+    "difficulty": "Easy",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Walmart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 55).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Walmart Query Challenge 55 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Walmart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-056",
+    "title": "Instacart: Threshold Group Filtering #56",
+    "difficulty": "Easy",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Instacart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 56).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Instacart Query Challenge 56 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Instacart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-057",
+    "title": "Databricks: Duplicate Key Deduplication #57",
+    "difficulty": "Easy",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Databricks data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 57).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Databricks Query Challenge 57 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Databricks, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-058",
+    "title": "LinkedIn: Date Range Filtering #58",
+    "difficulty": "Easy",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe LinkedIn data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 58).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- LinkedIn Query Challenge 58 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at LinkedIn, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-059",
+    "title": "Microsoft: Conditional Column Tagging #59",
+    "difficulty": "Easy",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Microsoft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 59).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Microsoft Query Challenge 59 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Microsoft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-060",
+    "title": "Palantir: Basic Scalar Subquery #60",
+    "difficulty": "Easy",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Palantir data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 60).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Palantir Query Challenge 60 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Palantir, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-061",
+    "title": "Robinhood: Dirty String Filtering #61",
+    "difficulty": "Easy",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Robinhood data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 61).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Robinhood Query Challenge 61 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Robinhood, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-062",
+    "title": "Coinbase: NULL Handling & Coalesce #62",
+    "difficulty": "Easy",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Coinbase data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 62).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Coinbase Query Challenge 62 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Coinbase, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-063",
+    "title": "Shopify: Multi-Table Inner Join #63",
+    "difficulty": "Easy",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Shopify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 63).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Shopify Query Challenge 63 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Shopify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-064",
+    "title": "Lyft: Customer Anti-Join #64",
+    "difficulty": "Easy",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Lyft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 64).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Lyft Query Challenge 64 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Lyft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-065",
+    "title": "Amazon: Category Aggregations #65",
+    "difficulty": "Easy",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Amazon data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 65).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Amazon Query Challenge 65 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Amazon, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-066",
+    "title": "Meta: Threshold Group Filtering #66",
+    "difficulty": "Easy",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Meta data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 66).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Meta Query Challenge 66 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Meta, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-067",
+    "title": "Google: Duplicate Key Deduplication #67",
+    "difficulty": "Easy",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Google data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 67).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Google Query Challenge 67 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Google, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-068",
+    "title": "Uber: Date Range Filtering #68",
+    "difficulty": "Easy",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Uber data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 68).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Uber Query Challenge 68 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Uber, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-069",
+    "title": "Netflix: Conditional Column Tagging #69",
+    "difficulty": "Easy",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Netflix data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 69).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Netflix Query Challenge 69 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Netflix, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-070",
+    "title": "Stripe: Basic Scalar Subquery #70",
+    "difficulty": "Easy",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Stripe data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 70).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Stripe Query Challenge 70 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Stripe, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-071",
+    "title": "Apple: Dirty String Filtering #71",
+    "difficulty": "Easy",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Apple data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 71).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Apple Query Challenge 71 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Apple, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-072",
+    "title": "Airbnb: NULL Handling & Coalesce #72",
+    "difficulty": "Easy",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Airbnb data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 72).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Airbnb Query Challenge 72 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Airbnb, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-073",
+    "title": "DoorDash: Multi-Table Inner Join #73",
+    "difficulty": "Easy",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe DoorDash data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 73).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- DoorDash Query Challenge 73 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at DoorDash, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-074",
+    "title": "Snowflake: Customer Anti-Join #74",
+    "difficulty": "Easy",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Snowflake data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 74).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Snowflake Query Challenge 74 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Snowflake, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-075",
+    "title": "ByteDance: Category Aggregations #75",
+    "difficulty": "Easy",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe ByteDance data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 75).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- ByteDance Query Challenge 75 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at ByteDance, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-076",
+    "title": "Citadel: Threshold Group Filtering #76",
+    "difficulty": "Easy",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Citadel data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 76).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Citadel Query Challenge 76 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Citadel, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-077",
+    "title": "Spotify: Duplicate Key Deduplication #77",
+    "difficulty": "Easy",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Spotify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 77).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Spotify Query Challenge 77 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Spotify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-078",
+    "title": "Pinterest: Date Range Filtering #78",
+    "difficulty": "Easy",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Pinterest data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 78).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Pinterest Query Challenge 78 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Pinterest, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-079",
+    "title": "Twitter / X: Conditional Column Tagging #79",
+    "difficulty": "Easy",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Twitter / X data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 79).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Twitter / X Query Challenge 79 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Twitter / X, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-080",
+    "title": "Walmart: Basic Scalar Subquery #80",
+    "difficulty": "Easy",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Walmart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 80).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Walmart Query Challenge 80 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Walmart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-081",
+    "title": "Instacart: Dirty String Filtering #81",
+    "difficulty": "Easy",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Instacart data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 81).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Instacart Query Challenge 81 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Instacart, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-082",
+    "title": "Databricks: NULL Handling & Coalesce #82",
+    "difficulty": "Easy",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Databricks data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 82).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Databricks Query Challenge 82 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Databricks, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-083",
+    "title": "LinkedIn: Multi-Table Inner Join #83",
+    "difficulty": "Easy",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe LinkedIn data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 83).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- LinkedIn Query Challenge 83 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at LinkedIn, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-084",
+    "title": "Microsoft: Customer Anti-Join #84",
+    "difficulty": "Easy",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Microsoft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 84).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Microsoft Query Challenge 84 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Microsoft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-085",
+    "title": "Palantir: Category Aggregations #85",
+    "difficulty": "Easy",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Palantir data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 85).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Palantir Query Challenge 85 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Palantir, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-086",
+    "title": "Robinhood: Threshold Group Filtering #86",
+    "difficulty": "Easy",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Robinhood data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 86).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Robinhood Query Challenge 86 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Robinhood, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-087",
+    "title": "Coinbase: Duplicate Key Deduplication #87",
+    "difficulty": "Easy",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Coinbase data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 87).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Coinbase Query Challenge 87 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Coinbase, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-088",
+    "title": "Shopify: Date Range Filtering #88",
+    "difficulty": "Easy",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Shopify data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 88).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Shopify Query Challenge 88 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Shopify, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-089",
+    "title": "Lyft: Conditional Column Tagging #89",
+    "difficulty": "Easy",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Lyft data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 89).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Lyft Query Challenge 89 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Lyft, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-090",
+    "title": "Amazon: Basic Scalar Subquery #90",
+    "difficulty": "Easy",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Amazon data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 90).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Amazon Query Challenge 90 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Amazon, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-091",
+    "title": "Meta: Dirty String Filtering #91",
+    "difficulty": "Easy",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "TRIM",
+      "LOWER",
+      "WHERE",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Meta data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Dirty String Filtering** (Scenario 91).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Meta Query Challenge 91 (Dirty String Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Meta, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-092",
+    "title": "Google: NULL Handling & Coalesce #92",
+    "difficulty": "Easy",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "COALESCE",
+      "NULLIF",
+      "IS NOT NULL"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Google data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **NULL Handling & Coalesce** (Scenario 92).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Google Query Challenge 92 (NULL Handling & Coalesce)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Google, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-093",
+    "title": "Uber: Multi-Table Inner Join #93",
+    "difficulty": "Easy",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "INNER JOIN",
+      "ON",
+      "Foreign Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Uber data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Multi-Table Inner Join** (Scenario 93).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Uber Query Challenge 93 (Multi-Table Inner Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Uber, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-094",
+    "title": "Netflix: Customer Anti-Join #94",
+    "difficulty": "Easy",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "LEFT JOIN",
+      "IS NULL",
+      "Outer Joins"
+    ],
+    "frequency": "High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe Netflix data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Customer Anti-Join** (Scenario 94).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Netflix Query Challenge 94 (Customer Anti-Join)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Netflix, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-095",
+    "title": "Stripe: Category Aggregations #95",
+    "difficulty": "Easy",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "GROUP BY",
+      "SUM",
+      "AVG",
+      "ROUND"
+    ],
+    "frequency": "High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Stripe data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Category Aggregations** (Scenario 95).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Stripe Query Challenge 95 (Category Aggregations)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Stripe, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-096",
+    "title": "Apple: Threshold Group Filtering #96",
+    "difficulty": "Easy",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "GROUP BY",
+      "HAVING",
+      "COUNT"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe Apple data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Threshold Group Filtering** (Scenario 96).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Apple Query Challenge 96 (Threshold Group Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Apple, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-097",
+    "title": "Airbnb: Duplicate Key Deduplication #97",
+    "difficulty": "Easy",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DISTINCT",
+      "WHERE"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Airbnb data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Duplicate Key Deduplication** (Scenario 97).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Airbnb Query Challenge 97 (Duplicate Key Deduplication)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Airbnb, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-098",
+    "title": "DoorDash: Date Range Filtering #98",
+    "difficulty": "Easy",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "WHERE",
+      "BETWEEN",
+      "DATE",
+      "ORDER BY"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe DoorDash data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Date Range Filtering** (Scenario 98).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- DoorDash Query Challenge 98 (Date Range Filtering)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at DoorDash, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-099",
+    "title": "Snowflake: Conditional Column Tagging #99",
+    "difficulty": "Easy",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "CASE WHEN",
+      "ELSE",
+      "AS"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe Snowflake data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Conditional Column Tagging** (Scenario 99).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- Snowflake Query Challenge 99 (Conditional Column Tagging)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at Snowflake, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "basic-100",
+    "title": "ByteDance: Basic Scalar Subquery #100",
+    "difficulty": "Easy",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Subquery",
+      "WHERE val > (SELECT AVG...)",
+      "SELECT"
+    ],
+    "frequency": "High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe ByteDance data analytics team needs to inspect dirty transactional records for daily operational reporting. Management has requested a report addressing **Basic Scalar Subquery** (Scenario 100).\n\n### Dirty Data Edge Cases\n- Some records contain trailing whitespace, inconsistent casing, or NULLs in key status fields.\n- Deduplicate records or handle NULL coercion properly.\n- Return the required columns ordered predictably.\n\n### Input Schema\n**customers** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n- `status` (VARCHAR: ' active ', 'ACTIVE', 'inactive', NULL)\n- `country` (VARCHAR)\n\n**orders** table:\n- `id` (INT PRIMARY KEY)\n- `customer_id` (INT)\n- `amount` (NUMERIC)\n- `refund_amount` (NUMERIC)\n- `order_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE customers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  status VARCHAR(50),\n  country VARCHAR(50)\n);\n\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT,\n  amount NUMERIC,\n  refund_amount NUMERIC,\n  order_date DATE\n);\n\nINSERT INTO customers VALUES\n(1, 'Alice Smith', ' ACTIVE ', 'USA'),\n(2, 'Bob Jones', 'active', 'Canada'),\n(3, 'Charlie Dave', 'inactive', 'USA'),\n(4, 'Diana Vance', NULL, 'UK'),\n(5, 'Evan Wright', 'ACTIVE', 'USA');\n\nINSERT INTO orders VALUES\n(101, 1, 150.00, NULL, '2025-01-15'),\n(102, 1, 80.50, 10.00, '2025-01-18'),\n(103, 2, 220.00, NULL, '2025-02-01'),\n(104, 3, 45.00, 45.00, '2025-02-05'),\n(105, 5, 310.00, 25.00, '2025-02-10');\n",
+    "starterSql": "-- ByteDance Query Challenge 100 (Basic Scalar Subquery)\n-- Output required columns: customer_name, total_net_spent\nSELECT \n  -- Your SQL here\nFROM customers c;\n",
+    "referenceSql": "SELECT \n  c.name AS customer_name,\n  ROUND(SUM(o.amount - COALESCE(o.refund_amount, 0)), 2) AS total_net_spent\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE LOWER(TRIM(both ' ' from COALESCE(c.status, ''))) = 'active'\nGROUP BY c.name\nORDER BY total_net_spent DESC, customer_name ASC;",
+    "expectedColumns": [
+      "customer_name",
+      "total_net_spent"
+    ],
+    "hints": [
+      "Use TRIM() and LOWER() on the status column to handle inconsistent casing and spaces.",
+      "Use COALESCE(refund_amount, 0) to avoid arithmetic failures with NULL values.",
+      "Group by customer name and order descending by total_net_spent."
+    ],
+    "explanation": "### Key Interview Takeaway\nDirty production schemas rarely enforce clean string formats or non-null numeric defaults. In interviews at ByteDance, interviewers check if you instinctively wrap columns in `TRIM()`, `LOWER()`, and `COALESCE()` without being prompted."
+  },
+  {
+    "id": "inter-101",
+    "title": "Instacart: Dense Rank Tie Auditing #101",
+    "difficulty": "Medium",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Instacart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 101).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Instacart Intermediate Challenge 101 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Instacart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-102",
+    "title": "Databricks: Consecutive Webhook Delta #102",
+    "difficulty": "Medium",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Databricks is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 102).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Databricks Intermediate Challenge 102 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Databricks, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-103",
+    "title": "LinkedIn: Rolling 7-Day Window Frame #103",
+    "difficulty": "Medium",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at LinkedIn is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 103).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- LinkedIn Intermediate Challenge 103 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at LinkedIn, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-104",
+    "title": "Microsoft: Preventing Join Fanout #104",
+    "difficulty": "Medium",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Microsoft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 104).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Microsoft Intermediate Challenge 104 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Microsoft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-105",
+    "title": "Palantir: Month-Over-Month Safe Growth #105",
+    "difficulty": "Medium",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Palantir is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 105).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Palantir Intermediate Challenge 105 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Palantir, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-106",
+    "title": "Robinhood: First-Touch Attribution #106",
+    "difficulty": "Medium",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Robinhood is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 106).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Robinhood Intermediate Challenge 106 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Robinhood, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-107",
+    "title": "Coinbase: Top N Per Category with Ties #107",
+    "difficulty": "Medium",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Coinbase is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 107).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Coinbase Intermediate Challenge 107 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Coinbase, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-108",
+    "title": "Shopify: Running Balance Calculator #108",
+    "difficulty": "Medium",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Shopify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 108).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Shopify Intermediate Challenge 108 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Shopify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-109",
+    "title": "Lyft: Active User Ratio (DAU/MAU) #109",
+    "difficulty": "Medium",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Lyft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 109).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Lyft Intermediate Challenge 109 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Lyft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-110",
+    "title": "Amazon: Multi-Step Pipeline Reporting #110",
+    "difficulty": "Medium",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Amazon is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 110).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Amazon Intermediate Challenge 110 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Amazon, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-111",
+    "title": "Meta: Dense Rank Tie Auditing #111",
+    "difficulty": "Medium",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Meta is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 111).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Meta Intermediate Challenge 111 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Meta, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-112",
+    "title": "Google: Consecutive Webhook Delta #112",
+    "difficulty": "Medium",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Google is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 112).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Google Intermediate Challenge 112 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Google, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-113",
+    "title": "Uber: Rolling 7-Day Window Frame #113",
+    "difficulty": "Medium",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Uber is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 113).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Uber Intermediate Challenge 113 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Uber, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-114",
+    "title": "Netflix: Preventing Join Fanout #114",
+    "difficulty": "Medium",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Netflix is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 114).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Netflix Intermediate Challenge 114 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Netflix, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-115",
+    "title": "Stripe: Month-Over-Month Safe Growth #115",
+    "difficulty": "Medium",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Stripe is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 115).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Stripe Intermediate Challenge 115 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Stripe, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-116",
+    "title": "Apple: First-Touch Attribution #116",
+    "difficulty": "Medium",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Apple is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 116).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Apple Intermediate Challenge 116 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Apple, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-117",
+    "title": "Airbnb: Top N Per Category with Ties #117",
+    "difficulty": "Medium",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Airbnb is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 117).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Airbnb Intermediate Challenge 117 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Airbnb, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-118",
+    "title": "DoorDash: Running Balance Calculator #118",
+    "difficulty": "Medium",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at DoorDash is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 118).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- DoorDash Intermediate Challenge 118 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at DoorDash, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-119",
+    "title": "Snowflake: Active User Ratio (DAU/MAU) #119",
+    "difficulty": "Medium",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Snowflake is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 119).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Snowflake Intermediate Challenge 119 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Snowflake, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-120",
+    "title": "ByteDance: Multi-Step Pipeline Reporting #120",
+    "difficulty": "Medium",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at ByteDance is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 120).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- ByteDance Intermediate Challenge 120 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at ByteDance, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-121",
+    "title": "Citadel: Dense Rank Tie Auditing #121",
+    "difficulty": "Medium",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Citadel is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 121).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Citadel Intermediate Challenge 121 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Citadel, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-122",
+    "title": "Spotify: Consecutive Webhook Delta #122",
+    "difficulty": "Medium",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Spotify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 122).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Spotify Intermediate Challenge 122 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Spotify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-123",
+    "title": "Pinterest: Rolling 7-Day Window Frame #123",
+    "difficulty": "Medium",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Pinterest is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 123).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Pinterest Intermediate Challenge 123 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Pinterest, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-124",
+    "title": "Twitter / X: Preventing Join Fanout #124",
+    "difficulty": "Medium",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Twitter / X is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 124).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Twitter / X Intermediate Challenge 124 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Twitter / X, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-125",
+    "title": "Walmart: Month-Over-Month Safe Growth #125",
+    "difficulty": "Medium",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Walmart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 125).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Walmart Intermediate Challenge 125 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Walmart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-126",
+    "title": "Instacart: First-Touch Attribution #126",
+    "difficulty": "Medium",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Instacart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 126).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Instacart Intermediate Challenge 126 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Instacart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-127",
+    "title": "Databricks: Top N Per Category with Ties #127",
+    "difficulty": "Medium",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Databricks is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 127).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Databricks Intermediate Challenge 127 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Databricks, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-128",
+    "title": "LinkedIn: Running Balance Calculator #128",
+    "difficulty": "Medium",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at LinkedIn is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 128).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- LinkedIn Intermediate Challenge 128 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at LinkedIn, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-129",
+    "title": "Microsoft: Active User Ratio (DAU/MAU) #129",
+    "difficulty": "Medium",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Microsoft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 129).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Microsoft Intermediate Challenge 129 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Microsoft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-130",
+    "title": "Palantir: Multi-Step Pipeline Reporting #130",
+    "difficulty": "Medium",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Palantir is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 130).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Palantir Intermediate Challenge 130 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Palantir, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-131",
+    "title": "Robinhood: Dense Rank Tie Auditing #131",
+    "difficulty": "Medium",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Robinhood is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 131).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Robinhood Intermediate Challenge 131 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Robinhood, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-132",
+    "title": "Coinbase: Consecutive Webhook Delta #132",
+    "difficulty": "Medium",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Coinbase is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 132).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Coinbase Intermediate Challenge 132 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Coinbase, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-133",
+    "title": "Shopify: Rolling 7-Day Window Frame #133",
+    "difficulty": "Medium",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Shopify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 133).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Shopify Intermediate Challenge 133 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Shopify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-134",
+    "title": "Lyft: Preventing Join Fanout #134",
+    "difficulty": "Medium",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Lyft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 134).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Lyft Intermediate Challenge 134 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Lyft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-135",
+    "title": "Amazon: Month-Over-Month Safe Growth #135",
+    "difficulty": "Medium",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Amazon is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 135).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Amazon Intermediate Challenge 135 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Amazon, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-136",
+    "title": "Meta: First-Touch Attribution #136",
+    "difficulty": "Medium",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Meta is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 136).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Meta Intermediate Challenge 136 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Meta, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-137",
+    "title": "Google: Top N Per Category with Ties #137",
+    "difficulty": "Medium",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Google is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 137).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Google Intermediate Challenge 137 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Google, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-138",
+    "title": "Uber: Running Balance Calculator #138",
+    "difficulty": "Medium",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Uber is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 138).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Uber Intermediate Challenge 138 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Uber, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-139",
+    "title": "Netflix: Active User Ratio (DAU/MAU) #139",
+    "difficulty": "Medium",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Netflix is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 139).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Netflix Intermediate Challenge 139 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Netflix, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-140",
+    "title": "Stripe: Multi-Step Pipeline Reporting #140",
+    "difficulty": "Medium",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Stripe is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 140).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Stripe Intermediate Challenge 140 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Stripe, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-141",
+    "title": "Apple: Dense Rank Tie Auditing #141",
+    "difficulty": "Medium",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Apple is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 141).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Apple Intermediate Challenge 141 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Apple, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-142",
+    "title": "Airbnb: Consecutive Webhook Delta #142",
+    "difficulty": "Medium",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Airbnb is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 142).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Airbnb Intermediate Challenge 142 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Airbnb, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-143",
+    "title": "DoorDash: Rolling 7-Day Window Frame #143",
+    "difficulty": "Medium",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at DoorDash is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 143).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- DoorDash Intermediate Challenge 143 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at DoorDash, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-144",
+    "title": "Snowflake: Preventing Join Fanout #144",
+    "difficulty": "Medium",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Snowflake is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 144).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Snowflake Intermediate Challenge 144 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Snowflake, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-145",
+    "title": "ByteDance: Month-Over-Month Safe Growth #145",
+    "difficulty": "Medium",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at ByteDance is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 145).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- ByteDance Intermediate Challenge 145 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at ByteDance, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-146",
+    "title": "Citadel: First-Touch Attribution #146",
+    "difficulty": "Medium",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Citadel is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 146).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Citadel Intermediate Challenge 146 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Citadel, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-147",
+    "title": "Spotify: Top N Per Category with Ties #147",
+    "difficulty": "Medium",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Spotify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 147).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Spotify Intermediate Challenge 147 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Spotify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-148",
+    "title": "Pinterest: Running Balance Calculator #148",
+    "difficulty": "Medium",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Pinterest is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 148).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Pinterest Intermediate Challenge 148 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Pinterest, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-149",
+    "title": "Twitter / X: Active User Ratio (DAU/MAU) #149",
+    "difficulty": "Medium",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Twitter / X is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 149).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Twitter / X Intermediate Challenge 149 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Twitter / X, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-150",
+    "title": "Walmart: Multi-Step Pipeline Reporting #150",
+    "difficulty": "Medium",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Walmart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 150).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Walmart Intermediate Challenge 150 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Walmart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-151",
+    "title": "Instacart: Dense Rank Tie Auditing #151",
+    "difficulty": "Medium",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Instacart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 151).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Instacart Intermediate Challenge 151 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Instacart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-152",
+    "title": "Databricks: Consecutive Webhook Delta #152",
+    "difficulty": "Medium",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Databricks is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 152).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Databricks Intermediate Challenge 152 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Databricks, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-153",
+    "title": "LinkedIn: Rolling 7-Day Window Frame #153",
+    "difficulty": "Medium",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at LinkedIn is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 153).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- LinkedIn Intermediate Challenge 153 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at LinkedIn, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-154",
+    "title": "Microsoft: Preventing Join Fanout #154",
+    "difficulty": "Medium",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Microsoft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 154).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Microsoft Intermediate Challenge 154 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Microsoft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-155",
+    "title": "Palantir: Month-Over-Month Safe Growth #155",
+    "difficulty": "Medium",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Palantir is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 155).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Palantir Intermediate Challenge 155 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Palantir, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-156",
+    "title": "Robinhood: First-Touch Attribution #156",
+    "difficulty": "Medium",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Robinhood is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 156).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Robinhood Intermediate Challenge 156 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Robinhood, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-157",
+    "title": "Coinbase: Top N Per Category with Ties #157",
+    "difficulty": "Medium",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Coinbase is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 157).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Coinbase Intermediate Challenge 157 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Coinbase, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-158",
+    "title": "Shopify: Running Balance Calculator #158",
+    "difficulty": "Medium",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Shopify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 158).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Shopify Intermediate Challenge 158 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Shopify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-159",
+    "title": "Lyft: Active User Ratio (DAU/MAU) #159",
+    "difficulty": "Medium",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Lyft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 159).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Lyft Intermediate Challenge 159 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Lyft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-160",
+    "title": "Amazon: Multi-Step Pipeline Reporting #160",
+    "difficulty": "Medium",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Amazon is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 160).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Amazon Intermediate Challenge 160 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Amazon, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-161",
+    "title": "Meta: Dense Rank Tie Auditing #161",
+    "difficulty": "Medium",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Meta is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 161).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Meta Intermediate Challenge 161 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Meta, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-162",
+    "title": "Google: Consecutive Webhook Delta #162",
+    "difficulty": "Medium",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Google is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 162).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Google Intermediate Challenge 162 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Google, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-163",
+    "title": "Uber: Rolling 7-Day Window Frame #163",
+    "difficulty": "Medium",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Uber is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 163).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Uber Intermediate Challenge 163 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Uber, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-164",
+    "title": "Netflix: Preventing Join Fanout #164",
+    "difficulty": "Medium",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Netflix is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 164).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Netflix Intermediate Challenge 164 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Netflix, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-165",
+    "title": "Stripe: Month-Over-Month Safe Growth #165",
+    "difficulty": "Medium",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Stripe is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 165).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Stripe Intermediate Challenge 165 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Stripe, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-166",
+    "title": "Apple: First-Touch Attribution #166",
+    "difficulty": "Medium",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Apple is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 166).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Apple Intermediate Challenge 166 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Apple, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-167",
+    "title": "Airbnb: Top N Per Category with Ties #167",
+    "difficulty": "Medium",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Airbnb is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 167).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Airbnb Intermediate Challenge 167 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Airbnb, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-168",
+    "title": "DoorDash: Running Balance Calculator #168",
+    "difficulty": "Medium",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at DoorDash is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 168).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- DoorDash Intermediate Challenge 168 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at DoorDash, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-169",
+    "title": "Snowflake: Active User Ratio (DAU/MAU) #169",
+    "difficulty": "Medium",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Snowflake is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 169).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Snowflake Intermediate Challenge 169 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Snowflake, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-170",
+    "title": "ByteDance: Multi-Step Pipeline Reporting #170",
+    "difficulty": "Medium",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at ByteDance is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 170).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- ByteDance Intermediate Challenge 170 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at ByteDance, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-171",
+    "title": "Citadel: Dense Rank Tie Auditing #171",
+    "difficulty": "Medium",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Citadel is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 171).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Citadel Intermediate Challenge 171 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Citadel, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-172",
+    "title": "Spotify: Consecutive Webhook Delta #172",
+    "difficulty": "Medium",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Spotify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 172).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Spotify Intermediate Challenge 172 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Spotify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-173",
+    "title": "Pinterest: Rolling 7-Day Window Frame #173",
+    "difficulty": "Medium",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Pinterest is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 173).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Pinterest Intermediate Challenge 173 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Pinterest, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-174",
+    "title": "Twitter / X: Preventing Join Fanout #174",
+    "difficulty": "Medium",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Twitter / X is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 174).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Twitter / X Intermediate Challenge 174 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Twitter / X, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-175",
+    "title": "Walmart: Month-Over-Month Safe Growth #175",
+    "difficulty": "Medium",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Walmart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 175).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Walmart Intermediate Challenge 175 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Walmart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-176",
+    "title": "Instacart: First-Touch Attribution #176",
+    "difficulty": "Medium",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Instacart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 176).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Instacart Intermediate Challenge 176 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Instacart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-177",
+    "title": "Databricks: Top N Per Category with Ties #177",
+    "difficulty": "Medium",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Databricks is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 177).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Databricks Intermediate Challenge 177 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Databricks, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-178",
+    "title": "LinkedIn: Running Balance Calculator #178",
+    "difficulty": "Medium",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at LinkedIn is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 178).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- LinkedIn Intermediate Challenge 178 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at LinkedIn, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-179",
+    "title": "Microsoft: Active User Ratio (DAU/MAU) #179",
+    "difficulty": "Medium",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Microsoft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 179).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Microsoft Intermediate Challenge 179 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Microsoft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-180",
+    "title": "Palantir: Multi-Step Pipeline Reporting #180",
+    "difficulty": "Medium",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Palantir is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 180).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Palantir Intermediate Challenge 180 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Palantir, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-181",
+    "title": "Robinhood: Dense Rank Tie Auditing #181",
+    "difficulty": "Medium",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Robinhood is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 181).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Robinhood Intermediate Challenge 181 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Robinhood, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-182",
+    "title": "Coinbase: Consecutive Webhook Delta #182",
+    "difficulty": "Medium",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Coinbase is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 182).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Coinbase Intermediate Challenge 182 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Coinbase, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-183",
+    "title": "Shopify: Rolling 7-Day Window Frame #183",
+    "difficulty": "Medium",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Shopify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 183).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Shopify Intermediate Challenge 183 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Shopify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-184",
+    "title": "Lyft: Preventing Join Fanout #184",
+    "difficulty": "Medium",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Lyft is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 184).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Lyft Intermediate Challenge 184 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Lyft, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-185",
+    "title": "Amazon: Month-Over-Month Safe Growth #185",
+    "difficulty": "Medium",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Amazon is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 185).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Amazon Intermediate Challenge 185 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Amazon, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-186",
+    "title": "Meta: First-Touch Attribution #186",
+    "difficulty": "Medium",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Meta is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 186).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Meta Intermediate Challenge 186 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Meta, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-187",
+    "title": "Google: Top N Per Category with Ties #187",
+    "difficulty": "Medium",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Google is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 187).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Google Intermediate Challenge 187 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Google, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-188",
+    "title": "Uber: Running Balance Calculator #188",
+    "difficulty": "Medium",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Uber is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 188).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Uber Intermediate Challenge 188 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Uber, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-189",
+    "title": "Netflix: Active User Ratio (DAU/MAU) #189",
+    "difficulty": "Medium",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Netflix is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 189).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Netflix Intermediate Challenge 189 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Netflix, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-190",
+    "title": "Stripe: Multi-Step Pipeline Reporting #190",
+    "difficulty": "Medium",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Stripe is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 190).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Stripe Intermediate Challenge 190 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Stripe, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-191",
+    "title": "Apple: Dense Rank Tie Auditing #191",
+    "difficulty": "Medium",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "DENSE_RANK()",
+      "PARTITION BY",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Apple is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Dense Rank Tie Auditing** (Scenario 191).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Apple Intermediate Challenge 191 (Dense Rank Tie Auditing)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Apple, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-192",
+    "title": "Airbnb: Consecutive Webhook Delta #192",
+    "difficulty": "Medium",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "LEAD()",
+      "LAG()",
+      "EXTRACT(EPOCH)"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Airbnb is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Consecutive Webhook Delta** (Scenario 192).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Airbnb Intermediate Challenge 192 (Consecutive Webhook Delta)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Airbnb, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-193",
+    "title": "DoorDash: Rolling 7-Day Window Frame #193",
+    "difficulty": "Medium",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "SUM() OVER",
+      "ROWS BETWEEN",
+      "Moving Average"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at DoorDash is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Rolling 7-Day Window Frame** (Scenario 193).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- DoorDash Intermediate Challenge 193 (Rolling 7-Day Window Frame)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at DoorDash, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-194",
+    "title": "Snowflake: Preventing Join Fanout #194",
+    "difficulty": "Medium",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Pre-aggregated CTEs",
+      "GROUP BY before JOIN"
+    ],
+    "frequency": "Very High",
+    "category": "Joins & Set Theory",
+    "description": "### Business Context\nThe analytics team at Snowflake is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Preventing Join Fanout** (Scenario 194).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Snowflake Intermediate Challenge 194 (Preventing Join Fanout)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Snowflake, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-195",
+    "title": "ByteDance: Month-Over-Month Safe Growth #195",
+    "difficulty": "Medium",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "LAG()",
+      "NULLIF",
+      "DATE_TRUNC",
+      "Growth %"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at ByteDance is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Month-Over-Month Safe Growth** (Scenario 195).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- ByteDance Intermediate Challenge 195 (Month-Over-Month Safe Growth)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at ByteDance, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-196",
+    "title": "Citadel: First-Touch Attribution #196",
+    "difficulty": "Medium",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "ROW_NUMBER()",
+      "PARTITION BY user_id",
+      "First Event"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Citadel is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **First-Touch Attribution** (Scenario 196).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Citadel Intermediate Challenge 196 (First-Touch Attribution)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Citadel, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-197",
+    "title": "Spotify: Top N Per Category with Ties #197",
+    "difficulty": "Medium",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "RANK()",
+      "PARTITION BY",
+      "WHERE rnk <= N"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Spotify is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Top N Per Category with Ties** (Scenario 197).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Spotify Intermediate Challenge 197 (Top N Per Category with Ties)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Spotify, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-198",
+    "title": "Pinterest: Running Balance Calculator #198",
+    "difficulty": "Medium",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "SUM() OVER (ORDER BY date)",
+      "Cumulative Metrics"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe analytics team at Pinterest is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Running Balance Calculator** (Scenario 198).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Pinterest Intermediate Challenge 198 (Running Balance Calculator)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Pinterest, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-199",
+    "title": "Twitter / X: Active User Ratio (DAU/MAU) #199",
+    "difficulty": "Medium",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "COUNT(DISTINCT)",
+      "DATE_TRUNC",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Aggregations",
+    "description": "### Business Context\nThe analytics team at Twitter / X is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Active User Ratio (DAU/MAU)** (Scenario 199).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Twitter / X Intermediate Challenge 199 (Active User Ratio (DAU/MAU))\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Twitter / X, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "inter-200",
+    "title": "Walmart: Multi-Step Pipeline Reporting #200",
+    "difficulty": "Medium",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Chained CTEs",
+      "Data Normalization"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe analytics team at Walmart is auditing metrics requiring multi-step window calculations and Common Table Expressions (CTEs). Management needs to resolve **Multi-Step Pipeline Reporting** (Scenario 200).\n\n### Technical Requirements\n- Utilize window functions like `DENSE_RANK()`, `LEAD()`, `LAG()`, or rolling frames.\n- Ensure ties are handled without skipping ranks.\n- Filter window results via CTE pipelines.\n\n### Input Schema\n**departments** table:\n- `id` (INT PRIMARY KEY)\n- `name` (VARCHAR)\n\n**employees** table:\n- `id` (INT PRIMARY KEY)\n- `department_id` (INT)\n- `name` (VARCHAR)\n- `salary` (INT)\n- `hire_date` (DATE)",
+    "schemaSql": "\nCREATE TABLE departments (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE employees (\n  id INT PRIMARY KEY,\n  department_id INT,\n  name VARCHAR(50),\n  salary INT,\n  hire_date DATE\n);\n\nINSERT INTO departments VALUES\n(1, 'Engineering'),\n(2, 'Product'),\n(3, 'Analytics');\n\nINSERT INTO employees VALUES\n(1, 1, 'Alice Chen', 160000, '2023-01-10'),\n(2, 1, 'Bob Miller', 160000, '2023-02-15'),\n(3, 1, 'Charlie Dave', 145000, '2023-05-20'),\n(4, 2, 'Diana Ross', 150000, '2023-03-01'),\n(5, 2, 'Evan Wright', 130000, '2023-07-12'),\n(6, 3, 'Fiona Gallagher', 140000, '2023-04-18'),\n(7, 3, 'George Clark', 140000, '2023-06-25'),\n(8, 3, 'Hannah Abbott', 125000, '2023-09-01');\n",
+    "starterSql": "-- Walmart Intermediate Challenge 200 (Multi-Step Pipeline Reporting)\n-- Output: department_name, employee_name, salary, rnk\nWITH ranked_staff AS (\n  -- Your code here\n)\nSELECT * FROM ranked_staff;\n",
+    "referenceSql": "WITH ranked_staff AS (\n  SELECT \n    d.name AS department_name,\n    e.name AS employee_name,\n    e.salary,\n    DENSE_RANK() OVER (\n      PARTITION BY e.department_id \n      ORDER BY e.salary DESC\n    ) AS rnk\n  FROM employees e\n  JOIN departments d ON e.department_id = d.id\n)\nSELECT \n  department_name,\n  employee_name,\n  salary,\n  rnk\nFROM ranked_staff\nWHERE rnk <= 2\nORDER BY department_name ASC, salary DESC, employee_name ASC;",
+    "expectedColumns": [
+      "department_name",
+      "employee_name",
+      "salary",
+      "rnk"
+    ],
+    "hints": [
+      "You cannot filter by a window function in the WHERE clause directly. Wrap it inside a CTE.",
+      "DENSE_RANK() handles ties cleanly without skipping numbers.",
+      "Partition by department_id and order by salary DESC."
+    ],
+    "explanation": "### Intermediate Architecture\nIn technical screens at Walmart, standard queries test your ability to separate calculation from filtering using CTEs (`WITH`). This ensures code readability and prevents redundant subqueries."
+  },
+  {
+    "id": "adv-201",
+    "title": "Apple: 30-Min Sessionization #201",
+    "difficulty": "Hard",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Apple is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 201) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Apple Advanced Challenge 201 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Apple, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-202",
+    "title": "Airbnb: Recursive Org Hierarchy #202",
+    "difficulty": "Hard",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Airbnb is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 202) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Airbnb Advanced Challenge 202 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Airbnb, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-203",
+    "title": "DoorDash: Cohort Retention Matrix #203",
+    "difficulty": "Hard",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at DoorDash is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 203) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- DoorDash Advanced Challenge 203 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like DoorDash, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-204",
+    "title": "Snowflake: Gaps & Islands Login Streaks #204",
+    "difficulty": "Hard",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Snowflake is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 204) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Snowflake Advanced Challenge 204 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Snowflake, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-205",
+    "title": "ByteDance: Downtime Period Detection #205",
+    "difficulty": "Hard",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at ByteDance is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 205) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- ByteDance Advanced Challenge 205 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like ByteDance, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-206",
+    "title": "Citadel: Nested JSON Payload Munging #206",
+    "difficulty": "Hard",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Citadel is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 206) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Citadel Advanced Challenge 206 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Citadel, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-207",
+    "title": "Spotify: Idempotent Deduplication #207",
+    "difficulty": "Hard",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Spotify is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 207) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Spotify Advanced Challenge 207 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Spotify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-208",
+    "title": "Pinterest: Recursive Bill of Materials #208",
+    "difficulty": "Hard",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Pinterest is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 208) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Pinterest Advanced Challenge 208 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Pinterest, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-209",
+    "title": "Twitter / X: Year-Over-Year Cohort Drop #209",
+    "difficulty": "Hard",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Twitter / X is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 209) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Twitter / X Advanced Challenge 209 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Twitter / X, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-210",
+    "title": "Walmart: Query Tuning & Execution Plan #210",
+    "difficulty": "Hard",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Walmart is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 210) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Walmart Advanced Challenge 210 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Walmart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-211",
+    "title": "Instacart: 30-Min Sessionization #211",
+    "difficulty": "Hard",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Instacart is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 211) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Instacart Advanced Challenge 211 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Instacart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-212",
+    "title": "Databricks: Recursive Org Hierarchy #212",
+    "difficulty": "Hard",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Databricks is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 212) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Databricks Advanced Challenge 212 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Databricks, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-213",
+    "title": "LinkedIn: Cohort Retention Matrix #213",
+    "difficulty": "Hard",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at LinkedIn is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 213) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- LinkedIn Advanced Challenge 213 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like LinkedIn, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-214",
+    "title": "Microsoft: Gaps & Islands Login Streaks #214",
+    "difficulty": "Hard",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Microsoft is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 214) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Microsoft Advanced Challenge 214 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Microsoft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-215",
+    "title": "Palantir: Downtime Period Detection #215",
+    "difficulty": "Hard",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Palantir is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 215) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Palantir Advanced Challenge 215 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Palantir, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-216",
+    "title": "Robinhood: Nested JSON Payload Munging #216",
+    "difficulty": "Hard",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Robinhood is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 216) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Robinhood Advanced Challenge 216 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Robinhood, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-217",
+    "title": "Coinbase: Idempotent Deduplication #217",
+    "difficulty": "Hard",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Coinbase is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 217) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Coinbase Advanced Challenge 217 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Coinbase, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-218",
+    "title": "Shopify: Recursive Bill of Materials #218",
+    "difficulty": "Hard",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Shopify is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 218) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Shopify Advanced Challenge 218 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Shopify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-219",
+    "title": "Lyft: Year-Over-Year Cohort Drop #219",
+    "difficulty": "Hard",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Lyft is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 219) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Lyft Advanced Challenge 219 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Lyft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-220",
+    "title": "Amazon: Query Tuning & Execution Plan #220",
+    "difficulty": "Hard",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Amazon is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 220) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Amazon Advanced Challenge 220 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Amazon, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-221",
+    "title": "Meta: 30-Min Sessionization #221",
+    "difficulty": "Hard",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Meta is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 221) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Meta Advanced Challenge 221 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Meta, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-222",
+    "title": "Google: Recursive Org Hierarchy #222",
+    "difficulty": "Hard",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Google is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 222) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Google Advanced Challenge 222 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Google, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-223",
+    "title": "Uber: Cohort Retention Matrix #223",
+    "difficulty": "Hard",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Uber is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 223) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Uber Advanced Challenge 223 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Uber, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-224",
+    "title": "Netflix: Gaps & Islands Login Streaks #224",
+    "difficulty": "Hard",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Netflix is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 224) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Netflix Advanced Challenge 224 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Netflix, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-225",
+    "title": "Stripe: Downtime Period Detection #225",
+    "difficulty": "Hard",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Stripe is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 225) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Stripe Advanced Challenge 225 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Stripe, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-226",
+    "title": "Apple: Nested JSON Payload Munging #226",
+    "difficulty": "Hard",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Apple is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 226) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Apple Advanced Challenge 226 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Apple, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-227",
+    "title": "Airbnb: Idempotent Deduplication #227",
+    "difficulty": "Hard",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Airbnb is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 227) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Airbnb Advanced Challenge 227 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Airbnb, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-228",
+    "title": "DoorDash: Recursive Bill of Materials #228",
+    "difficulty": "Hard",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at DoorDash is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 228) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- DoorDash Advanced Challenge 228 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like DoorDash, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-229",
+    "title": "Snowflake: Year-Over-Year Cohort Drop #229",
+    "difficulty": "Hard",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Snowflake is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 229) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Snowflake Advanced Challenge 229 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Snowflake, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-230",
+    "title": "ByteDance: Query Tuning & Execution Plan #230",
+    "difficulty": "Hard",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at ByteDance is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 230) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- ByteDance Advanced Challenge 230 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like ByteDance, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-231",
+    "title": "Citadel: 30-Min Sessionization #231",
+    "difficulty": "Hard",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Citadel is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 231) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Citadel Advanced Challenge 231 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Citadel, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-232",
+    "title": "Spotify: Recursive Org Hierarchy #232",
+    "difficulty": "Hard",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Spotify is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 232) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Spotify Advanced Challenge 232 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Spotify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-233",
+    "title": "Pinterest: Cohort Retention Matrix #233",
+    "difficulty": "Hard",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Pinterest is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 233) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Pinterest Advanced Challenge 233 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Pinterest, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-234",
+    "title": "Twitter / X: Gaps & Islands Login Streaks #234",
+    "difficulty": "Hard",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Twitter / X is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 234) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Twitter / X Advanced Challenge 234 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Twitter / X, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-235",
+    "title": "Walmart: Downtime Period Detection #235",
+    "difficulty": "Hard",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Walmart is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 235) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Walmart Advanced Challenge 235 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Walmart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-236",
+    "title": "Instacart: Nested JSON Payload Munging #236",
+    "difficulty": "Hard",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Instacart is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 236) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Instacart Advanced Challenge 236 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Instacart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-237",
+    "title": "Databricks: Idempotent Deduplication #237",
+    "difficulty": "Hard",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Databricks is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 237) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Databricks Advanced Challenge 237 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Databricks, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-238",
+    "title": "LinkedIn: Recursive Bill of Materials #238",
+    "difficulty": "Hard",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at LinkedIn is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 238) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- LinkedIn Advanced Challenge 238 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like LinkedIn, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-239",
+    "title": "Microsoft: Year-Over-Year Cohort Drop #239",
+    "difficulty": "Hard",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Microsoft is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 239) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Microsoft Advanced Challenge 239 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Microsoft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-240",
+    "title": "Palantir: Query Tuning & Execution Plan #240",
+    "difficulty": "Hard",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Palantir is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 240) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Palantir Advanced Challenge 240 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Palantir, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-241",
+    "title": "Robinhood: 30-Min Sessionization #241",
+    "difficulty": "Hard",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Robinhood is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 241) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Robinhood Advanced Challenge 241 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Robinhood, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-242",
+    "title": "Coinbase: Recursive Org Hierarchy #242",
+    "difficulty": "Hard",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Coinbase is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 242) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Coinbase Advanced Challenge 242 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Coinbase, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-243",
+    "title": "Shopify: Cohort Retention Matrix #243",
+    "difficulty": "Hard",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Shopify is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 243) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Shopify Advanced Challenge 243 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Shopify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-244",
+    "title": "Lyft: Gaps & Islands Login Streaks #244",
+    "difficulty": "Hard",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Lyft is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 244) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Lyft Advanced Challenge 244 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Lyft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-245",
+    "title": "Amazon: Downtime Period Detection #245",
+    "difficulty": "Hard",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Amazon is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 245) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Amazon Advanced Challenge 245 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Amazon, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-246",
+    "title": "Meta: Nested JSON Payload Munging #246",
+    "difficulty": "Hard",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Meta is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 246) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Meta Advanced Challenge 246 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Meta, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-247",
+    "title": "Google: Idempotent Deduplication #247",
+    "difficulty": "Hard",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Google is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 247) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Google Advanced Challenge 247 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Google, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-248",
+    "title": "Uber: Recursive Bill of Materials #248",
+    "difficulty": "Hard",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Uber is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 248) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Uber Advanced Challenge 248 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Uber, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-249",
+    "title": "Netflix: Year-Over-Year Cohort Drop #249",
+    "difficulty": "Hard",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Netflix is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 249) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Netflix Advanced Challenge 249 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Netflix, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-250",
+    "title": "Stripe: Query Tuning & Execution Plan #250",
+    "difficulty": "Hard",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Stripe is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 250) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Stripe Advanced Challenge 250 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Stripe, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-251",
+    "title": "Apple: 30-Min Sessionization #251",
+    "difficulty": "Hard",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Apple is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 251) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Apple Advanced Challenge 251 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Apple, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-252",
+    "title": "Airbnb: Recursive Org Hierarchy #252",
+    "difficulty": "Hard",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Airbnb is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 252) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Airbnb Advanced Challenge 252 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Airbnb, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-253",
+    "title": "DoorDash: Cohort Retention Matrix #253",
+    "difficulty": "Hard",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at DoorDash is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 253) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- DoorDash Advanced Challenge 253 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like DoorDash, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-254",
+    "title": "Snowflake: Gaps & Islands Login Streaks #254",
+    "difficulty": "Hard",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Snowflake is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 254) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Snowflake Advanced Challenge 254 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Snowflake, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-255",
+    "title": "ByteDance: Downtime Period Detection #255",
+    "difficulty": "Hard",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at ByteDance is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 255) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- ByteDance Advanced Challenge 255 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like ByteDance, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-256",
+    "title": "Citadel: Nested JSON Payload Munging #256",
+    "difficulty": "Hard",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Citadel is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 256) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Citadel Advanced Challenge 256 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Citadel, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-257",
+    "title": "Spotify: Idempotent Deduplication #257",
+    "difficulty": "Hard",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Spotify is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 257) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Spotify Advanced Challenge 257 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Spotify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-258",
+    "title": "Pinterest: Recursive Bill of Materials #258",
+    "difficulty": "Hard",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Pinterest is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 258) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Pinterest Advanced Challenge 258 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Pinterest, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-259",
+    "title": "Twitter / X: Year-Over-Year Cohort Drop #259",
+    "difficulty": "Hard",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Twitter / X is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 259) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Twitter / X Advanced Challenge 259 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Twitter / X, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-260",
+    "title": "Walmart: Query Tuning & Execution Plan #260",
+    "difficulty": "Hard",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Walmart is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 260) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Walmart Advanced Challenge 260 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Walmart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-261",
+    "title": "Instacart: 30-Min Sessionization #261",
+    "difficulty": "Hard",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Instacart is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 261) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Instacart Advanced Challenge 261 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Instacart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-262",
+    "title": "Databricks: Recursive Org Hierarchy #262",
+    "difficulty": "Hard",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Databricks is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 262) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Databricks Advanced Challenge 262 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Databricks, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-263",
+    "title": "LinkedIn: Cohort Retention Matrix #263",
+    "difficulty": "Hard",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at LinkedIn is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 263) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- LinkedIn Advanced Challenge 263 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like LinkedIn, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-264",
+    "title": "Microsoft: Gaps & Islands Login Streaks #264",
+    "difficulty": "Hard",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Microsoft is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 264) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Microsoft Advanced Challenge 264 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Microsoft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-265",
+    "title": "Palantir: Downtime Period Detection #265",
+    "difficulty": "Hard",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Palantir is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 265) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Palantir Advanced Challenge 265 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Palantir, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-266",
+    "title": "Robinhood: Nested JSON Payload Munging #266",
+    "difficulty": "Hard",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Robinhood is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 266) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Robinhood Advanced Challenge 266 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Robinhood, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-267",
+    "title": "Coinbase: Idempotent Deduplication #267",
+    "difficulty": "Hard",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Coinbase is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 267) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Coinbase Advanced Challenge 267 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Coinbase, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-268",
+    "title": "Shopify: Recursive Bill of Materials #268",
+    "difficulty": "Hard",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Shopify is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 268) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Shopify Advanced Challenge 268 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Shopify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-269",
+    "title": "Lyft: Year-Over-Year Cohort Drop #269",
+    "difficulty": "Hard",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Lyft is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 269) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Lyft Advanced Challenge 269 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Lyft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-270",
+    "title": "Amazon: Query Tuning & Execution Plan #270",
+    "difficulty": "Hard",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Amazon is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 270) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Amazon Advanced Challenge 270 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Amazon, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-271",
+    "title": "Meta: 30-Min Sessionization #271",
+    "difficulty": "Hard",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Meta is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 271) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Meta Advanced Challenge 271 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Meta, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-272",
+    "title": "Google: Recursive Org Hierarchy #272",
+    "difficulty": "Hard",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Google is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 272) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Google Advanced Challenge 272 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Google, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-273",
+    "title": "Uber: Cohort Retention Matrix #273",
+    "difficulty": "Hard",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Uber is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 273) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Uber Advanced Challenge 273 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Uber, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-274",
+    "title": "Netflix: Gaps & Islands Login Streaks #274",
+    "difficulty": "Hard",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Netflix is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 274) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Netflix Advanced Challenge 274 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Netflix, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-275",
+    "title": "Stripe: Downtime Period Detection #275",
+    "difficulty": "Hard",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Stripe is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 275) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Stripe Advanced Challenge 275 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Stripe, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-276",
+    "title": "Apple: Nested JSON Payload Munging #276",
+    "difficulty": "Hard",
+    "companies": [
+      "Apple",
+      "Pinterest"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Apple is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 276) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Apple Advanced Challenge 276 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Apple, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-277",
+    "title": "Airbnb: Idempotent Deduplication #277",
+    "difficulty": "Hard",
+    "companies": [
+      "Airbnb",
+      "Twitter / X"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Airbnb is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 277) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Airbnb Advanced Challenge 277 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Airbnb, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-278",
+    "title": "DoorDash: Recursive Bill of Materials #278",
+    "difficulty": "Hard",
+    "companies": [
+      "DoorDash",
+      "Walmart"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at DoorDash is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 278) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- DoorDash Advanced Challenge 278 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like DoorDash, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-279",
+    "title": "Snowflake: Year-Over-Year Cohort Drop #279",
+    "difficulty": "Hard",
+    "companies": [
+      "Snowflake",
+      "Instacart"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Snowflake is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 279) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Snowflake Advanced Challenge 279 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Snowflake, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-280",
+    "title": "ByteDance: Query Tuning & Execution Plan #280",
+    "difficulty": "Hard",
+    "companies": [
+      "ByteDance",
+      "Databricks"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at ByteDance is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 280) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- ByteDance Advanced Challenge 280 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like ByteDance, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-281",
+    "title": "Citadel: 30-Min Sessionization #281",
+    "difficulty": "Hard",
+    "companies": [
+      "Citadel",
+      "LinkedIn"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Citadel is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 281) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Citadel Advanced Challenge 281 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Citadel, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-282",
+    "title": "Spotify: Recursive Org Hierarchy #282",
+    "difficulty": "Hard",
+    "companies": [
+      "Spotify",
+      "Microsoft"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Spotify is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 282) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Spotify Advanced Challenge 282 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Spotify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-283",
+    "title": "Pinterest: Cohort Retention Matrix #283",
+    "difficulty": "Hard",
+    "companies": [
+      "Pinterest",
+      "Palantir"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Pinterest is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 283) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Pinterest Advanced Challenge 283 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Pinterest, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-284",
+    "title": "Twitter / X: Gaps & Islands Login Streaks #284",
+    "difficulty": "Hard",
+    "companies": [
+      "Twitter / X",
+      "Robinhood"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Twitter / X is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 284) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Twitter / X Advanced Challenge 284 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Twitter / X, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-285",
+    "title": "Walmart: Downtime Period Detection #285",
+    "difficulty": "Hard",
+    "companies": [
+      "Walmart",
+      "Coinbase"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Walmart is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 285) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Walmart Advanced Challenge 285 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Walmart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-286",
+    "title": "Instacart: Nested JSON Payload Munging #286",
+    "difficulty": "Hard",
+    "companies": [
+      "Instacart",
+      "Shopify"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Instacart is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 286) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Instacart Advanced Challenge 286 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Instacart, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-287",
+    "title": "Databricks: Idempotent Deduplication #287",
+    "difficulty": "Hard",
+    "companies": [
+      "Databricks",
+      "Lyft"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Databricks is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 287) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Databricks Advanced Challenge 287 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Databricks, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-288",
+    "title": "LinkedIn: Recursive Bill of Materials #288",
+    "difficulty": "Hard",
+    "companies": [
+      "LinkedIn",
+      "Amazon"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at LinkedIn is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 288) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- LinkedIn Advanced Challenge 288 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like LinkedIn, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-289",
+    "title": "Microsoft: Year-Over-Year Cohort Drop #289",
+    "difficulty": "Hard",
+    "companies": [
+      "Microsoft",
+      "Meta"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Microsoft is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 289) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Microsoft Advanced Challenge 289 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Microsoft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-290",
+    "title": "Palantir: Query Tuning & Execution Plan #290",
+    "difficulty": "Hard",
+    "companies": [
+      "Palantir",
+      "Google"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Palantir is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 290) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Palantir Advanced Challenge 290 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Palantir, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-291",
+    "title": "Robinhood: 30-Min Sessionization #291",
+    "difficulty": "Hard",
+    "companies": [
+      "Robinhood",
+      "Uber"
+    ],
+    "topics": [
+      "Sessionization",
+      "LAG()",
+      "SUM() OVER",
+      "Inactivity Window"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Robinhood is investigating complex operational bottlenecks. Solve **30-Min Sessionization** (Scenario 291) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Robinhood Advanced Challenge 291 (30-Min Sessionization)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Robinhood, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-292",
+    "title": "Coinbase: Recursive Org Hierarchy #292",
+    "difficulty": "Hard",
+    "companies": [
+      "Coinbase",
+      "Netflix"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Hierarchy Traversal",
+      "UNION ALL"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Coinbase is investigating complex operational bottlenecks. Solve **Recursive Org Hierarchy** (Scenario 292) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Coinbase Advanced Challenge 292 (Recursive Org Hierarchy)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Coinbase, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-293",
+    "title": "Shopify: Cohort Retention Matrix #293",
+    "difficulty": "Hard",
+    "companies": [
+      "Shopify",
+      "Stripe"
+    ],
+    "topics": [
+      "Triangular Cohort",
+      "DATE_DIFF",
+      "MoM Retention"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Shopify is investigating complex operational bottlenecks. Solve **Cohort Retention Matrix** (Scenario 293) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Shopify Advanced Challenge 293 (Cohort Retention Matrix)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Shopify, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-294",
+    "title": "Lyft: Gaps & Islands Login Streaks #294",
+    "difficulty": "Hard",
+    "companies": [
+      "Lyft",
+      "Apple"
+    ],
+    "topics": [
+      "Gaps and Islands",
+      "ROW_NUMBER() Subtraction",
+      "Streaks"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Lyft is investigating complex operational bottlenecks. Solve **Gaps & Islands Login Streaks** (Scenario 294) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Lyft Advanced Challenge 294 (Gaps & Islands Login Streaks)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Lyft, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-295",
+    "title": "Amazon: Downtime Period Detection #295",
+    "difficulty": "Hard",
+    "companies": [
+      "Amazon",
+      "Airbnb"
+    ],
+    "topics": [
+      "Gaps & Islands",
+      "LEAD()",
+      "Timestamp Glitches"
+    ],
+    "frequency": "Very High",
+    "category": "Gaps & Islands",
+    "description": "### Business Context\nThe engineering and data science leadership at Amazon is investigating complex operational bottlenecks. Solve **Downtime Period Detection** (Scenario 295) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Amazon Advanced Challenge 295 (Downtime Period Detection)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Amazon, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-296",
+    "title": "Meta: Nested JSON Payload Munging #296",
+    "difficulty": "Hard",
+    "companies": [
+      "Meta",
+      "DoorDash"
+    ],
+    "topics": [
+      "jsonb_extract_path",
+      "SAFE_CAST",
+      "Unnest"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Meta is investigating complex operational bottlenecks. Solve **Nested JSON Payload Munging** (Scenario 296) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Meta Advanced Challenge 296 (Nested JSON Payload Munging)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Meta, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-297",
+    "title": "Google: Idempotent Deduplication #297",
+    "difficulty": "Hard",
+    "companies": [
+      "Google",
+      "Snowflake"
+    ],
+    "topics": [
+      "ROW_NUMBER() Deduplication",
+      "Corrupted Keys"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Google is investigating complex operational bottlenecks. Solve **Idempotent Deduplication** (Scenario 297) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Google Advanced Challenge 297 (Idempotent Deduplication)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Google, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-298",
+    "title": "Uber: Recursive Bill of Materials #298",
+    "difficulty": "Hard",
+    "companies": [
+      "Uber",
+      "ByteDance"
+    ],
+    "topics": [
+      "WITH RECURSIVE",
+      "Part Explosion",
+      "Rollup"
+    ],
+    "frequency": "Very High",
+    "category": "Window Functions",
+    "description": "### Business Context\nThe engineering and data science leadership at Uber is investigating complex operational bottlenecks. Solve **Recursive Bill of Materials** (Scenario 298) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Uber Advanced Challenge 298 (Recursive Bill of Materials)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Uber, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-299",
+    "title": "Netflix: Year-Over-Year Cohort Drop #299",
+    "difficulty": "Hard",
+    "companies": [
+      "Netflix",
+      "Citadel"
+    ],
+    "topics": [
+      "Cohort Drop-off",
+      "Conditional Matrix",
+      "CTEs"
+    ],
+    "frequency": "Very High",
+    "category": "Cohorts & Retention",
+    "description": "### Business Context\nThe engineering and data science leadership at Netflix is investigating complex operational bottlenecks. Solve **Year-Over-Year Cohort Drop** (Scenario 299) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Netflix Advanced Challenge 299 (Year-Over-Year Cohort Drop)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Netflix, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
+  },
+  {
+    "id": "adv-300",
+    "title": "Stripe: Query Tuning & Execution Plan #300",
+    "difficulty": "Hard",
+    "companies": [
+      "Stripe",
+      "Spotify"
+    ],
+    "topics": [
+      "Hash Join Conversion",
+      "Correlated Subquery Refactor"
+    ],
+    "frequency": "Very High",
+    "category": "Business Analytics",
+    "description": "### Business Context\nThe engineering and data science leadership at Stripe is investigating complex operational bottlenecks. Solve **Query Tuning & Execution Plan** (Scenario 300) involving messy event streams or recursive hierarchies.\n\n### Nightmare Schemas & Traps\n- Data contains non-contiguous event logs, unkeyed records, or recursive tree structures.\n- Requires advanced constructs: recursive CTEs, sessionization with inactivity thresholds, or gaps & islands.\n- Ensure query efficiency and predictable ordering.\n\n### Input Schema\n**user_events** table:\n- `event_id` (INT PRIMARY KEY)\n- `user_id` (INT)\n- `event_type` (VARCHAR)\n- `event_time` (TIMESTAMP)",
+    "schemaSql": "\nCREATE TABLE user_events (\n  event_id INT PRIMARY KEY,\n  user_id INT,\n  event_type VARCHAR(50),\n  event_time TIMESTAMP\n);\n\nINSERT INTO user_events VALUES\n(1, 101, 'page_view', '2025-03-01 10:00:00'),\n(2, 101, 'scroll',    '2025-03-01 10:12:00'),\n(3, 101, 'click',     '2025-03-01 10:20:00'),\n(4, 101, 'page_view', '2025-03-01 11:30:00'),\n(5, 101, 'checkout',  '2025-03-01 11:42:00'),\n(6, 102, 'page_view', '2025-03-01 14:00:00'),\n(7, 102, 'click',     '2025-03-01 14:15:00'),\n(8, 102, 'page_view', '2025-03-01 15:20:00');\n",
+    "starterSql": "-- Stripe Advanced Challenge 300 (Query Tuning & Execution Plan)\n-- Identify distinct sessions partitioned by 30-minute inactivity window\nWITH lag_events AS (\n  -- Your code here\n)\nSELECT * FROM lag_events;\n",
+    "referenceSql": "WITH lag_events AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    LAG(event_time) OVER (\n      PARTITION BY user_id \n      ORDER BY event_time ASC\n    ) AS prev_time\n  FROM user_events\n),\nflagged_sessions AS (\n  SELECT \n    user_id,\n    event_id,\n    event_time,\n    CASE \n      WHEN prev_time IS NULL OR event_time > prev_time + INTERVAL '30 minutes' THEN 1 \n      ELSE 0 \n    END AS is_new_session\n  FROM lag_events\n)\nSELECT \n  user_id,\n  event_id,\n  event_time,\n  SUM(is_new_session) OVER (\n    PARTITION BY user_id \n    ORDER BY event_time ASC\n  ) AS session_id\nFROM flagged_sessions\nORDER BY user_id ASC, event_time ASC;",
+    "expectedColumns": [
+      "user_id",
+      "event_id",
+      "event_time",
+      "session_id"
+    ],
+    "hints": [
+      "Use LAG() to compare current event_time with the previous event_time for the same user.",
+      "Flag a new session with 1 whenever event_time > prev_time + INTERVAL '30 minutes' (or prev_time IS NULL).",
+      "Perform a running sum over the new session flags using SUM(...) OVER (PARTITION BY user_id ORDER BY event_time) to generate consecutive session IDs."
+    ],
+    "explanation": "### Master Pattern: Sessionization\nSessionization is a staple Staff / Senior Data Scientist technical interview question at companies like Stripe, Netflix, and Uber. The standard solution uses a two-phase CTE:\n1. Identify inactivity boundaries using `LAG()` and delta thresholds.\n2. Form running cumulative sums of the flag to create distinct, monotonic session IDs."
   }
 ];
 

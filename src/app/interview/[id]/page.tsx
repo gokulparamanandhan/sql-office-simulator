@@ -59,6 +59,20 @@ export default function InterviewProblemWorkspacePage({
   const [solutionRevealed, setSolutionRevealed] = useState<boolean>(false);
   const [unlockedHints, setUnlockedHints] = useState<number[]>([0]);
 
+  // Auth gate: redirect unauthenticated users to signup
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.authenticated) {
+          router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+        }
+      })
+      .catch(() => {
+        router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
+      });
+  }, [router]);
+
   // Timer State (Default 25 minutes)
   const [timerSeconds, setTimerSeconds] = useState<number>(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
@@ -353,22 +367,22 @@ export default function InterviewProblemWorkspacePage({
                       __html: question.description
                         .replace(/### (.*?)\n/g, '<h3 class="font-black text-sm text-[var(--ink)] mt-4 mb-2 pb-1 border-b border-[var(--sky)]">$1</h3>')
                         .replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-[var(--ink)]">$1</strong>')
-                        .replace(/`([^`]+)`/g, '<code class="bg-[var(--mist)] border border-[var(--sky)] text-pink-600 font-mono text-[11px] px-1.5 py-0.5 rounded">$1</code>')
+                        .replace(/`([^`]+)`/g, '<code class="bg-[#F5EFEB] border border-black text-black font-mono font-bold text-[11px] px-1.5 py-0.5 rounded shadow-[1px_1px_0px_#000]">$1</code>')
                         .replace(/- (.*?)\n/g, '<li class="ml-4 list-disc text-xs">$1</li>')
                     }}
                   />
                 </div>
 
                 {/* Expected Columns Box */}
-                <div className="bg-[var(--mist)] border border-[var(--sky)] rounded-xl p-3.5">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink)] block mb-1.5">
+                <div className="bg-[#FAF8F5] border-2 border-black rounded-xl p-3.5 shadow-[2px_2px_0px_#000000]">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-black block mb-1.5">
                     Required Output Columns:
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {question.expectedColumns.map((col) => (
                       <span
                         key={col}
-                        className="font-mono text-xs font-black bg-[var(--white)] text-[var(--ink)] px-2 py-1 rounded border border-[var(--ink)] shadow-[1px_1px_0px_var(--ink)]"
+                        className="font-mono text-xs font-black bg-white text-black px-2.5 py-1 rounded border-2 border-black shadow-[1px_1px_0px_#000000]"
                       >
                         {col}
                       </span>
@@ -473,7 +487,7 @@ export default function InterviewProblemWorkspacePage({
                           __html: question.explanation
                             .replace(/### (.*?)\n/g, '<h5 class="font-extrabold text-xs text-[var(--ink)] mt-2">$1</h5>')
                             .replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-[var(--ink)]">$1</strong>')
-                            .replace(/`([^`]+)`/g, '<code class="bg-[var(--mist)] border border-[var(--sky)] text-pink-600 font-mono text-[11px] px-1 py-0.5 rounded">$1</code>')
+                            .replace(/`([^`]+)`/g, '<code class="bg-[#F5EFEB] border border-black text-black font-mono font-bold text-[11px] px-1.5 py-0.5 rounded shadow-[1px_1px_0px_#000]">$1</code>')
                             .replace(/- (.*?)\n/g, '<li class="ml-4 list-disc text-xs">$1</li>')
                         }}
                       />
