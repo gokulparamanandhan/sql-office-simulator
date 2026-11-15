@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useRef } from "react";
+import { useState, useEffect, use, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -25,7 +25,9 @@ import {
   Timer as TimerIcon,
   Eye,
   Check,
-  ChevronDown
+  ChevronDown,
+  Layers,
+  Terminal,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
@@ -41,6 +43,8 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 
+export type SqlDialect = "PostgreSQL" | "MySQL" | "MSSQL" | "Oracle";
+
 export default function InterviewProblemWorkspacePage({
   params,
 }: {
@@ -49,6 +53,12 @@ export default function InterviewProblemWorkspacePage({
   const router = useRouter();
   const { id } = use(params);
   const question = getInterviewQuestionById(id) || INTERVIEW_QUESTIONS[0];
+
+  // Mobile navigation view state
+  const [mobileView, setMobileView] = useState<"problem" | "editor" | "results">("problem");
+
+  // Dialect state
+  const [selectedDialect, setSelectedDialect] = useState<SqlDialect>("PostgreSQL");
 
   const [activeTab, setActiveTab] = useState<"problem" | "schema" | "hints" | "solution">("problem");
   const [activeResultTab, setActiveResultTab] = useState<"results" | "output" | "diff">("results");
@@ -72,6 +82,27 @@ export default function InterviewProblemWorkspacePage({
         router.push(`/auth/signup?redirect=${encodeURIComponent(window.location.pathname)}`);
       });
   }, [router]);
+
+  // Load preferred dialect from localStorage
+  useEffect(() => {
+    try {
+      const savedDialect = localStorage.getItem("sql_office_user_dialect") as SqlDialect;
+      if (savedDialect && ["PostgreSQL", "MySQL", "MSSQL", "Oracle"].includes(savedDialect)) {
+        setSelectedDialect(savedDialect);
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const handleDialectChange = (dialect: SqlDialect) => {
+    setSelectedDialect(dialect);
+    try {
+      localStorage.setItem("sql_office_user_dialect", dialect);
+    } catch {
+      // Ignore
+    }
+  };
 
   // Timer State (Default 25 minutes)
   const [timerSeconds, setTimerSeconds] = useState<number>(25 * 60);
@@ -145,11 +176,16 @@ export default function InterviewProblemWorkspacePage({
       const res = await fetch(`/api/interview/${question.id}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sql: userSql }),
+        body: JSON.stringify({ sql: userSql, dialect: selectedDialect }),
       });
       const data = await res.json();
       setRunResult(data);
       setActiveResultTab("output");
+
+      // On mobile devices, automatically switch to results view
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setMobileView("results");
+      }
     } catch (err: any) {
       setRunResult({
         success: false,
@@ -160,6 +196,9 @@ export default function InterviewProblemWorkspacePage({
         error: err.message || "Failed to execute query",
       });
       setActiveResultTab("output");
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setMobileView("results");
+      }
     } finally {
       setIsRunning(false);
     }
@@ -173,7 +212,7 @@ export default function InterviewProblemWorkspacePage({
       const res = await fetch(`/api/interview/${question.id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sql: userSql }),
+        body: JSON.stringify({ sql: userSql, dialect: selectedDialect }),
       });
       const data = await res.json();
       setSubmitResult(data);
@@ -191,6 +230,11 @@ export default function InterviewProblemWorkspacePage({
           // Ignore
         }
       }
+
+      // On mobile devices, automatically switch to results view to see verdict
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setMobileView("results");
+      }
     } catch (err: any) {
       setSubmitResult({
         isCorrect: false,
@@ -199,10 +243,25 @@ export default function InterviewProblemWorkspacePage({
         durationMs: 0,
       });
       setActiveResultTab("results");
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setMobileView("results");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Map dialect to Monaco Editor language
+  const monacoLanguage = useMemo(() => {
+    switch (selectedDialect) {
+      case "MySQL":
+        return "mysql";
+      case "PostgreSQL":
+        return "pgsql";
+      default:
+        return "sql";
+    }
+  }, [selectedDialect]);
 
   if (!question) {
     return (
@@ -220,24 +279,25 @@ export default function InterviewProblemWorkspacePage({
   return (
     <div className="h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans overflow-hidden">
       {/* Top Navigation Bar */}
-      <header className="h-14 bg-[var(--white)] border-b-2 border-[var(--sky)] px-4 flex items-center justify-between shrink-0 z-40">
-        <div className="flex items-center gap-3">
+      <header className="h-13 sm:h-14 bg-[var(--white)] border-b-2 border-[var(--sky)] px-2 sm:px-4 flex items-center justify-between shrink-0 z-40 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link
             href="/interview"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] transition-colors"
+            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] transition-colors shrink-0"
+            title="Back to Catalog"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Problem Catalog</span>
+            <span className="hidden sm:inline ml-1.5">Catalog</span>
           </Link>
 
-          <div className="h-4 w-[1px] bg-[var(--sky)]" />
+          <div className="h-4 w-[1px] bg-[var(--sky)] shrink-0 hidden xs:block" />
 
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm text-[var(--ink)] tracking-tight truncate max-w-[200px] sm:max-w-xs">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-extrabold text-xs sm:text-sm text-[var(--ink)] tracking-tight truncate max-w-[140px] xs:max-w-[180px] sm:max-w-xs md:max-w-md">
               {question.title}
             </span>
             <span
-              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+              className={`text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full border shrink-0 ${
                 question.difficulty === "Easy"
                   ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                   : question.difficulty === "Medium"
@@ -251,14 +311,14 @@ export default function InterviewProblemWorkspacePage({
         </div>
 
         {/* Center / Right controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Mock Interview Countdown Timer */}
-          <div className="flex items-center gap-1.5 bg-[var(--mist)] border border-[var(--sky)] rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-[var(--ink)]">
-            <TimerIcon className="w-3.5 h-3.5 text-orange-600" />
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--mist)] border border-[var(--sky)] rounded-lg px-2 py-1 text-xs font-mono font-bold text-[var(--ink)]">
+            <TimerIcon className="w-3.5 h-3.5 text-orange-600 hidden xs:inline" />
             <span>{formatTimer(timerSeconds)}</span>
             <button
               onClick={() => setIsTimerRunning(!isTimerRunning)}
-              className="p-1 hover:bg-[var(--white)] rounded text-[var(--ink)] ml-1"
+              className="p-0.5 hover:bg-[var(--white)] rounded text-[var(--ink)] ml-0.5"
               title={isTimerRunning ? "Pause Timer" : "Start Timer"}
             >
               {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
@@ -268,7 +328,7 @@ export default function InterviewProblemWorkspacePage({
                 setIsTimerRunning(false);
                 setTimerSeconds(25 * 60);
               }}
-              className="p-1 hover:bg-[var(--white)] rounded text-[var(--ink)] opacity-60 hover:opacity-100"
+              className="p-0.5 hover:bg-[var(--white)] rounded text-[var(--ink)] opacity-60 hover:opacity-100 hidden sm:inline"
               title="Reset Timer"
             >
               <RotateCcw className="w-3 h-3" />
@@ -280,12 +340,68 @@ export default function InterviewProblemWorkspacePage({
         </div>
       </header>
 
-      {/* Main Workspace (Split Pane) */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      {/* Mobile Mode Segmented Switcher (Visible only on mobile screens < md) */}
+      <div className="md:hidden flex items-center border-b-2 border-black bg-[var(--white)] px-2 py-1.5 shrink-0 justify-between gap-1.5 shadow-sm z-30">
+        <button
+          onClick={() => setMobileView("problem")}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${
+            mobileView === "problem"
+              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Problem</span>
+        </button>
+
+        <button
+          onClick={() => setMobileView("editor")}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${
+            mobileView === "editor"
+              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+          }`}
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>SQL Editor</span>
+        </button>
+
+        <button
+          onClick={() => setMobileView("results")}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all relative ${
+            mobileView === "results"
+              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+          }`}
+        >
+          {submitResult ? (
+            submitResult.isCorrect ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <AlertCircle className="w-3.5 h-3.5 text-red-600" />
+            )
+          ) : (
+            <Table2 className="w-3.5 h-3.5" />
+          )}
+          <span>Results</span>
+          {runResult && (
+            <span className="text-[10px] bg-black text-white px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+              {runResult.rowCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Main Workspace (Split Pane on desktop, single full-height pane on mobile) */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left Panel: Problem, Schema, Hints, Solution */}
-        <div className="w-full md:w-1/2 lg:w-5/12 h-1/2 md:h-full bg-[var(--white)] border-r-2 border-[var(--sky)] flex flex-col overflow-hidden">
+        <div
+          className={`w-full md:w-1/2 lg:w-5/12 h-full bg-[var(--white)] border-r-2 border-[var(--sky)] flex flex-col overflow-hidden ${
+            mobileView === "problem" ? "flex" : "hidden md:flex"
+          }`}
+        >
           {/* Tab Bar */}
-          <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 overflow-x-auto">
+          <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab("problem")}
               className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
@@ -333,7 +449,7 @@ export default function InterviewProblemWorkspacePage({
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
             {activeTab === "problem" && (
               <div className="space-y-5">
                 {/* Company & Topic Tags */}
@@ -396,10 +512,10 @@ export default function InterviewProblemWorkspacePage({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-sm text-[var(--ink)]">
-                    PostgreSQL 16 Seed Schema
+                    Database Seed Schema
                   </h3>
                   <span className="text-[11px] font-mono text-[var(--ink)] opacity-70">
-                    Auto-seeded in PGlite
+                    Engine: PostgreSQL 16
                   </span>
                 </div>
                 <pre className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-4 font-mono text-xs text-[var(--ink)] overflow-x-auto leading-relaxed">
@@ -470,7 +586,7 @@ export default function InterviewProblemWorkspacePage({
                   <div className="space-y-5 animate-in fade-in duration-200">
                     <div>
                       <span className="text-[11px] font-black uppercase text-purple-700 tracking-wider block mb-2">
-                        Canonical Reference SQL (PostgreSQL):
+                        Canonical Reference SQL ({selectedDialect}):
                       </span>
                       <pre className="bg-[#1e1e1e] text-[#d4d4d4] rounded-xl p-4 font-mono text-xs overflow-x-auto border-2 border-[var(--ink)]">
                         {question.referenceSql}
@@ -497,34 +613,89 @@ export default function InterviewProblemWorkspacePage({
               </div>
             )}
           </div>
+
+          {/* Mobile Bottom Bar: Switch to SQL Editor */}
+          <div className="md:hidden sticky bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[var(--white)] via-[var(--white)] to-transparent pt-4 border-t border-[var(--sky)] shrink-0">
+            <button
+              onClick={() => setMobileView("editor")}
+              className="w-full btn-primary text-xs py-2.5 flex items-center justify-center gap-2 font-black shadow-[2px_2px_0px_#000]"
+            >
+              <Code2 className="w-4 h-4" />
+              <span>Write Query in SQL Editor</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Right Panel: Monaco Editor & Output Console */}
-        <div className="w-full md:w-1/2 lg:w-7/12 h-1/2 md:h-full flex flex-col bg-[var(--white)] overflow-hidden">
-          {/* Editor Header Bar */}
-          <div className="h-10 bg-[var(--surface)] border-b border-[var(--sky)] px-4 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <Code2 className="w-3.5 h-3.5 text-[var(--ink)]" />
-              <span className="font-mono text-xs font-bold text-[var(--ink)]">SQL Query Editor</span>
+        <div
+          className={`w-full md:w-1/2 lg:w-7/12 h-full flex flex-col bg-[var(--white)] overflow-hidden ${
+            mobileView === "editor" || mobileView === "results" ? "flex" : "hidden md:flex"
+          }`}
+        >
+          {/* Editor Header Bar with SQL Dialect Dropdown */}
+          <div className="h-11 bg-[var(--surface)] border-b border-[var(--sky)] px-3 sm:px-4 flex items-center justify-between shrink-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Code2 className="w-3.5 h-3.5 text-[var(--ink)] shrink-0" />
+              <span className="font-mono text-xs font-bold text-[var(--ink)] hidden sm:inline">
+                SQL Editor
+              </span>
+
+              {/* SQL Dialect Selector Dropdown */}
+              <div className="flex items-center gap-1.5 bg-[#FAF8F5] border-2 border-black rounded-lg px-2 py-0.5 shadow-[1px_1px_0px_#000]">
+                <span className="text-[10px] font-black uppercase text-black tracking-wider hidden xs:inline">
+                  Dialect:
+                </span>
+                <select
+                  value={selectedDialect}
+                  onChange={(e) => handleDialectChange(e.target.value as SqlDialect)}
+                  className="bg-transparent font-mono text-xs font-bold text-black cursor-pointer focus:outline-none pr-1"
+                  aria-label="Select SQL Dialect"
+                >
+                  <option value="PostgreSQL">🐘 PostgreSQL</option>
+                  <option value="MySQL">🐬 MySQL</option>
+                  <option value="MSSQL">🪟 MSSQL (T-SQL)</option>
+                  <option value="Oracle">🏛️ Oracle SQL</option>
+                </select>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setUserSql(question.starterSql)}
-                className="flex items-center gap-1 text-[11px] font-bold text-[var(--ink)] opacity-70 hover:opacity-100 px-2 py-1 rounded hover:bg-[var(--mist)]"
+                className="flex items-center gap-1 text-[11px] font-bold text-[var(--ink)] opacity-70 hover:opacity-100 px-2 py-1 rounded hover:bg-[var(--mist)] border border-transparent hover:border-black transition-colors"
                 title="Reset to starter query"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset</span>
+                <span className="hidden xs:inline">Reset</span>
               </button>
             </div>
           </div>
 
-          {/* Monaco Editor Container */}
-          <div className="flex-1 min-h-[160px] relative">
+          {/* Dialect Info Banner */}
+          {selectedDialect !== "PostgreSQL" && (
+            <div className="bg-[#FFE600]/20 border-b border-black/10 px-3 py-1 flex items-center justify-between text-[11px] font-mono text-black shrink-0">
+              <span className="flex items-center gap-1.5 truncate">
+                <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                <span className="truncate">
+                  {selectedDialect === "MySQL" && "MySQL syntax active: IFNULL(), UCASE(), standard CTEs supported."}
+                  {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: ISNULL(), LEN(), standard CTEs supported."}
+                  {selectedDialect === "Oracle" && "Oracle SQL active: NVL(), analytic window functions supported."}
+                </span>
+              </span>
+              <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>
+            </div>
+          )}
+
+          {/* Monaco Editor Container (Takes full space on mobile if mobileView === 'editor') */}
+          <div
+            className={`flex-1 min-h-[160px] relative ${
+              mobileView === "results" ? "hidden md:block" : "block"
+            }`}
+          >
             <MonacoEditor
               height="100%"
-              language="sql"
+              language={monacoLanguage}
               theme="vs-dark"
               value={userSql}
               onChange={(val) => setUserSql(val || "")}
@@ -537,15 +708,34 @@ export default function InterviewProblemWorkspacePage({
                 scrollBeyondLastLine: false,
                 wordWrap: "on",
                 padding: { top: 12, bottom: 12 },
+                automaticLayout: true,
               }}
             />
           </div>
 
           {/* Actions Bar (Run & Submit) */}
-          <div className="bg-[var(--surface)] border-t border-[var(--sky)] px-4 py-2.5 flex items-center justify-between shrink-0">
-            <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
-              Ctrl+Enter to Run
-            </span>
+          <div
+            className={`bg-[var(--surface)] border-t border-[var(--sky)] px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 gap-2 ${
+              mobileView === "results" ? "hidden md:flex" : "flex"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMobileView("results")}
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs font-bold text-[var(--ink)] shadow-sm"
+              >
+                <Table2 className="w-3.5 h-3.5" />
+                <span>Results</span>
+                {runResult && (
+                  <span className="text-[10px] bg-black text-white px-1.5 rounded-full font-bold">
+                    {runResult.rowCount}
+                  </span>
+                )}
+              </button>
+              <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
+                Ctrl+Enter to Run
+              </span>
+            </div>
 
             <div className="flex items-center gap-2 ml-auto">
               <button
@@ -560,7 +750,7 @@ export default function InterviewProblemWorkspacePage({
               <button
                 onClick={handleSubmitQuery}
                 disabled={isRunning || isSubmitting}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
               >
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
@@ -568,42 +758,59 @@ export default function InterviewProblemWorkspacePage({
             </div>
           </div>
 
-          {/* Bottom Results & Console Drawer */}
-          <div className="h-56 bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden shrink-0">
+          {/* Bottom Results & Console Drawer (Full-height on mobile if mobileView === 'results') */}
+          <div
+            className={`bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden ${
+              mobileView === "results"
+                ? "flex-1 h-full"
+                : "h-56 shrink-0 hidden md:flex"
+            }`}
+          >
             {/* Console Tab Bar */}
-            <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0">
-              <button
-                onClick={() => setActiveResultTab("results")}
-                className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                  activeResultTab === "results"
-                    ? "border-[var(--ink)] text-[var(--ink)]"
-                    : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                }`}
-              >
-                Test Results
-              </button>
-              <button
-                onClick={() => setActiveResultTab("output")}
-                className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                  activeResultTab === "output"
-                    ? "border-[var(--ink)] text-[var(--ink)]"
-                    : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                }`}
-              >
-                Query Output ({runResult?.rowCount ?? 0})
-              </button>
-              {submitResult && !submitResult.isCorrect && (
+            <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 justify-between">
+              <div className="flex items-center">
                 <button
-                  onClick={() => setActiveResultTab("diff")}
-                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${
-                    activeResultTab === "diff"
-                      ? "border-red-600"
-                      : "border-transparent opacity-70 hover:opacity-100"
+                  onClick={() => setActiveResultTab("results")}
+                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
+                    activeResultTab === "results"
+                      ? "border-[var(--ink)] text-[var(--ink)]"
+                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
                   }`}
                 >
-                  Expected Diff View
+                  Test Results
                 </button>
-              )}
+                <button
+                  onClick={() => setActiveResultTab("output")}
+                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
+                    activeResultTab === "output"
+                      ? "border-[var(--ink)] text-[var(--ink)]"
+                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  Query Output ({runResult?.rowCount ?? 0})
+                </button>
+                {submitResult && !submitResult.isCorrect && (
+                  <button
+                    onClick={() => setActiveResultTab("diff")}
+                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${
+                      activeResultTab === "diff"
+                        ? "border-red-600"
+                        : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    Expected Diff View
+                  </button>
+                )}
+              </div>
+
+              {/* On mobile: quick button back to editor */}
+              <button
+                onClick={() => setMobileView("editor")}
+                className="md:hidden flex items-center gap-1 text-[11px] font-bold text-black bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] mr-1"
+              >
+                <Code2 className="w-3 h-3" />
+                <span>Editor</span>
+              </button>
             </div>
 
             {/* Console Body */}
@@ -664,7 +871,7 @@ export default function InterviewProblemWorkspacePage({
                         <thead>
                           <tr className="bg-[var(--mist)] border-b border-[var(--sky)] font-bold text-[var(--ink)]">
                             {runResult.columns.map((c) => (
-                              <th key={c} className="p-2 border-r border-[var(--sky)] last:border-r-0">
+                              <th key={c} className="p-2 border-r border-[var(--sky)] last:border-r-0 whitespace-nowrap">
                                 {c}
                               </th>
                             ))}
@@ -674,7 +881,7 @@ export default function InterviewProblemWorkspacePage({
                           {runResult.rows.map((row, rIdx) => (
                             <tr key={rIdx} className="hover:bg-[var(--surface)]">
                               {runResult.columns.map((c, cIdx) => (
-                                <td key={cIdx} className="p-2 border-r border-[var(--sky)] last:border-r-0">
+                                <td key={cIdx} className="p-2 border-r border-[var(--sky)] last:border-r-0 whitespace-nowrap">
                                   {String(row[c] ?? "NULL")}
                                 </td>
                               ))}
@@ -720,10 +927,28 @@ export default function InterviewProblemWorkspacePage({
                 </div>
               )}
             </div>
+
+            {/* Mobile Actions in Results view */}
+            <div className="md:hidden p-2.5 bg-[var(--surface)] border-t border-[var(--sky)] flex items-center justify-between gap-2 shrink-0">
+              <button
+                onClick={() => setMobileView("editor")}
+                className="btn-primary text-xs py-2 px-3 flex-1 flex items-center justify-center gap-1.5 font-black shadow-[2px_2px_0px_#000]"
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                <span>Back to SQL Editor</span>
+              </button>
+              <button
+                onClick={handleSubmitQuery}
+                disabled={isRunning || isSubmitting}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-[2px_2px_0px_#000] disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Submit</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

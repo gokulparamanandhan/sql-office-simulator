@@ -8,7 +8,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { sql } = body;
+    const { sql, dialect } = body;
 
     if (!sql || typeof sql !== "string") {
       return NextResponse.json(
@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const result = await submitInterviewQuery(id, sql);
+    const result = await submitInterviewQuery(id, sql, dialect || "PostgreSQL");
     return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

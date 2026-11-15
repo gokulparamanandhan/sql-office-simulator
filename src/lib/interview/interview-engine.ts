@@ -49,10 +49,25 @@ export interface RunInterviewQueryResult {
   error?: string;
 }
 
+export function transpileDialectToPg(sql: string, dialect: string = "PostgreSQL"): string {
+  if (!dialect || dialect.toLowerCase().includes("postgre")) return sql;
+  let out = sql;
+  // Common function aliases across MySQL, MSSQL, Oracle
+  out = out.replace(/\b(?:IFNULL|ISNULL|NVL)\s*\(/gi, "COALESCE(");
+  out = out.replace(/\bLEN\s*\(/gi, "LENGTH(");
+  out = out.replace(/\bUCASE\s*\(/gi, "UPPER(");
+  out = out.replace(/\bLCASE\s*\(/gi, "LOWER(");
+  out = out.replace(/\bGETDATE\(\)/gi, "CURRENT_TIMESTAMP");
+  out = out.replace(/\bSYSDATE\b/gi, "CURRENT_TIMESTAMP");
+  out = out.replace(/\bCURDATE\(\)/gi, "CURRENT_DATE");
+  return out;
+}
+
 export async function runInterviewQuery(
   questionId: string,
   userSql: string,
-  maxRows: number = 100
+  maxRows: number = 100,
+  dialect: string = "PostgreSQL"
 ): Promise<RunInterviewQueryResult> {
   const startTime = Date.now();
   const question = getInterviewQuestionById(questionId);
@@ -68,8 +83,10 @@ export async function runInterviewQuery(
     };
   }
 
+  const transpiledSql = transpileDialectToPg(userSql, dialect);
+
   // Ast Security check
-  const security = validateSqlSecurity(userSql);
+  const security = validateSqlSecurity(transpiledSql);
   if (!security.allowed) {
     return {
       success: false,
@@ -86,7 +103,7 @@ export async function runInterviewQuery(
     const schema = await ensureInterviewSchema(pg, question, false);
     await pg.exec(`SET search_path = "${schema}";`);
 
-    const results = await pg.exec(security.sanitizedSql || userSql);
+    const results = await pg.exec(security.sanitizedSql || transpiledSql);
     let finalRes = results[results.length - 1];
     for (let i = results.length - 1; i >= 0; i--) {
       if (results[i]?.fields && results[i].fields.length > 0) {
@@ -163,7 +180,8 @@ function normalizeVal(val: unknown, tolerance: number = 0.01): unknown {
 
 export async function submitInterviewQuery(
   questionId: string,
-  userSql: string
+  userSql: string,
+  dialect: string = "PostgreSQL"
 ): Promise<InterviewSubmissionResult> {
   const startTime = Date.now();
   const question = getInterviewQuestionById(questionId);
@@ -177,8 +195,10 @@ export async function submitInterviewQuery(
     };
   }
 
+  const transpiledSql = transpileDialectToPg(userSql, dialect);
+
   // 1. Security Check
-  const security = validateSqlSecurity(userSql);
+  const security = validateSqlSecurity(transpiledSql);
   if (!security.allowed) {
     return {
       isCorrect: false,
@@ -188,7 +208,7 @@ export async function submitInterviewQuery(
     };
   }
 
-  const cleanUserSql = security.sanitizedSql || userSql;
+  const cleanUserSql = security.sanitizedSql || transpiledSql;
 
   try {
     const pg = await getInterviewPg();
