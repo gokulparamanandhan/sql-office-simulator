@@ -30,7 +30,7 @@ function main() {
   companies: string[];
   topics: string[];
   frequency: "Very High" | "High" | "Medium";
-  category: "Aggregations" | "Window Functions" | "Cohorts & Retention" | "Joins & Set Theory" | "Gaps & Islands" | "Business Analytics";
+  category: "Aggregations" | "Window Functions" | "Cohorts & Retention" | "Joins & Set Theory" | "Gaps & Islands" | "Business Analytics" | "Advanced SQL";
   description: string;
   schemaSql: string;
   hiddenTestSql?: string;
