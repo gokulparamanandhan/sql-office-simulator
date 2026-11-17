@@ -270,11 +270,10 @@ export default function InterviewPrepCatalogPage() {
                 <button
                   key={tier.val}
                   onClick={() => setSelectedTier(tier.val)}
-                  className={`px-3.5 py-2 rounded-lg border-2 border-black text-xs font-black uppercase whitespace-nowrap transition-all ${
-                    selectedTier === tier.val
-                      ? "bg-[#FFE600] shadow-[2px_2px_0px_#000000] -translate-y-0.5"
-                      : "bg-white hover:bg-slate-50"
-                  }`}
+                  className={`px-3.5 py-2 rounded-lg border-2 border-black text-xs font-black uppercase whitespace-nowrap transition-all ${selectedTier === tier.val
+                    ? "bg-[#FFE600] shadow-[2px_2px_0px_#000000] -translate-y-0.5"
+                    : "bg-white hover:bg-slate-50"
+                    }`}
                 >
                   {tier.label}
                 </button>
@@ -358,21 +357,20 @@ export default function InterviewPrepCatalogPage() {
                     {continueQuestion.status === "in-progress"
                       ? "Resume Solving"
                       : continueQuestion.status === "start"
-                      ? "Start Here"
-                      : "Next Question Up"}
+                        ? "Start Here"
+                        : "Next Question Up"}
                   </span>
                 </span>
                 <span className="text-xs font-black text-black/60 font-mono">
                   Question #{continueQuestion.question.number || (INTERVIEW_QUESTIONS.indexOf(continueQuestion.question) + 1)}
                 </span>
                 <span
-                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
-                    continueQuestion.question.difficulty === "Easy"
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-400"
-                      : continueQuestion.question.difficulty === "Medium"
+                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${continueQuestion.question.difficulty === "Easy"
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-400"
+                    : continueQuestion.question.difficulty === "Medium"
                       ? "bg-amber-100 text-amber-800 border-amber-400"
                       : "bg-rose-100 text-rose-800 border-rose-400"
-                  }`}
+                    }`}
                 >
                   {continueQuestion.question.difficulty}
                 </span>
@@ -419,15 +417,14 @@ export default function InterviewPrepCatalogPage() {
                 q.difficulty === "Easy"
                   ? { label: "Level 1: Basic", color: "bg-emerald-300 text-black border-black" }
                   : q.difficulty === "Medium"
-                  ? { label: "Level 2: Intermediate", color: "bg-amber-300 text-black border-black" }
-                  : { label: "Level 3: Advanced", color: "bg-rose-500 text-white border-black" };
+                    ? { label: "Level 2: Intermediate", color: "bg-amber-300 text-black border-black" }
+                    : { label: "Level 3: Advanced", color: "bg-rose-500 text-white border-black" };
 
               return (
                 <div
                   key={q.id}
-                  className={`bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0px_#000000] flex flex-col justify-between space-y-4 transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000000] ${
-                    isSolved ? "border-emerald-600 bg-[#F4FBF7]" : ""
-                  }`}
+                  className={`bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0px_#000000] flex flex-col justify-between space-y-4 transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000000] ${isSolved ? "border-emerald-600 bg-[#F4FBF7]" : ""
+                    }`}
                 >
                   <div className="space-y-3">
                     {/* Header: Tier + Company */}
