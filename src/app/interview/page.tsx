@@ -26,6 +26,7 @@ export default function InterviewPrepCatalogPage() {
   const [selectedCompany, setSelectedCompany] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
+  const [lastQuestionId, setLastQuestionId] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   // Authentication gate: redirect to signup if unauthenticated
@@ -52,6 +53,10 @@ export default function InterviewPrepCatalogPage() {
       if (stored) {
         setSolvedMap(JSON.parse(stored));
       }
+      const lastQ = localStorage.getItem(`sql_office_${currentUserId}_interview_last_question`);
+      if (lastQ) {
+        setLastQuestionId(lastQ);
+      }
 
       // Pre-select tier if present in URL
       if (typeof window !== "undefined") {
@@ -72,14 +77,47 @@ export default function InterviewPrepCatalogPage() {
     }
   }, []);
 
+  // Determine the continue question (last question solving or next question in sequence)
+  const continueQuestion = useMemo(() => {
+    if (lastQuestionId) {
+      const lastQ = INTERVIEW_QUESTIONS.find(
+        (q) => q.id.toLowerCase() === lastQuestionId.toLowerCase()
+      );
+      if (lastQ) {
+        // If the user hasn't solved it yet, resume solving it
+        if (!solvedMap[lastQ.id]) {
+          return { question: lastQ, status: "in-progress" as const };
+        }
+        // If solved, automatically direct to the next question in sequence
+        const idx = INTERVIEW_QUESTIONS.findIndex((q) => q.id === lastQ.id);
+        if (idx >= 0 && idx < INTERVIEW_QUESTIONS.length - 1) {
+          return { question: INTERVIEW_QUESTIONS[idx + 1], status: "next" as const };
+        }
+      }
+    }
+
+    // Otherwise find the first unsolved question
+    const firstUnsolved = INTERVIEW_QUESTIONS.find((q) => !solvedMap[q.id]);
+    if (firstUnsolved) {
+      const isStart =
+        firstUnsolved.id === INTERVIEW_QUESTIONS[0].id &&
+        Object.keys(solvedMap).filter((k) => solvedMap[k]).length === 0;
+      return { question: firstUnsolved, status: isStart ? ("start" as const) : ("next" as const) };
+    }
+
+    return null;
+  }, [lastQuestionId, solvedMap]);
+
   const filteredQuestions = useMemo(() => {
+    const cleanSearch = searchQuery.trim().toLowerCase().replace(/^#/, "");
     return INTERVIEW_QUESTIONS.filter((q) => {
       // Search
       const matchesSearch =
-        searchQuery.trim() === "" ||
-        q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.topics.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        q.companies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
+        cleanSearch === "" ||
+        q.title.toLowerCase().includes(cleanSearch) ||
+        String(q.number || "").includes(cleanSearch) ||
+        q.topics.some((t) => t.toLowerCase().includes(cleanSearch)) ||
+        q.companies.some((c) => c.toLowerCase().includes(cleanSearch));
 
       // Tier:
       // Level 1: Basic (Easy) - 100 questions
@@ -309,6 +347,64 @@ export default function InterviewPrepCatalogPage() {
           </div>
         </div>
 
+        {/* Continue Practicing Card (Directs to last active / next unsolved question) */}
+        {continueQuestion && (
+          <div className="bg-gradient-to-r from-[#FFFDF0] via-white to-[#F0FFF8] border-3 border-black rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_#000000] flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFE600] border-2 border-black text-[10px] font-black uppercase shadow-[1px_1px_0px_#000000]">
+                  <Play className="w-3 h-3 fill-black text-black" />
+                  <span>
+                    {continueQuestion.status === "in-progress"
+                      ? "Resume Solving"
+                      : continueQuestion.status === "start"
+                      ? "Start Here"
+                      : "Next Question Up"}
+                  </span>
+                </span>
+                <span className="text-xs font-black text-black/60 font-mono">
+                  Question #{continueQuestion.question.number || (INTERVIEW_QUESTIONS.indexOf(continueQuestion.question) + 1)}
+                </span>
+                <span
+                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                    continueQuestion.question.difficulty === "Easy"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-400"
+                      : continueQuestion.question.difficulty === "Medium"
+                      ? "bg-amber-100 text-amber-800 border-amber-400"
+                      : "bg-rose-100 text-rose-800 border-rose-400"
+                  }`}
+                >
+                  {continueQuestion.question.difficulty}
+                </span>
+              </div>
+
+              <h2 className="text-base sm:text-xl font-black text-black leading-snug">
+                {continueQuestion.question.title}
+              </h2>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-black/70">
+                <span>{continueQuestion.question.companies.slice(0, 3).join(", ")}</span>
+                <span>•</span>
+                <span>{continueQuestion.question.category}</span>
+                <span>•</span>
+                <span className="text-black/50">
+                  {continueQuestion.status === "in-progress"
+                    ? "Pick up right where you left off"
+                    : "Ready for your next challenge"}
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href={`/interview/${continueQuestion.question.id}`}
+              className="px-6 py-3.5 bg-[#00E599] hover:bg-[#00D084] text-black border-2 border-black rounded-xl font-black text-xs sm:text-sm shadow-[3px_3px_0px_#000000] hover:translate-x-0.5 hover:translate-y-0.5 flex items-center justify-center gap-2 shrink-0 transition-all uppercase tracking-wider"
+            >
+              <span>Continue Solving</span>
+              <Play className="w-4 h-4 fill-black text-black" />
+            </Link>
+          </div>
+        )}
+
         {/* Questions Grid */}
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs font-black uppercase text-black/70">
@@ -336,9 +432,14 @@ export default function InterviewPrepCatalogPage() {
                   <div className="space-y-3">
                     {/* Header: Tier + Company */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border-2 ${tierBadge.color}`}>
-                        {tierBadge.label}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-black bg-black text-white px-1.5 py-0.5 rounded border border-black shadow-[1px_1px_0px_#000]">
+                          #{q.number || (INTERVIEW_QUESTIONS.indexOf(q) + 1)}
+                        </span>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border-2 ${tierBadge.color}`}>
+                          {tierBadge.label}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1">
                         {q.companies.slice(0, 2).map((c) => (
                           <span

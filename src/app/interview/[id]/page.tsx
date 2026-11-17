@@ -14,6 +14,8 @@ import {
   Clock,
   Zap,
   ChevronRight,
+  ChevronLeft,
+  Trophy,
   Flame,
   RotateCcw,
   Sparkles,
@@ -53,6 +55,30 @@ export default function InterviewProblemWorkspacePage({
   const router = useRouter();
   const { id } = use(params);
   const question = getInterviewQuestionById(id) || INTERVIEW_QUESTIONS[0];
+
+  const currentIndex = useMemo(() => {
+    return INTERVIEW_QUESTIONS.findIndex(
+      (q) => q.id.toLowerCase() === (question?.id || "").toLowerCase()
+    );
+  }, [question?.id]);
+
+  const prevQuestion = currentIndex > 0 ? INTERVIEW_QUESTIONS[currentIndex - 1] : null;
+  const nextQuestion =
+    currentIndex >= 0 && currentIndex < INTERVIEW_QUESTIONS.length - 1
+      ? INTERVIEW_QUESTIONS[currentIndex + 1]
+      : null;
+
+  // Persist current question as last-active for Homescreen Continue button
+  useEffect(() => {
+    if (question) {
+      try {
+        const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+        localStorage.setItem(`sql_office_${currentUserId}_interview_last_question`, question.id);
+      } catch {
+        // Ignore
+      }
+    }
+  }, [question?.id]);
 
   // Mobile navigation view state
   const [mobileView, setMobileView] = useState<"problem" | "editor" | "results">("problem");
@@ -289,6 +315,37 @@ export default function InterviewProblemWorkspacePage({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline ml-1.5">Catalog</span>
           </Link>
+
+          {/* Prev / Next Question Navigation */}
+          <div className="flex items-center gap-1 shrink-0">
+            {prevQuestion ? (
+              <Link
+                href={`/interview/${prevQuestion.id}`}
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
+                title={`Previous: ${prevQuestion.title}`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-[var(--sky)]/30 text-[var(--ink)]/30 cursor-not-allowed">
+                <ChevronLeft className="w-4 h-4" />
+              </span>
+            )}
+
+            {nextQuestion ? (
+              <Link
+                href={`/interview/${nextQuestion.id}`}
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-[var(--sky)] hover:bg-[var(--mist)] text-[var(--ink)] transition-colors"
+                title={`Next: ${nextQuestion.title}`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-[var(--sky)]/30 text-[var(--ink)]/30 cursor-not-allowed">
+                <ChevronRight className="w-4 h-4" />
+              </span>
+            )}
+          </div>
 
           <div className="h-4 w-[1px] bg-[var(--sky)] shrink-0 hidden xs:block" />
 
@@ -755,6 +812,16 @@ export default function InterviewProblemWorkspacePage({
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
               </button>
+
+              {submitResult?.isCorrect && nextQuestion && (
+                <Link
+                  href={`/interview/${nextQuestion.id}`}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black text-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0"
+                >
+                  <span>Next Question</span>
+                  <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+                </Link>
+              )}
             </div>
           </div>
 
@@ -824,16 +891,36 @@ export default function InterviewProblemWorkspacePage({
                   ) : submitResult ? (
                     <div className="space-y-3">
                       {submitResult.isCorrect ? (
-                        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex items-center gap-3">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-                          <div>
-                            <span className="font-black text-sm text-emerald-900 block">
-                              Accepted! All Test Cases Passed
-                            </span>
-                            <span className="text-xs text-emerald-700">
-                              Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
-                            </span>
+                        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_rgba(16,185,129,0.3)]">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                            <div>
+                              <span className="font-black text-sm text-emerald-900 block">
+                                Accepted! All Test Cases Passed
+                              </span>
+                              <span className="text-xs text-emerald-700">
+                                Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
+                              </span>
+                            </div>
                           </div>
+
+                          {nextQuestion ? (
+                            <Link
+                              href={`/interview/${nextQuestion.id}`}
+                              className="px-4 py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0"
+                            >
+                              <span>Next Question</span>
+                              <ChevronRight className="w-4 h-4 stroke-[3]" />
+                            </Link>
+                          ) : (
+                            <Link
+                              href="/interview"
+                              className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 shrink-0"
+                            >
+                              <Trophy className="w-4 h-4" />
+                              <span>All 300 Solved! Back to Hub</span>
+                            </Link>
+                          )}
                         </div>
                       ) : (
                         <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2">
@@ -937,14 +1024,24 @@ export default function InterviewProblemWorkspacePage({
                 <Code2 className="w-3.5 h-3.5" />
                 <span>Back to SQL Editor</span>
               </button>
-              <button
-                onClick={handleSubmitQuery}
-                disabled={isRunning || isSubmitting}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-[2px_2px_0px_#000] disabled:opacity-50"
-              >
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Submit</span>
-              </button>
+              {submitResult?.isCorrect && nextQuestion ? (
+                <Link
+                  href={`/interview/${nextQuestion.id}`}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-black text-xs font-black shadow-[2px_2px_0px_#000]"
+                >
+                  <span>Next Question</span>
+                  <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+                </Link>
+              ) : (
+                <button
+                  onClick={handleSubmitQuery}
+                  disabled={isRunning || isSubmitting}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-[2px_2px_0px_#000] disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Submit</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

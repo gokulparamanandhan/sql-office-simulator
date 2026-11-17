@@ -25,6 +25,7 @@ function main() {
 
   const fileContent = `export interface InterviewQuestion {
   id: string;
+  number: number;
   title: string;
   difficulty: "Easy" | "Medium" | "Hard";
   companies: string[];
