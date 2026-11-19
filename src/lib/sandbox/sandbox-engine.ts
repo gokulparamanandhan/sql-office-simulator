@@ -2,6 +2,7 @@ import { validateSqlSecurity } from "./security-guard";
 import { sandboxPool, SandboxExecutionResult } from "@/lib/db/sandbox-db";
 import { generateDomainSql } from "@/lib/datasets/multi-domain-generators";
 import { PGlite } from "@electric-sql/pglite";
+import { transpileDialectToPg, DIALECT_POLYFILL_SQL } from "@/lib/dialect/dialect-transpiler";
 
 /**
  * Universal SQL Sandbox Execution Engine (Spec Section 10.3)
@@ -22,12 +23,18 @@ async function getEmbeddedPg(): Promise<PGlite> {
   embeddedPgInitializing = (async () => {
     try {
       const pg = new PGlite();
+      // Polyfill dialect compatibility (MySQL, MSSQL, Oracle)
+      await pg.exec(DIALECT_POLYFILL_SQL);
+
       // Pre-seed ecom_l1 and ecom_l1_val schemas with all 15 operational tables
       const mainSql = generateDomainSql("ecommerce", "main", "ecom_l1");
       const valSql = generateDomainSql("ecommerce", "validation", "ecom_l1_val");
 
       await pg.exec(mainSql);
       await pg.exec(valSql);
+
+      await pg.exec(`CREATE OR REPLACE VIEW "ecom_l1".dual AS SELECT 1 AS dummy;`);
+      await pg.exec(`CREATE OR REPLACE VIEW "ecom_l1_val".dual AS SELECT 1 AS dummy;`);
 
       embeddedPgInstance = pg;
       return pg;
@@ -48,6 +55,7 @@ async function ensureSchemaSeeded(pg: PGlite, schema: string): Promise<void> {
     const sql = generateDomainSql(rawDomain, isVal ? "validation" : "main", schema);
     if (sql) {
       await pg.exec(sql);
+      await pg.exec(`CREATE OR REPLACE VIEW "${schema}".dual AS SELECT 1 AS dummy;`);
       seededSchemas.add(schema);
     }
   } catch (err) {
@@ -88,12 +96,14 @@ function prepareQueryForExecution(sql: string): string {
 export async function runSandboxQuery(
   rawSql: string,
   schema: string = "ecom_l1",
-  maxRows: number = 100
+  maxRows: number = 100,
+  dialect?: string
 ): Promise<SandboxExecutionResult> {
   const startTime = Date.now();
+  const transpiledSql = transpileDialectToPg(rawSql, dialect);
 
   // 1. Enforce AST Security Checks (Section 10.3)
-  const security = validateSqlSecurity(rawSql);
+  const security = validateSqlSecurity(transpiledSql);
   if (!security.allowed) {
     return {
       columns: [],
@@ -104,7 +114,7 @@ export async function runSandboxQuery(
     };
   }
 
-  const queryToRun = security.sanitizedSql!;
+  const queryToRun = security.sanitizedSql || transpiledSql;
 
   // 2. Execute via embedded PostgreSQL WASM (PGlite) for instant zero-latency compilation
   // If external DB is explicitly configured via USE_EXTERNAL_DB=true, try TCP pool with short timeout
@@ -160,7 +170,7 @@ export async function runSandboxQuery(
   try {
     const pg = await getEmbeddedPg();
     await ensureSchemaSeeded(pg, schema);
-    await pg.exec(`SET search_path = "${schema}";`);
+    await pg.exec(`SET search_path = "${schema}", public;`);
 
     const executableSql = prepareQueryForExecution(queryToRun);
     const execResults = await pg.exec(executableSql);
@@ -200,9 +210,10 @@ export async function runSandboxQuery(
 export async function executeInSandbox(
   sql: string,
   schema: string = "ecom_l1",
-  maxRows: number = 100
+  maxRows: number = 100,
+  dialect?: string
 ) {
-  const result = await runSandboxQuery(sql, schema, maxRows);
+  const result = await runSandboxQuery(sql, schema, maxRows, dialect);
   return {
     success: !result.error,
     columns: result.columns,

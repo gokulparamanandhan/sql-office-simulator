@@ -128,7 +128,8 @@ export async function validateSubmission(
   learnerSql: string,
   question: QuestionDefinition,
   mainSchema?: string,
-  valSchema?: string
+  valSchema?: string,
+  dialect?: string
 ): Promise<ValidationFeedback> {
   const startTime = Date.now();
   const tolerance = question.validation?.numeric_tolerance ?? 0.01;
@@ -142,7 +143,7 @@ export async function validateSubmission(
   // ========================================================
   if (question.challenge_type === "index_optimization") {
     // 1. Run index creation query
-    const buildRes = await runSandboxQuery(learnerSql, resolvedMainSchema);
+    const buildRes = await runSandboxQuery(learnerSql, resolvedMainSchema, 100, dialect);
     if (buildRes.error) {
       return {
         isCorrect: false,
@@ -195,7 +196,7 @@ export async function validateSubmission(
   // ========================================================
   if (question.challenge_type === "stored_procedure" || question.challenge_type === "trigger") {
     // 1. Compile procedure / function / trigger
-    const compileRes = await runSandboxQuery(learnerSql, resolvedMainSchema);
+    const compileRes = await runSandboxQuery(learnerSql, resolvedMainSchema, 100, dialect);
     if (compileRes.error) {
       return {
         isCorrect: false,
@@ -255,7 +256,7 @@ export async function validateSubmission(
   // SPECIALIZED MODE 3: TABLE PARTITIONING
   // ========================================================
   if (question.challenge_type === "partitioning") {
-    const buildRes = await runSandboxQuery(learnerSql, resolvedMainSchema);
+    const buildRes = await runSandboxQuery(learnerSql, resolvedMainSchema, 100, dialect);
     if (buildRes.error) {
       return {
         isCorrect: false,
@@ -295,7 +296,7 @@ export async function validateSubmission(
   // ========================================================
 
   // 1. Run learner query on main schema
-  const learnerMain = await runSandboxQuery(learnerSql, resolvedMainSchema, 1000);
+  const learnerMain = await runSandboxQuery(learnerSql, resolvedMainSchema, 1000, dialect);
   if (learnerMain.error) {
     const isSec = learnerMain.error.includes("Security Violation");
     return {
@@ -382,7 +383,7 @@ export async function validateSubmission(
   }
 
   // 6. Test on Hidden Validation Dataset (Section 8: Grading Correctness)
-  const learnerVal = await runSandboxQuery(learnerSql, resolvedValSchema, 1000);
+  const learnerVal = await runSandboxQuery(learnerSql, resolvedValSchema, 1000, dialect);
   const refVal = await runSandboxQuery(question.reference_sql, resolvedValSchema, 1000);
 
   if (learnerVal.error || learnerVal.rowCount !== refVal.rowCount) {

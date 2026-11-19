@@ -18,7 +18,7 @@ export async function POST(
 
     const { id } = await params;
     const body = await req.json();
-    const { sql, schema } = body;
+    const { sql, schema, dialect } = body;
 
     if (!sql || typeof sql !== "string") {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(
     }
 
     // Execute query preview (max 100 rows)
-    const result = await runSandboxQuery(sql, targetSchema, 100);
+    const result = await runSandboxQuery(sql, targetSchema, 100, dialect);
 
     return NextResponse.json({
       questionId: id,

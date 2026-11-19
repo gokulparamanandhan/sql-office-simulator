@@ -38,7 +38,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { sql, hintsUsed = 0 } = body;
+    const { sql, hintsUsed = 0, dialect } = body;
 
     if (!sql || typeof sql !== "string") {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(
       );
     }
 
-    const feedback = await validateSubmission(sql, question);
+    const feedback = await validateSubmission(sql, question, undefined, undefined, dialect);
 
     // Calculate XP earned if correct
     let xpEarned = 0;

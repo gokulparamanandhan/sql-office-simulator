@@ -735,9 +735,9 @@ export default function InterviewProblemWorkspacePage({
               <span className="flex items-center gap-1.5 truncate">
                 <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
                 <span className="truncate">
-                  {selectedDialect === "MySQL" && "MySQL syntax active: IFNULL(), UCASE(), standard CTEs supported."}
-                  {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: ISNULL(), LEN(), standard CTEs supported."}
-                  {selectedDialect === "Oracle" && "Oracle SQL active: NVL(), analytic window functions supported."}
+                  {selectedDialect === "MySQL" && "MySQL syntax active: `backticks`, LIMIT offset,count, IF(), IFNULL(), GROUP_CONCAT(), DATE_ADD(), DATEDIFF(), REGEXP."}
+                  {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: SELECT TOP N, [brackets], ISNULL(), LEN(), IIF(), DATEADD(), DATEDIFF(), CHARINDEX()."}
+                  {selectedDialect === "Oracle" && "Oracle SQL active: FROM DUAL, ROWNUM, NVL(), NVL2(), DECODE(), ADD_MONTHS(), TRUNC(), SYSDATE."}
                 </span>
               </span>
               <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>

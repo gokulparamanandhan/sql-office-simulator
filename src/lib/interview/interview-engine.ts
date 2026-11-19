@@ -1,6 +1,9 @@
 import { PGlite } from "@electric-sql/pglite";
 import { getInterviewQuestionById, InterviewQuestion } from "../content/interview-questions";
 import { validateSqlSecurity } from "../sandbox/security-guard";
+import { transpileDialectToPg, DIALECT_POLYFILL_SQL } from "../dialect/dialect-transpiler";
+
+export { transpileDialectToPg };
 
 let interviewPgInstance: PGlite | null = null;
 let interviewPgPromise: Promise<PGlite> | null = null;
@@ -12,6 +15,7 @@ async function getInterviewPg(): Promise<PGlite> {
 
   interviewPgPromise = (async () => {
     const pg = new PGlite();
+    await pg.exec(DIALECT_POLYFILL_SQL);
     interviewPgInstance = pg;
     return pg;
   })();
@@ -29,8 +33,9 @@ async function ensureInterviewSchema(pg: PGlite, question: InterviewQuestion, is
   if (initializedSchemas.has(schema)) return schema;
 
   await pg.exec(`CREATE SCHEMA IF NOT EXISTS "${schema}";`);
-  await pg.exec(`SET search_path = "${schema}";`);
+  await pg.exec(`SET search_path = "${schema}", public;`);
   await pg.exec(question.schemaSql);
+  await pg.exec(`CREATE OR REPLACE VIEW "${schema}".dual AS SELECT 1 AS dummy;`);
 
   if (isValidation && question.hiddenTestSql) {
     await pg.exec(question.hiddenTestSql);
@@ -47,20 +52,6 @@ export interface RunInterviewQueryResult {
   rowCount: number;
   durationMs: number;
   error?: string;
-}
-
-export function transpileDialectToPg(sql: string, dialect: string = "PostgreSQL"): string {
-  if (!dialect || dialect.toLowerCase().includes("postgre")) return sql;
-  let out = sql;
-  // Common function aliases across MySQL, MSSQL, Oracle
-  out = out.replace(/\b(?:IFNULL|ISNULL|NVL)\s*\(/gi, "COALESCE(");
-  out = out.replace(/\bLEN\s*\(/gi, "LENGTH(");
-  out = out.replace(/\bUCASE\s*\(/gi, "UPPER(");
-  out = out.replace(/\bLCASE\s*\(/gi, "LOWER(");
-  out = out.replace(/\bGETDATE\(\)/gi, "CURRENT_TIMESTAMP");
-  out = out.replace(/\bSYSDATE\b/gi, "CURRENT_TIMESTAMP");
-  out = out.replace(/\bCURDATE\(\)/gi, "CURRENT_DATE");
-  return out;
 }
 
 export async function runInterviewQuery(
@@ -101,7 +92,7 @@ export async function runInterviewQuery(
   try {
     const pg = await getInterviewPg();
     const schema = await ensureInterviewSchema(pg, question, false);
-    await pg.exec(`SET search_path = "${schema}";`);
+    await pg.exec(`SET search_path = "${schema}", public;`);
 
     const results = await pg.exec(security.sanitizedSql || transpiledSql);
     let finalRes = results[results.length - 1];
@@ -215,7 +206,7 @@ export async function submitInterviewQuery(
 
     // 2. Primary Dataset Evaluation
     const primarySchema = await ensureInterviewSchema(pg, question, false);
-    await pg.exec(`SET search_path = "${primarySchema}";`);
+    await pg.exec(`SET search_path = "${primarySchema}", public;`);
 
     let userPrimaryRes;
     try {
@@ -328,7 +319,7 @@ export async function submitInterviewQuery(
     // 3. Hidden Edge-Case Dataset Evaluation (if defined)
     if (question.hiddenTestSql) {
       const valSchema = await ensureInterviewSchema(pg, question, true);
-      await pg.exec(`SET search_path = "${valSchema}";`);
+      await pg.exec(`SET search_path = "${valSchema}", public;`);
 
       const userValExec = await pg.exec(cleanUserSql);
       const refValExec = await pg.exec(question.referenceSql);
