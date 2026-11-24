@@ -38,28 +38,27 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [solvedStats, setSolvedStats] = useState({
-    const [solvedStats, setSolvedStats] = useState<{
-      l1: number;
-      l2: number;
-      l3: number;
-      totalSolved: number;
-      academySolved: number;
-      totalXp: number;
-      streakDays: number;
-      skillBreakdown: { track: string; total: number; solved: number; pct: number }[];
-    }>({
-      l1: 0,
-      l2: 0,
-      l3: 0,
-      totalSolved: 0,
-      academySolved: 0,
-      totalXp: 0,
-      streakDays: 1,
-      skillBreakdown: [],
-    });
+  const [solvedStats, setSolvedStats] = useState<{
+    l1: number;
+    l2: number;
+    l3: number;
+    totalSolved: number;
+    academySolved: number;
+    totalXp: number;
+    streakDays: number;
+    skillBreakdown: { track: string; total: number; solved: number; pct: number }[];
+  }>({
+    l1: 0,
+    l2: 0,
+    l3: 0,
+    totalSolved: 0,
+    academySolved: 0,
+    totalXp: 0,
+    streakDays: 1,
+    skillBreakdown: [],
+  });
 
-    useEffect(() => {
+  useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) {
@@ -91,8 +90,6 @@ export default function DashboardPage() {
       const interviewSolved = JSON.parse(localStorage.getItem(interviewSolvedKey) || "{}");
       const academySolvedMap = JSON.parse(localStorage.getItem(academySolvedKey) || "{}");
 
-      const interviewCount = Object.keys(interviewSolved).filter((k) => interviewSolved[k]).length;
-      const count = Math.max(stats.solvedCount || 0, interviewCount);
       const l1Real = INTERVIEW_QUESTIONS.filter(
         (q) => q.difficulty === "Easy" && interviewSolved[q.id]
       ).length;
@@ -104,11 +101,6 @@ export default function DashboardPage() {
       ).length;
       const realTotal = l1Real + l2Real + l3Real;
 
-      // Estimate tier breakdown
-      const l1 = Math.min(100, count);
-      const l2 = Math.min(100, Math.max(0, count - 100));
-      const l3 = Math.min(100, Math.max(0, count - 200));
-      const calculatedXp = stats.xp || (l1 * 25 + l2 * 45 + l3 * 80) || 50;
       const count = realTotal > 0 ? realTotal : (stats.solvedCount || 0);
       const l1 = realTotal > 0 ? l1Real : Math.min(100, count);
       const l2 = realTotal > 0 ? l2Real : Math.min(100, Math.max(0, count - 100));
@@ -223,6 +215,7 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        </div>
       </header>
 
       {/* Main Content */}

@@ -182,8 +182,7 @@ export default function InterviewPrepCatalogPage() {
         matchesSkill
       );
     });
-  }, [searchQuery, selectedTier, selectedCompany, selectedCategory]);
-}, [searchQuery, selectedTier, selectedCompany, selectedCategory, selectedStage, selectedSkillTrack]);
+  }, [searchQuery, selectedTier, selectedCompany, selectedCategory, selectedStage, selectedSkillTrack]);
 
 const totalQuestions = INTERVIEW_QUESTIONS.length;
 const solvedCount = Object.keys(solvedMap).filter((k) => solvedMap[k]).length;
@@ -284,6 +283,7 @@ return (
             <FeedbackLink variant="button" />
           </div>
         </div>
+      </div>
     </header>
 
     {/* Main Container */}
@@ -411,7 +411,6 @@ return (
             ].map((tier) => (
               <button
                 key={tier.val}
-                onClick={() => setSelectedTier(tier.val)}
                 onClick={() => {
                   setSelectedTier(tier.val);
                   if (tier.val !== "Level 1: Basic" && tier.val !== "All") {
@@ -435,7 +434,6 @@ return (
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by topic, keyword, or company..."
               placeholder="Search by topic, pattern, stage, or company..."
               className="w-full pl-9 pr-3 py-2 bg-white border-2 border-black rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#FFE600] shadow-[2px_2px_0px_#000000]"
             />
@@ -532,9 +530,8 @@ return (
           </div>
 
           {/* Reset Filters */}
-          {(selectedTier !== "All" || selectedCompany !== "All" || selectedCategory !== "All" || searchQuery !== "") && (
-            {(selectedTier !== "All" ||
-              selectedCompany !== "All" ||
+          {(selectedTier !== "All" ||
+            selectedCompany !== "All" ||
               selectedCategory !== "All" ||
               selectedStage !== "All" ||
               selectedSkillTrack !== "All" ||

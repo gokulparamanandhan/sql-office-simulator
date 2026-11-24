@@ -97,7 +97,6 @@ export default function InterviewProblemWorkspacePage({
   // Dialect state
   const [selectedDialect, setSelectedDialect] = useState<SqlDialect>("PostgreSQL");
 
-  const [activeTab, setActiveTab] = useState<"problem" | "schema" | "hints" | "solution">("problem");
   const [activeTab, setActiveTab] = useState<"problem" | "primer" | "schema" | "hints" | "solution">("problem");
   const [activeResultTab, setActiveResultTab] = useState<"results" | "output" | "diff">("results");
   const [userSql, setUserSql] = useState<string>("");
@@ -741,12 +740,12 @@ export default function InterviewProblemWorkspacePage({
                 <pre className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-4 font-mono text-xs text-[var(--ink)] overflow-x-auto leading-relaxed">
                   {question.schemaSql.trim()}
                 </pre>
+                <VisualSchemaExplorer
+                  questionId={question.id}
+                  rawSchemaSql={question.schemaSql}
+                  allowExpectedPreview={true}
+                />
               </div>
-              <VisualSchemaExplorer
-                questionId={question.id}
-                rawSchemaSql={question.schemaSql}
-                allowExpectedPreview={true}
-              />
             )}
 
             {activeTab === "hints" && (
@@ -768,7 +767,6 @@ export default function InterviewProblemWorkspacePage({
                         </span>
                         {!isUnlocked && (
                           <button
-                            onClick={() => setUnlockedHints([...unlockedHints, idx])}
                             onClick={() => {
                               setUnlockedHints([...unlockedHints, idx]);
                               if (idx > 0) {
@@ -806,7 +804,6 @@ export default function InterviewProblemWorkspacePage({
                       In a real interview, you won't have answers. We recommend attempting at least 2 queries before revealing.
                     </p>
                     <button
-                      onClick={() => setSolutionRevealed(true)}
                       onClick={() => {
                         setSolutionRevealed(true);
                         recordAttemptMeta(question.id, { usedHintOrSolution: true });
@@ -921,7 +918,6 @@ export default function InterviewProblemWorkspacePage({
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
-                  onClick={() => setUserSql(question.starterSql)}
                   type="button"
                   onClick={handleInsertBlueprint}
                   className="flex items-center gap-1 text-[11px] font-black text-black bg-[#E3F2FD] hover:bg-[#BBDEFB] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] transition-colors"
@@ -952,6 +948,7 @@ export default function InterviewProblemWorkspacePage({
                 </button>
               </div>
             </div>
+          </div>
 
             {/* CTE X-Ray Step-by-Step Inspector Bar */}
             {parsedUserCtes.ctes.length > 0 && (
@@ -1198,43 +1195,41 @@ export default function InterviewProblemWorkspacePage({
                             )}
                           </div>
                         ) : (
-                          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2">
-                            <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2.5">
-                              <div className="flex items-center gap-2 text-red-800 font-black">
-                                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                                <span>{submitResult.code}: {submitResult.message}</span>
-                              </div>
-                              {submitResult.diagnosisHint && (
-                                <div className="bg-[#FFF9D2] border-2 border-amber-500 rounded-lg p-3 text-xs text-black font-sans flex items-start gap-2">
-                                  <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                  <div>
-                                    <span className="font-black uppercase text-[10px] tracking-wider text-amber-900 block mb-0.5">
-                                      Smart SQL Coach Diagnosis
-                                    </span>
-                                    <p className="font-medium leading-relaxed">{submitResult.diagnosisHint}</p>
-                                  </div>
-                                </div>
-                              )}
-                              {submitResult.diff && (
-                                <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
-                                  Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
-                                  <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
-                                  <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
-                                </div>
-                              )}
+                          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2.5">
+                            <div className="flex items-center gap-2 text-red-800 font-black">
+                              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                              <span>{submitResult.code}: {submitResult.message}</span>
                             </div>
-                      )}
+                            {submitResult.diagnosisHint && (
+                              <div className="bg-[#FFF9D2] border-2 border-amber-500 rounded-lg p-3 text-xs text-black font-sans flex items-start gap-2">
+                                <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="font-black uppercase text-[10px] tracking-wider text-amber-900 block mb-0.5">
+                                    Smart SQL Coach Diagnosis
+                                  </span>
+                                  <p className="font-medium leading-relaxed">{submitResult.diagnosisHint}</p>
+                                </div>
+                              </div>
+                            )}
+                            {submitResult.diff && (
+                              <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
+                                Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
+                                <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
+                                <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                        <div className="text-xs text-[var(--ink)]">
-                          Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
-                        </div>
-                  )}
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[var(--ink)]">
+                        Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
                       </div>
                     )}
+                  </div>
+                )}
 
                     {activeResultTab === "output" && (
-                <div>
                 <div className="space-y-2">
                   {activeCtePreview && (
                     <div className="bg-[#EEF2FF] border border-indigo-400 rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-[11px] font-sans">
@@ -1296,8 +1291,6 @@ export default function InterviewProblemWorkspacePage({
 
               {activeResultTab === "diff" && submitResult && !submitResult.isCorrect && (
                 <div className="space-y-3">
-                  <div className="text-[11px] text-[var(--ink)] font-bold">
-                    Comparing Your Output vs Expected Output (First 5 rows):
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--ink)] font-bold font-sans">
                     <span>
                       Visual Side-by-Side Table Comparison (First 12 rows):
@@ -1306,15 +1299,6 @@ export default function InterviewProblemWorkspacePage({
                       Mismatch cells highlighted in red vs green
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* User Output */}
-                    <div className="border border-red-300 rounded bg-red-50/50 p-2 overflow-x-auto">
-                      <span className="font-bold text-[10px] text-red-700 block mb-1 uppercase">
-                        Your Query Output ({submitResult.actualRows?.length || 0} rows)
-                      </span>
-                      <pre className="text-[10px] text-[var(--ink)]">
-                        {JSON.stringify(submitResult.actualRows?.slice(0, 5), null, 2)}
-                      </pre>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {/* User Output Table */}
                     <div className="border-2 border-red-400 rounded-lg bg-red-50/40 overflow-x-auto">
@@ -1376,17 +1360,10 @@ export default function InterviewProblemWorkspacePage({
                       )}
                     </div>
 
-                    {/* Expected Output */}
-                    <div className="border border-emerald-300 rounded bg-emerald-50/50 p-2 overflow-x-auto">
-                      <span className="font-bold text-[10px] text-emerald-700 block mb-1 uppercase">
                     {/* Expected Output Table */}
                     <div className="border-2 border-emerald-400 rounded-lg bg-emerald-50/40 overflow-x-auto">
                       <div className="bg-emerald-100 border-b border-emerald-300 px-2.5 py-1.5 font-black text-[10px] text-emerald-900 uppercase">
                         Expected Output ({submitResult.expectedRows?.length || 0} rows)
-                      </span>
-                      <pre className="text-[10px] text-[var(--ink)]">
-                        {JSON.stringify(submitResult.expectedRows?.slice(0, 5), null, 2)}
-                      </pre>
                       </div>
                       {submitResult.expectedRows && submitResult.expectedRows.length > 0 ? (
                         <table className="w-full text-left border-collapse text-[11px]">
