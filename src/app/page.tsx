@@ -110,6 +110,15 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Academy Link */}
+            <Link
+              href="/learn"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-[#FFF9D2] hover:bg-[#FFE600] text-xs font-black shadow-[2px_2px_0px_#000000] transition-transform"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-700" />
+              <span>SQL Academy</span>
+            </Link>
+
             {/* 3 Tiers Link */}
             <Link
               href={user ? "/interview" : "/auth/signup?redirect=/interview"}
@@ -231,15 +240,15 @@ export default function Home() {
                 <div className="text-black space-y-1.5 pt-1">
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-700 font-black">▶</span>
-                    <span><strong>Level 1:</strong> 100 Basic Questions (SELECT, WHERE, NULLs, dirty JOINs)</span>
+                    <span><strong>Level 1:</strong> 100 Basic Questions (10-Stage Ramp: JOINs, Subqueries, CTEs, Windows &amp; Frame Clauses)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-amber-700 font-black">▶</span>
-                    <span><strong>Level 2:</strong> 100 Intermediate Questions (CTEs, Window Functions, DENSE_RANK)</span>
+                    <span><strong>Level 2:</strong> 100 Intermediate Questions (Chained CTEs, Fanout Audits, RANGE Frames, Streaks)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-rose-700 font-black">▶</span>
-                    <span><strong>Level 3:</strong> 100 Advanced Questions (Shitty schemas, recursive CTEs, cohorts)</span>
+                    <span><strong>Level 3:</strong> 100 Advanced Questions (Recursive CTEs, Sessionization, Cohorts, Gaps &amp; Islands)</span>
                   </div>
                 </div>
               </div>
@@ -253,6 +262,14 @@ export default function Home() {
                   <Zap className="w-4 h-4 text-black fill-black" />
                   <span>Start Solving Dirty SQL (Free)</span>
                   <ArrowRight className="w-4 h-4 text-black" />
+                </Link>
+
+                <Link
+                  href="/learn"
+                  className="px-4 py-3 rounded-xl border-3 border-black bg-[#FFF9D2] hover:bg-[#FFE600] font-black text-sm shadow-[4px_4px_0px_#000000] flex items-center gap-2 transition-transform"
+                >
+                  <BookOpen className="w-4 h-4 text-amber-700" />
+                  <span>100-Lesson SQL Academy</span>
                 </Link>
 
                 <Link
@@ -569,7 +586,7 @@ export default function Home() {
                   </span>
                   <h4 className="font-black text-base">The Mud Scrapper</h4>
                   <p className="text-xs text-black/75 font-medium leading-relaxed">
-                    Complete all 100 basic messy questions (SELECT, NULLs, dirty JOINs).
+                    Complete all 100 Basic spiral questions (JOINs, Subqueries, CTEs, Windows &amp; Frames).
                   </p>
                 </div>
               </div>
@@ -590,7 +607,7 @@ export default function Home() {
                   </span>
                   <h4 className="font-black text-base">The Window Wizard</h4>
                   <p className="text-xs text-black/75 font-medium leading-relaxed">
-                    Complete all 100 intermediate questions (CTEs, DENSE_RANK, LEAD, LAG).
+                    Complete all 100 intermediate questions (Chained CTEs, Fanouts, RANGE Frames, Streaks).
                   </p>
                 </div>
               </div>

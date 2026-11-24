@@ -23,7 +23,11 @@ function main() {
 
   const targetPath = path.join(__dirname, "../src/lib/content/interview-questions.ts");
 
-  const fileContent = `export interface InterviewQuestion {
+  const fileContent = `import type { ConceptPrimer, RampStep } from "../interview/sql-learning-helpers";
+
+export type { ConceptPrimer, RampStep };
+
+export interface InterviewQuestion {
   id: string;
   number: number;
   title: string;
@@ -41,6 +45,12 @@ function main() {
   hints: string[];
   explanation: string;
   orderSensitive?: boolean;
+  stage?: string;
+  stageOrder?: number;
+  rampStep?: RampStep;
+  patternTag?: string;
+  conceptPrimer?: ConceptPrimer;
+  blueprintSql?: string;
 }
 
 export const INTERVIEW_QUESTIONS: InterviewQuestion[] = ${JSON.stringify(all, null, 2)};

@@ -38,20 +38,20 @@ export const CURRICULUM_TIERS: CurriculumTier[] = [
     id: "basic",
     levelNumber: 1,
     name: "Tier 1: The Mud Scrapper (Basic)",
-    tagline: "Foundations on Dirty Real-World Schemas",
+    tagline: "10-Stage Spiral Ramp: Dirty Data -> Subqueries -> CTEs -> Windows -> Frames",
     badgeName: "Mud Scrapper",
     badgeIcon: "🚜",
     badgeColor: "bg-emerald-400 text-black border-black",
     questionsCount: 100,
     description:
-      "Writing SELECT, WHERE, aggregates, GROUP BY, HAVING, and multi-table JOINs on un-sanitized operational data with NULLs, whitespace, and duplicate keys.",
+      "Builds complete SQL intuition in 10 progressive stages: dirty strings & NULLs, CASE/dates, GROUP BY, multi-table JOINs, Subqueries, CTEs (WITH), Window Foundations (OVER/PARTITION), Ranking (ROW_NUMBER/DENSE_RANK), Navigation (LAG/LEAD/FIRST_VALUE), and Window Frame Clauses (ROWS BETWEEN).",
     focusTopics: [
-      "SELECT, WHERE filtering, and logical operators with NULL quirks",
-      "String normalization (TRIM, LOWER, LIKE regex patterns)",
-      "Aggregations: COUNT(DISTINCT) vs COUNT(*), SUM, AVG with COALESCE",
-      "GROUP BY and HAVING on dirty categorical fields",
-      "INNER, LEFT, and RIGHT JOINs avoiding accidental fanouts",
-      "Basic scalar and correlated subqueries in WHERE/FROM clauses"
+      "Stages 1-3: SELECT, NULL hygiene, CASE, date buckets, GROUP BY & HAVING",
+      "Stage 4: Multi-table LEFT/INNER/SELF JOINs & UNION on real dirty schemas",
+      "Stage 5: Scalar, IN, ANY/ALL, NOT EXISTS & derived-table Subqueries",
+      "Stage 6: Single and multi-step CTEs (WITH) to stage clean transformations",
+      "Stages 7-8: Window OVER(), PARTITION BY, ROW_NUMBER, RANK, DENSE_RANK, NTILE",
+      "Stages 9-10: LAG/LEAD/FIRST_VALUE deltas & ROWS BETWEEN frame clauses"
     ],
     messyDataFeatures: [
       "User IDs formatted inconsistently (e.g. 'USR-001' vs 'usr_1')",
@@ -60,27 +60,26 @@ export const CURRICULUM_TIERS: CurriculumTier[] = [
       "Order items with missing foreign keys due to deleted accounts"
     ],
     sampleCompanies: ["Amazon", "Shopify", "DoorDash", "Airbnb", "Spotify"],
-    targetOutcome: "Crushes any junior Data Analyst / BI Analyst SQL technical screen."
+    targetOutcome: "Bridges junior SQL straight into modern analytical functions without a difficulty cliff."
   },
   {
     id: "intermediate",
     levelNumber: 2,
     name: "Tier 2: The Window Wizard (Intermediate)",
-    tagline: "Window Functions, CTE Pipelines & Performance",
+    tagline: "Multi-Step CTE Pipelines, Calendar Cohorts & Pre-Advanced Patterns",
     badgeName: "Window Wizard",
     badgeIcon: "🧙‍♂️",
     badgeColor: "bg-amber-300 text-black border-black",
     questionsCount: 100,
     description:
-      "Mastering Common Table Expressions (CTEs), multi-step analytics pipelines, window ranking (ROW_NUMBER, DENSE_RANK), lead/lag offsets, running metrics, and query execution tuning.",
+      "Applies Basic analytical primitives to multi-step business logic: chained CTE pipelines, pre-aggregation to fix JOIN fanouts, tie-broken window rankings, RANGE BETWEEN sliding time windows, gap-free date spines, Pareto shares, streak keys, and recursive CTE introductions.",
     focusTopics: [
-      "Window Ranking: ROW_NUMBER(), RANK(), DENSE_RANK() with tie-breaking",
-      "Offset Window Functions: LEAD(), LAG() for interval & delta analysis",
-      "Rolling & cumulative window frames: ROWS BETWEEN UNBOUNDED PRECEDING",
-      "Multi-step CTE pipelines for clean, readable business logic",
-      "Avoiding and diagnosing accidental JOIN fanouts on one-to-many tables",
-      "Date arithmetic: DATE_TRUNC, interval calculations, and timezone normalization",
-      "Execution plans: EXPLAIN ANALYZE, indexing logic, and query bottlenecks"
+      "Window Ranking & Tie-Breaking: ROW_NUMBER(), RANK(), DENSE_RANK() at scale",
+      "Two-Pass Analytics: CTE + LAG/LEAD + rolling frame compositions",
+      "Time-Based Frames: RANGE BETWEEN INTERVAL '7 days' PRECEDING windows",
+      "Gap-Free Date Spines: GENERATE_SERIES left-joined with COALESCE",
+      "Avoiding & diagnosing accidental JOIN fanouts before aggregation",
+      "JSONB extraction combined with window analytics & EXPLAIN ANALYZE"
     ],
     messyDataFeatures: [
       "Duplicate transaction webhooks firing within milliseconds",

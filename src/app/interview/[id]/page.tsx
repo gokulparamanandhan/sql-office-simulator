@@ -30,10 +30,21 @@ import {
   ChevronDown,
   Layers,
   Terminal,
+  Lightbulb,
+  Wand2,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
 import { getInterviewQuestionById, INTERVIEW_QUESTIONS } from "@/lib/content/interview-questions";
+import ConceptPrimerPanel from "@/components/learning/ConceptPrimerPanel";
+import VisualSchemaExplorer from "@/components/learning/VisualSchemaExplorer";
+import PatternCheatSheetModal from "@/components/learning/PatternCheatSheetModal";
+import {
+  extractCtesFromSql,
+  buildCtePreviewSql,
+  resolveConceptPrimer,
+  resolveBlueprintSql,
+} from "@/lib/interview/sql-learning-helpers";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -87,6 +98,7 @@ export default function InterviewProblemWorkspacePage({
   const [selectedDialect, setSelectedDialect] = useState<SqlDialect>("PostgreSQL");
 
   const [activeTab, setActiveTab] = useState<"problem" | "schema" | "hints" | "solution">("problem");
+  const [activeTab, setActiveTab] = useState<"problem" | "primer" | "schema" | "hints" | "solution">("problem");
   const [activeResultTab, setActiveResultTab] = useState<"results" | "output" | "diff">("results");
   const [userSql, setUserSql] = useState<string>("");
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -94,6 +106,8 @@ export default function InterviewProblemWorkspacePage({
   const [showSolutionConfirm, setShowSolutionConfirm] = useState<boolean>(false);
   const [solutionRevealed, setSolutionRevealed] = useState<boolean>(false);
   const [unlockedHints, setUnlockedHints] = useState<number[]>([0]);
+  const [showPatternCheatSheet, setShowPatternCheatSheet] = useState<boolean>(false);
+  const [activeCtePreview, setActiveCtePreview] = useState<string | null>(null);
 
   // Auth gate: redirect unauthenticated users to signup
   useEffect(() => {
@@ -148,6 +162,7 @@ export default function InterviewProblemWorkspacePage({
     isCorrect: boolean;
     code: string;
     message: string;
+    diagnosisHint?: string;
     durationMs: number;
     actualRows?: Record<string, unknown>[];
     expectedRows?: Record<string, unknown>[];
@@ -161,6 +176,41 @@ export default function InterviewProblemWorkspacePage({
     };
   } | null>(null);
 
+  const conceptPrimer = useMemo(
+    () => (question ? resolveConceptPrimer(question) : null),
+    [question]
+  );
+
+  const parsedUserCtes = useMemo(() => extractCtesFromSql(userSql), [userSql]);
+  const parsedSolutionCtes = useMemo(
+    () =>
+      question
+        ? extractCtesFromSql(question.referenceSql)
+        : { isRecursive: false, ctes: [], cleanSql: "" },
+    [question]
+  );
+
+  const recordAttemptMeta = (
+    questionId: string,
+    opts: { attempt?: boolean; usedHintOrSolution?: boolean; solved?: boolean }
+  ) => {
+    try {
+      const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+      const metaKey = `sql_office_${currentUserId}_interview_meta`;
+      const meta = JSON.parse(localStorage.getItem(metaKey) || "{}");
+      const prev = meta[questionId] || { attempts: 0, usedHintOrSolution: false };
+      meta[questionId] = {
+        attempts: prev.attempts + (opts.attempt ? 1 : 0),
+        usedHintOrSolution: prev.usedHintOrSolution || Boolean(opts.usedHintOrSolution),
+        solved: prev.solved || Boolean(opts.solved),
+        lastAttemptAt: Date.now(),
+      };
+      localStorage.setItem(metaKey, JSON.stringify(meta));
+    } catch {
+      // Ignore storage failures
+    }
+  };
+
   // Initialize SQL from starter
   useEffect(() => {
     if (question) {
@@ -170,6 +220,8 @@ export default function InterviewProblemWorkspacePage({
       setShowSolutionConfirm(false);
       setSolutionRevealed(false);
       setUnlockedHints([0]);
+      setActiveCtePreview(null);
+      setActiveTab("problem");
       setTimerSeconds(25 * 60);
       setIsTimerRunning(false);
     }
@@ -198,6 +250,7 @@ export default function InterviewProblemWorkspacePage({
     if (!question) return;
     setIsRunning(true);
     setRunResult(null);
+    setActiveCtePreview(null);
     try {
       const res = await fetch(`/api/interview/${question.id}/run`, {
         method: "POST",
@@ -230,6 +283,53 @@ export default function InterviewProblemWorkspacePage({
     }
   };
 
+  const handleRunCtePreview = async (
+    sqlSource: string,
+    cteName: string,
+    dialectOverride?: SqlDialect
+  ) => {
+    if (!question) return;
+    const previewSql = buildCtePreviewSql(sqlSource, cteName);
+    if (!previewSql) return;
+    setIsRunning(true);
+    setRunResult(null);
+    setActiveCtePreview(cteName);
+    try {
+      const res = await fetch(`/api/interview/${question.id}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sql: previewSql,
+          dialect: dialectOverride || selectedDialect,
+        }),
+      });
+      const data = await res.json();
+      setRunResult(data);
+      setActiveResultTab("output");
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setMobileView("results");
+      }
+    } catch (err: any) {
+      setRunResult({
+        success: false,
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        durationMs: 0,
+        error: err.message || "Failed to execute CTE preview",
+      });
+      setActiveResultTab("output");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleInsertBlueprint = () => {
+    if (!question) return;
+    setUserSql(resolveBlueprintSql(question));
+    setActiveCtePreview(null);
+  };
+
   const handleSubmitQuery = async () => {
     if (!question) return;
     setIsSubmitting(true);
@@ -243,6 +343,7 @@ export default function InterviewProblemWorkspacePage({
       const data = await res.json();
       setSubmitResult(data);
       setActiveResultTab("results");
+      recordAttemptMeta(question.id, { attempt: true, solved: data.isCorrect });
 
       if (data.isCorrect) {
         // Save to localStorage solved map
@@ -276,6 +377,11 @@ export default function InterviewProblemWorkspacePage({
       setIsSubmitting(false);
     }
   };
+
+  const runQueryRef = useRef(handleRunQuery);
+  const submitQueryRef = useRef(handleSubmitQuery);
+  runQueryRef.current = handleRunQuery;
+  submitQueryRef.current = handleSubmitQuery;
 
   // Map dialect to Monaco Editor language
   const monacoLanguage = useMemo(() => {
@@ -354,13 +460,12 @@ export default function InterviewProblemWorkspacePage({
               {question.title}
             </span>
             <span
-              className={`text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full border shrink-0 ${
-                question.difficulty === "Easy"
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                  : question.difficulty === "Medium"
+              className={`text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full border shrink-0 ${question.difficulty === "Easy"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                : question.difficulty === "Medium"
                   ? "bg-amber-50 text-amber-700 border-amber-300"
                   : "bg-red-50 text-red-700 border-red-300"
-              }`}
+                }`}
             >
               {question.difficulty}
             </span>
@@ -401,11 +506,10 @@ export default function InterviewProblemWorkspacePage({
       <div className="md:hidden flex items-center border-b-2 border-black bg-[var(--white)] px-2 py-1.5 shrink-0 justify-between gap-1.5 shadow-sm z-30">
         <button
           onClick={() => setMobileView("problem")}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${
-            mobileView === "problem"
-              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
-              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
-          }`}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${mobileView === "problem"
+            ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+            : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+            }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>Problem</span>
@@ -413,11 +517,10 @@ export default function InterviewProblemWorkspacePage({
 
         <button
           onClick={() => setMobileView("editor")}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${
-            mobileView === "editor"
-              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
-              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
-          }`}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all ${mobileView === "editor"
+            ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+            : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+            }`}
         >
           <Code2 className="w-3.5 h-3.5" />
           <span>SQL Editor</span>
@@ -425,11 +528,10 @@ export default function InterviewProblemWorkspacePage({
 
         <button
           onClick={() => setMobileView("results")}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all relative ${
-            mobileView === "results"
-              ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
-              : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
-          }`}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 border-2 transition-all relative ${mobileView === "results"
+            ? "bg-[#FFE600] text-black border-black shadow-[2px_2px_0px_#000]"
+            : "bg-[var(--surface)] text-[var(--ink)] border-transparent opacity-70"
+            }`}
         >
           {submitResult ? (
             submitResult.isCorrect ? (
@@ -453,52 +555,60 @@ export default function InterviewProblemWorkspacePage({
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left Panel: Problem, Schema, Hints, Solution */}
         <div
-          className={`w-full md:w-1/2 lg:w-5/12 h-full bg-[var(--white)] border-r-2 border-[var(--sky)] flex flex-col overflow-hidden ${
-            mobileView === "problem" ? "flex" : "hidden md:flex"
-          }`}
+          className={`w-full md:w-1/2 lg:w-5/12 h-full bg-[var(--white)] border-r-2 border-[var(--sky)] flex flex-col overflow-hidden ${mobileView === "problem" ? "flex" : "hidden md:flex"
+            }`}
         >
           {/* Tab Bar */}
           <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab("problem")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === "problem"
-                  ? "border-[var(--ink)] text-[var(--ink)]"
-                  : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-              }`}
+              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "problem"
+                ? "border-[var(--ink)] text-[var(--ink)]"
+                : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Description</span>
             </button>
+            {conceptPrimer && (
+              <button
+                onClick={() => setActiveTab("primer")}
+                className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "primer"
+                  ? "border-amber-600 text-amber-800 bg-amber-50/70"
+                  : "border-transparent text-amber-700 opacity-85 hover:opacity-100"
+                  }`}
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+                <span>Concept &amp; Sim</span>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("schema")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === "schema"
-                  ? "border-[var(--ink)] text-[var(--ink)]"
-                  : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-              }`}
+              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "schema"
+                ? "border-[var(--ink)] text-[var(--ink)]"
+                : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                }`}
             >
               <Database className="w-3.5 h-3.5" />
               <span>Database Schema</span>
+              <span>Schema &amp; Data</span>
             </button>
             <button
               onClick={() => setActiveTab("hints")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === "hints"
-                  ? "border-[var(--ink)] text-[var(--ink)]"
-                  : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-              }`}
+              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "hints"
+                ? "border-[var(--ink)] text-[var(--ink)]"
+                : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                }`}
             >
               <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
               <span>Hints ({unlockedHints.length}/3)</span>
             </button>
             <button
               onClick={() => setActiveTab("solution")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === "solution"
-                  ? "border-[var(--ink)] text-[var(--ink)]"
-                  : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-              }`}
+              className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "solution"
+                ? "border-[var(--ink)] text-[var(--ink)]"
+                : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-600" />
               <span>Solution & Tips</span>
@@ -509,6 +619,51 @@ export default function InterviewProblemWorkspacePage({
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
             {activeTab === "problem" && (
               <div className="space-y-5">
+                {/* Stage / Concept / Pattern Badges */}
+                {(question.stage || question.rampStep || question.patternTag) && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {question.stage && (
+                      <span className="text-[10px] font-black uppercase bg-[#E3F2FD] text-black border border-black px-2 py-0.5 rounded shadow-[1px_1px_0px_#000]">
+                        {question.stage}
+                      </span>
+                    )}
+                    {question.rampStep && (
+                      <span className="text-[10px] font-black uppercase bg-[#FFF3C4] text-black border border-black px-2 py-0.5 rounded">
+                        {question.rampStep}
+                      </span>
+                    )}
+                    {question.patternTag && (
+                      <span className="text-[10px] font-bold bg-[#F3E8FF] text-purple-900 border border-purple-400 px-2 py-0.5 rounded">
+                        Pattern: {question.patternTag}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Concept Primer & Window Simulator Launch Card */}
+                {conceptPrimer && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("primer")}
+                    className="w-full text-left bg-[#FFF9D2] hover:bg-[#FFF3B0] border-2 border-black rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-[2px_2px_0px_#000000] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-black text-xs text-black block truncate">
+                          Need a quick refresher? {conceptPrimer.title}
+                        </span>
+                        <span className="text-[11px] font-medium text-black/75 block truncate">
+                          Open Syntax Blueprint &amp; Visual Window/Frame Simulator
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-black bg-white border border-black px-2 py-1 rounded shrink-0 text-black">
+                      Open Primer →
+                    </span>
+                  </button>
+                )}
+
                 {/* Company & Topic Tags */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[10px] font-black uppercase text-[var(--ink)] opacity-60 mr-1">
@@ -565,6 +720,14 @@ export default function InterviewProblemWorkspacePage({
               </div>
             )}
 
+            {activeTab === "primer" && conceptPrimer && (
+              <ConceptPrimerPanel
+                primer={conceptPrimer}
+                stage={question.stage}
+                rampStep={question.rampStep}
+              />
+            )}
+
             {activeTab === "schema" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -579,6 +742,11 @@ export default function InterviewProblemWorkspacePage({
                   {question.schemaSql.trim()}
                 </pre>
               </div>
+              <VisualSchemaExplorer
+                questionId={question.id}
+                rawSchemaSql={question.schemaSql}
+                allowExpectedPreview={true}
+              />
             )}
 
             {activeTab === "hints" && (
@@ -601,6 +769,12 @@ export default function InterviewProblemWorkspacePage({
                         {!isUnlocked && (
                           <button
                             onClick={() => setUnlockedHints([...unlockedHints, idx])}
+                            onClick={() => {
+                              setUnlockedHints([...unlockedHints, idx]);
+                              if (idx > 0) {
+                                recordAttemptMeta(question.id, { usedHintOrSolution: true });
+                              }
+                            }}
                             className="text-[11px] font-extrabold text-[var(--ink)] bg-[var(--sun)] border border-[var(--ink)] px-2 py-0.5 rounded shadow-[1px_1px_0px_var(--ink)]"
                           >
                             Reveal Hint
@@ -633,6 +807,10 @@ export default function InterviewProblemWorkspacePage({
                     </p>
                     <button
                       onClick={() => setSolutionRevealed(true)}
+                      onClick={() => {
+                        setSolutionRevealed(true);
+                        recordAttemptMeta(question.id, { usedHintOrSolution: true });
+                      }}
                       className="btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -648,6 +826,30 @@ export default function InterviewProblemWorkspacePage({
                       <pre className="bg-[#1e1e1e] text-[#d4d4d4] rounded-xl p-4 font-mono text-xs overflow-x-auto border-2 border-[var(--ink)]">
                         {question.referenceSql}
                       </pre>
+                      {parsedSolutionCtes.ctes.length > 0 && (
+                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 bg-[#F3E8FF] border border-purple-400 rounded-lg px-3 py-2">
+                          <span className="text-[10px] font-black uppercase text-purple-900 flex items-center gap-1 mr-1">
+                            <Layers className="w-3 h-3" />
+                            X-Ray Solution CTEs:
+                          </span>
+                          {parsedSolutionCtes.ctes.map((cte, cIdx) => (
+                            <button
+                              key={cte.name}
+                              type="button"
+                              onClick={() =>
+                                handleRunCtePreview(
+                                  question.referenceSql,
+                                  cte.name,
+                                  "PostgreSQL"
+                                )
+                              }
+                              className="text-[11px] font-mono font-bold bg-white hover:bg-purple-100 text-purple-900 border border-purple-500 px-2 py-0.5 rounded shadow-[1px_1px_0px_#000]"
+                            >
+                              {cIdx + 1}. {cte.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="bg-[var(--surface)] border border-[var(--sky)] rounded-xl p-4 space-y-3">
@@ -686,9 +888,8 @@ export default function InterviewProblemWorkspacePage({
 
         {/* Right Panel: Monaco Editor & Output Console */}
         <div
-          className={`w-full md:w-1/2 lg:w-7/12 h-full flex flex-col bg-[var(--white)] overflow-hidden ${
-            mobileView === "editor" || mobileView === "results" ? "flex" : "hidden md:flex"
-          }`}
+          className={`w-full md:w-1/2 lg:w-7/12 h-full flex flex-col bg-[var(--white)] overflow-hidden ${mobileView === "editor" || mobileView === "results" ? "flex" : "hidden md:flex"
+            }`}
         >
           {/* Editor Header Bar with SQL Dialect Dropdown */}
           <div className="h-11 bg-[var(--surface)] border-b border-[var(--sky)] px-3 sm:px-4 flex items-center justify-between shrink-0 gap-2">
@@ -718,236 +919,344 @@ export default function InterviewProblemWorkspacePage({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setUserSql(question.starterSql)}
-                className="flex items-center gap-1 text-[11px] font-bold text-[var(--ink)] opacity-70 hover:opacity-100 px-2 py-1 rounded hover:bg-[var(--mist)] border border-transparent hover:border-black transition-colors"
-                title="Reset to starter query"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span className="hidden xs:inline">Reset</span>
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setUserSql(question.starterSql)}
+                  type="button"
+                  onClick={handleInsertBlueprint}
+                  className="flex items-center gap-1 text-[11px] font-black text-black bg-[#E3F2FD] hover:bg-[#BBDEFB] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] transition-colors"
+                  title="Insert a guided SQL skeleton with blank TODO slots"
+                >
+                  <Wand2 className="w-3 h-3 text-blue-700" />
+                  <span className="hidden sm:inline">Blueprint</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPatternCheatSheet(true)}
+                  className="flex items-center gap-1 text-[11px] font-black text-black bg-[#FFF9D2] hover:bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] transition-colors"
+                  title="Open 8 Reusable SQL Patterns Cheat-Sheet"
+                >
+                  <BookOpen className="w-3 h-3 text-amber-700" />
+                  <span className="hidden md:inline">Patterns</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setUserSql(question.starterSql);
+                    setActiveCtePreview(null);
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-bold text-[var(--ink)] opacity-70 hover:opacity-100 px-2 py-1 rounded hover:bg-[var(--mist)] border border-transparent hover:border-black transition-colors"
+                  title="Reset to starter query"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span className="hidden xs:inline">Reset</span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Dialect Info Banner */}
-          {selectedDialect !== "PostgreSQL" && (
-            <div className="bg-[#FFE600]/20 border-b border-black/10 px-3 py-1 flex items-center justify-between text-[11px] font-mono text-black shrink-0">
-              <span className="flex items-center gap-1.5 truncate">
-                <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
-                <span className="truncate">
-                  {selectedDialect === "MySQL" && "MySQL syntax active: `backticks`, LIMIT offset,count, IF(), IFNULL(), GROUP_CONCAT(), DATE_ADD(), DATEDIFF(), REGEXP."}
-                  {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: SELECT TOP N, [brackets], ISNULL(), LEN(), IIF(), DATEADD(), DATEDIFF(), CHARINDEX()."}
-                  {selectedDialect === "Oracle" && "Oracle SQL active: FROM DUAL, ROWNUM, NVL(), NVL2(), DECODE(), ADD_MONTHS(), TRUNC(), SYSDATE."}
+            {/* CTE X-Ray Step-by-Step Inspector Bar */}
+            {parsedUserCtes.ctes.length > 0 && (
+              <div className="bg-[#EEF2FF] border-b border-indigo-200 px-3 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0">
+                <span className="text-[10px] font-black uppercase text-indigo-900 flex items-center gap-1 shrink-0">
+                  <Layers className="w-3 h-3 text-indigo-600" />
+                  CTE X-Ray:
                 </span>
-              </span>
-              <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>
-            </div>
-          )}
-
-          {/* Monaco Editor Container (Takes full space on mobile if mobileView === 'editor') */}
-          <div
-            className={`flex-1 min-h-[160px] relative ${
-              mobileView === "results" ? "hidden md:block" : "block"
-            }`}
-          >
-            <MonacoEditor
-              height="100%"
-              language={monacoLanguage}
-              theme="vs-dark"
-              value={userSql}
-              onChange={(val) => setUserSql(val || "")}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                lineNumbers: "on",
-                roundedSelection: true,
-                scrollBeyondLastLine: false,
-                wordWrap: "on",
-                padding: { top: 12, bottom: 12 },
-                automaticLayout: true,
-              }}
-            />
-          </div>
-
-          {/* Actions Bar (Run & Submit) */}
-          <div
-            className={`bg-[var(--surface)] border-t border-[var(--sky)] px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 gap-2 ${
-              mobileView === "results" ? "hidden md:flex" : "flex"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setMobileView("results")}
-                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs font-bold text-[var(--ink)] shadow-sm"
-              >
-                <Table2 className="w-3.5 h-3.5" />
-                <span>Results</span>
-                {runResult && (
-                  <span className="text-[10px] bg-black text-white px-1.5 rounded-full font-bold">
-                    {runResult.rowCount}
-                  </span>
-                )}
-              </button>
-              <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
-                Ctrl+Enter to Run
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={handleRunQuery}
-                disabled={isRunning || isSubmitting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] transition-all disabled:opacity-50"
-              >
-                <Play className="w-3.5 h-3.5 text-blue-600 fill-current" />
-                <span>{isRunning ? "Running..." : "Run Query"}</span>
-              </button>
-
-              <button
-                onClick={handleSubmitQuery}
-                disabled={isRunning || isSubmitting}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
-              >
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
-              </button>
-
-              {submitResult?.isCorrect && nextQuestion && (
-                <Link
-                  href={`/interview/${nextQuestion.id}`}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black text-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0"
-                >
-                  <span>Next Question</span>
-                  <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Results & Console Drawer (Full-height on mobile if mobileView === 'results') */}
-          <div
-            className={`bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden ${
-              mobileView === "results"
-                ? "flex-1 h-full"
-                : "h-56 shrink-0 hidden md:flex"
-            }`}
-          >
-            {/* Console Tab Bar */}
-            <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 justify-between">
-              <div className="flex items-center">
-                <button
-                  onClick={() => setActiveResultTab("results")}
-                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                    activeResultTab === "results"
-                      ? "border-[var(--ink)] text-[var(--ink)]"
-                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                  }`}
-                >
-                  Test Results
-                </button>
-                <button
-                  onClick={() => setActiveResultTab("output")}
-                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${
-                    activeResultTab === "output"
-                      ? "border-[var(--ink)] text-[var(--ink)]"
-                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                  }`}
-                >
-                  Query Output ({runResult?.rowCount ?? 0})
-                </button>
-                {submitResult && !submitResult.isCorrect && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {parsedUserCtes.ctes.map((cte, idx) => {
+                    const isActive = activeCtePreview === cte.name;
+                    return (
+                      <button
+                        key={cte.name}
+                        type="button"
+                        disabled={isRunning || isSubmitting}
+                        onClick={() => handleRunCtePreview(userSql, cte.name)}
+                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all flex items-center gap-1 ${isActive
+                          ? "bg-indigo-600 text-white border-black shadow-[1px_1px_0px_#000]"
+                          : "bg-white hover:bg-indigo-100 text-indigo-900 border-indigo-400"
+                          }`}
+                        title={`Run only up to CTE "${cte.name}" (max 50 rows)`}
+                      >
+                        <span>{idx + 1}. {cte.name}</span>
+                      </button>
+                    );
+                  })}
+                  <span className="text-indigo-400 text-xs font-black">→</span>
                   <button
-                    onClick={() => setActiveResultTab("diff")}
-                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${
-                      activeResultTab === "diff"
-                        ? "border-red-600"
-                        : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
+                    type="button"
+                    disabled={isRunning || isSubmitting}
+                    onClick={handleRunQuery}
+                    className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all ${activeCtePreview === null && runResult
+                      ? "bg-emerald-600 text-white border-black"
+                      : "bg-white hover:bg-emerald-50 text-emerald-900 border-emerald-400"
+                      }`}
                   >
-                    Expected Diff View
+                    Final SELECT
                   </button>
-                )}
+                </div>
+              </div>
+            )}
+
+            {/* Dialect Info Banner */}
+            {selectedDialect !== "PostgreSQL" && (
+              <div className="bg-[#FFE600]/20 border-b border-black/10 px-3 py-1 flex items-center justify-between text-[11px] font-mono text-black shrink-0">
+                <span className="flex items-center gap-1.5 truncate">
+                  <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                  <span className="truncate">
+                    {selectedDialect === "MySQL" && "MySQL syntax active: `backticks`, LIMIT offset,count, IF(), IFNULL(), GROUP_CONCAT(), DATE_ADD(), DATEDIFF(), REGEXP."}
+                    {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: SELECT TOP N, [brackets], ISNULL(), LEN(), IIF(), DATEADD(), DATEDIFF(), CHARINDEX()."}
+                    {selectedDialect === "Oracle" && "Oracle SQL active: FROM DUAL, ROWNUM, NVL(), NVL2(), DECODE(), ADD_MONTHS(), TRUNC(), SYSDATE."}
+                  </span>
+                </span>
+                <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>
+              </div>
+            )}
+
+            {/* Monaco Editor Container (Takes full space on mobile if mobileView === 'editor') */}
+            <div
+              className={`flex-1 min-h-[160px] relative ${mobileView === "results" ? "hidden md:block" : "block"
+                }`}
+            >
+              <MonacoEditor
+                height="100%"
+                language={monacoLanguage}
+                theme="vs-dark"
+                value={userSql}
+                onChange={(val) => setUserSql(val || "")}
+                onMount={(editor, monaco) => {
+                  editor.addCommand(
+                    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                    () => {
+                      runQueryRef.current();
+                    }
+                  );
+                  editor.addCommand(
+                    monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+                    () => {
+                      submitQueryRef.current();
+                    }
+                  );
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  lineNumbers: "on",
+                  roundedSelection: true,
+                  scrollBeyondLastLine: false,
+                  wordWrap: "on",
+                  padding: { top: 12, bottom: 12 },
+                  automaticLayout: true,
+                }}
+              />
+            </div>
+
+            {/* Actions Bar (Run & Submit) */}
+            <div
+              className={`bg-[var(--surface)] border-t border-[var(--sky)] px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 gap-2 ${mobileView === "results" ? "hidden md:flex" : "flex"
+                }`}
+            >
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMobileView("results")}
+                  className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs font-bold text-[var(--ink)] shadow-sm"
+                >
+                  <Table2 className="w-3.5 h-3.5" />
+                  <span>Results</span>
+                  {runResult && (
+                    <span className="text-[10px] bg-black text-white px-1.5 rounded-full font-bold">
+                      {runResult.rowCount}
+                    </span>
+                  )}
+                </button>
+                <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
+                  Ctrl+Enter to Run
+                  Ctrl+Enter Run • Ctrl+Shift+Enter Submit
+                </span>
               </div>
 
-              {/* On mobile: quick button back to editor */}
-              <button
-                onClick={() => setMobileView("editor")}
-                className="md:hidden flex items-center gap-1 text-[11px] font-bold text-black bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] mr-1"
-              >
-                <Code2 className="w-3 h-3" />
-                <span>Editor</span>
-              </button>
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={handleRunQuery}
+                  disabled={isRunning || isSubmitting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] transition-all disabled:opacity-50"
+                >
+                  <Play className="w-3.5 h-3.5 text-blue-600 fill-current" />
+                  <span>{isRunning ? "Running..." : "Run Query"}</span>
+                </button>
+
+                <button
+                  onClick={handleSubmitQuery}
+                  disabled={isRunning || isSubmitting}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
+                </button>
+
+                {submitResult?.isCorrect && nextQuestion && (
+                  <Link
+                    href={`/interview/${nextQuestion.id}`}
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black text-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0"
+                  >
+                    <span>Next Question</span>
+                    <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+                  </Link>
+                )}
+              </div>
             </div>
 
-            {/* Console Body */}
-            <div className="flex-1 overflow-auto p-3 text-xs font-mono">
-              {activeResultTab === "results" && (
-                <div>
-                  {!submitResult && !runResult ? (
-                    <div className="h-full flex items-center justify-center text-[var(--ink)] opacity-50 py-10">
-                      Write your SQL query and click "Run Query" or "Submit Code".
-                    </div>
-                  ) : submitResult ? (
-                    <div className="space-y-3">
-                      {submitResult.isCorrect ? (
-                        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_rgba(16,185,129,0.3)]">
-                          <div className="flex items-center gap-3">
-                            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-                            <div>
-                              <span className="font-black text-sm text-emerald-900 block">
-                                Accepted! All Test Cases Passed
-                              </span>
-                              <span className="text-xs text-emerald-700">
-                                Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
-                              </span>
-                            </div>
-                          </div>
-
-                          {nextQuestion ? (
-                            <Link
-                              href={`/interview/${nextQuestion.id}`}
-                              className="px-4 py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0"
-                            >
-                              <span>Next Question</span>
-                              <ChevronRight className="w-4 h-4 stroke-[3]" />
-                            </Link>
-                          ) : (
-                            <Link
-                              href="/interview"
-                              className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 shrink-0"
-                            >
-                              <Trophy className="w-4 h-4" />
-                              <span>All 300 Solved! Back to Hub</span>
-                            </Link>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2 text-red-800 font-black">
-                            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                            <span>{submitResult.code}: {submitResult.message}</span>
-                          </div>
-                          {submitResult.diff && (
-                            <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
-                              Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
-                              <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
-                              <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-[var(--ink)]">
-                      Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
-                    </div>
+            {/* Bottom Results & Console Drawer (Full-height on mobile if mobileView === 'results') */}
+            <div
+              className={`bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden ${mobileView === "results"
+                ? "flex-1 h-full"
+                : "h-56 shrink-0 hidden md:flex"
+                }`}
+            >
+              {/* Console Tab Bar */}
+              <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 justify-between">
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setActiveResultTab("results")}
+                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "results"
+                      ? "border-[var(--ink)] text-[var(--ink)]"
+                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                      }`}
+                  >
+                    Test Results
+                  </button>
+                  <button
+                    onClick={() => setActiveResultTab("output")}
+                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "output"
+                      ? "border-[var(--ink)] text-[var(--ink)]"
+                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                      }`}
+                  >
+                    Query Output ({runResult?.rowCount ?? 0})
+                  </button>
+                  {submitResult && !submitResult.isCorrect && (
+                    <button
+                      onClick={() => setActiveResultTab("diff")}
+                      className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${activeResultTab === "diff"
+                        ? "border-red-600"
+                        : "border-transparent opacity-70 hover:opacity-100"
+                        }`}
+                    >
+                      Expected Diff View
+                    </button>
                   )}
                 </div>
-              )}
 
-              {activeResultTab === "output" && (
+                {/* On mobile: quick button back to editor */}
+                <button
+                  onClick={() => setMobileView("editor")}
+                  className="md:hidden flex items-center gap-1 text-[11px] font-bold text-black bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] mr-1"
+                >
+                  <Code2 className="w-3 h-3" />
+                  <span>Editor</span>
+                </button>
+              </div>
+
+              {/* Console Body */}
+              <div className="flex-1 overflow-auto p-3 text-xs font-mono">
+                {activeResultTab === "results" && (
+                  <div>
+                    {!submitResult && !runResult ? (
+                      <div className="h-full flex items-center justify-center text-[var(--ink)] opacity-50 py-10">
+                        Write your SQL query and click "Run Query" or "Submit Code".
+                      </div>
+                    ) : submitResult ? (
+                      <div className="space-y-3">
+                        {submitResult.isCorrect ? (
+                          <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_rgba(16,185,129,0.3)]">
+                            <div className="flex items-center gap-3">
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                              <div>
+                                <span className="font-black text-sm text-emerald-900 block">
+                                  Accepted! All Test Cases Passed
+                                </span>
+                                <span className="text-xs text-emerald-700">
+                                  Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
+                                </span>
+                              </div>
+                            </div>
+
+                            {nextQuestion ? (
+                              <Link
+                                href={`/interview/${nextQuestion.id}`}
+                                className="px-4 py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0"
+                              >
+                                <span>Next Question</span>
+                                <ChevronRight className="w-4 h-4 stroke-[3]" />
+                              </Link>
+                            ) : (
+                              <Link
+                                href="/interview"
+                                className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 shrink-0"
+                              >
+                                <Trophy className="w-4 h-4" />
+                                <span>All 300 Solved! Back to Hub</span>
+                              </Link>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2">
+                            <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2.5">
+                              <div className="flex items-center gap-2 text-red-800 font-black">
+                                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                                <span>{submitResult.code}: {submitResult.message}</span>
+                              </div>
+                              {submitResult.diagnosisHint && (
+                                <div className="bg-[#FFF9D2] border-2 border-amber-500 rounded-lg p-3 text-xs text-black font-sans flex items-start gap-2">
+                                  <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-black uppercase text-[10px] tracking-wider text-amber-900 block mb-0.5">
+                                      Smart SQL Coach Diagnosis
+                                    </span>
+                                    <p className="font-medium leading-relaxed">{submitResult.diagnosisHint}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {submitResult.diff && (
+                                <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
+                                  Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
+                                  <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
+                                  <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
+                                </div>
+                              )}
+                            </div>
+                      )}
+                          </div>
+                        ) : (
+                        <div className="text-xs text-[var(--ink)]">
+                          Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
+                        </div>
+                  )}
+                      </div>
+                    )}
+
+                    {activeResultTab === "output" && (
                 <div>
+                <div className="space-y-2">
+                  {activeCtePreview && (
+                    <div className="bg-[#EEF2FF] border border-indigo-400 rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-[11px] font-sans">
+                      <span className="font-bold text-indigo-950 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span>
+                          CTE X-Ray Active: showing intermediate output of{" "}
+                          <code className="font-mono font-black bg-white px-1.5 py-0.5 rounded border border-indigo-300">
+                            {activeCtePreview}
+                          </code>{" "}
+                          (first 50 rows)
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleRunQuery}
+                        className="text-[10px] font-black bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded shrink-0"
+                      >
+                        Run Final SELECT
+                      </button>
+                    </div>
+                  )}
                   {runResult?.error ? (
                     <div className="bg-red-50 border border-red-300 rounded p-3 text-red-700">
                       {runResult.error}
@@ -989,6 +1298,13 @@ export default function InterviewProblemWorkspacePage({
                 <div className="space-y-3">
                   <div className="text-[11px] text-[var(--ink)] font-bold">
                     Comparing Your Output vs Expected Output (First 5 rows):
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--ink)] font-bold font-sans">
+                    <span>
+                      Visual Side-by-Side Table Comparison (First 12 rows):
+                    </span>
+                    <span className="text-[10px] font-mono text-black/70">
+                      Mismatch cells highlighted in red vs green
+                    </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* User Output */}
@@ -999,16 +1315,134 @@ export default function InterviewProblemWorkspacePage({
                       <pre className="text-[10px] text-[var(--ink)]">
                         {JSON.stringify(submitResult.actualRows?.slice(0, 5), null, 2)}
                       </pre>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {/* User Output Table */}
+                    <div className="border-2 border-red-400 rounded-lg bg-red-50/40 overflow-x-auto">
+                      <div className="bg-red-100 border-b border-red-300 px-2.5 py-1.5 font-black text-[10px] text-red-800 uppercase">
+                        Your Output ({submitResult.actualRows?.length || 0} rows)
+                      </div>
+                      {submitResult.actualRows && submitResult.actualRows.length > 0 ? (
+                        <table className="w-full text-left border-collapse text-[11px]">
+                          <thead>
+                            <tr className="bg-red-50 border-b border-red-200 font-bold text-black">
+                              <th className="p-1.5 border-r border-red-200 text-black/50">#</th>
+                              {(
+                                submitResult.actualColumns ||
+                                Object.keys(submitResult.actualRows[0] || {})
+                              ).map((c) => (
+                                <th key={c} className="p-1.5 border-r border-red-200 last:border-r-0 whitespace-nowrap">
+                                  {c}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-red-100">
+                            {submitResult.actualRows.slice(0, 12).map((row, rIdx) => {
+                              const cols =
+                                submitResult.actualColumns || Object.keys(row);
+                              const expRow = submitResult.expectedRows?.[rIdx];
+                              return (
+                                <tr key={rIdx}>
+                                  <td className="p-1.5 border-r border-red-100 text-black/50">
+                                    {rIdx + 1}
+                                  </td>
+                                  {cols.map((c) => {
+                                    const differs =
+                                      !expRow ||
+                                      String(row[c] ?? "NULL") !==
+                                        String(expRow[c] ?? "NULL");
+                                    return (
+                                      <td
+                                        key={c}
+                                        className={`p-1.5 border-r border-red-100 last:border-r-0 whitespace-nowrap ${
+                                          differs ? "bg-red-200/70 font-bold text-red-950" : ""
+                                        }`}
+                                      >
+                                        {row[c] === null || row[c] === undefined ? (
+                                          <span className="italic opacity-60">NULL</span>
+                                        ) : (
+                                          String(row[c])
+                                        )}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="p-3 text-[11px] text-red-700 italic">0 rows returned.</div>
+                      )}
                     </div>
 
                     {/* Expected Output */}
                     <div className="border border-emerald-300 rounded bg-emerald-50/50 p-2 overflow-x-auto">
                       <span className="font-bold text-[10px] text-emerald-700 block mb-1 uppercase">
+                    {/* Expected Output Table */}
+                    <div className="border-2 border-emerald-400 rounded-lg bg-emerald-50/40 overflow-x-auto">
+                      <div className="bg-emerald-100 border-b border-emerald-300 px-2.5 py-1.5 font-black text-[10px] text-emerald-900 uppercase">
                         Expected Output ({submitResult.expectedRows?.length || 0} rows)
                       </span>
                       <pre className="text-[10px] text-[var(--ink)]">
                         {JSON.stringify(submitResult.expectedRows?.slice(0, 5), null, 2)}
                       </pre>
+                      </div>
+                      {submitResult.expectedRows && submitResult.expectedRows.length > 0 ? (
+                        <table className="w-full text-left border-collapse text-[11px]">
+                          <thead>
+                            <tr className="bg-emerald-50 border-b border-emerald-200 font-bold text-black">
+                              <th className="p-1.5 border-r border-emerald-200 text-black/50">#</th>
+                              {(
+                                submitResult.expectedColumns ||
+                                Object.keys(submitResult.expectedRows[0] || {})
+                              ).map((c) => (
+                                <th key={c} className="p-1.5 border-r border-emerald-200 last:border-r-0 whitespace-nowrap">
+                                  {c}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-emerald-100">
+                            {submitResult.expectedRows.slice(0, 12).map((row, rIdx) => {
+                              const cols =
+                                submitResult.expectedColumns || Object.keys(row);
+                              const actRow = submitResult.actualRows?.[rIdx];
+                              return (
+                                <tr key={rIdx}>
+                                  <td className="p-1.5 border-r border-emerald-100 text-black/50">
+                                    {rIdx + 1}
+                                  </td>
+                                  {cols.map((c) => {
+                                    const differs =
+                                      !actRow ||
+                                      String(row[c] ?? "NULL") !==
+                                        String(actRow[c] ?? "NULL");
+                                    return (
+                                      <td
+                                        key={c}
+                                        className={`p-1.5 border-r border-emerald-100 last:border-r-0 whitespace-nowrap ${
+                                          differs
+                                            ? "bg-emerald-200/80 font-bold text-emerald-950"
+                                            : ""
+                                        }`}
+                                      >
+                                        {row[c] === null || row[c] === undefined ? (
+                                          <span className="italic opacity-60">NULL</span>
+                                        ) : (
+                                          String(row[c])
+                                        )}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="p-3 text-[11px] text-emerald-700 italic">0 rows expected.</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1046,6 +1480,11 @@ export default function InterviewProblemWorkspacePage({
           </div>
         </div>
       </div>
+
+      <PatternCheatSheetModal
+        isOpen={showPatternCheatSheet}
+        onClose={() => setShowPatternCheatSheet(false)}
+      />
     </div>
-  );
+                );
 }

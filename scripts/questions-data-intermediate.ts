@@ -1,8 +1,9 @@
 import { InterviewQuestion } from "../src/lib/content/interview-questions";
+import { orderAndEnrichIntermediate } from "./upgrades/inter-adv-upgrades";
 
-// Level 2: Intermediate (100 High-Quality Unique Interview Questions)
+// Level 2: Intermediate (100 Smoothly Progressive Interview Questions)
 export function getIntermediateQuestions(): InterviewQuestion[] {
-  return [
+  const raw: InterviewQuestion[] = [
   {
     "id": "inter-101",
     "title": "101. Amazon: Top 2 Highest Revenue Products per Category with Ties",
@@ -3415,4 +3416,5 @@ export function getIntermediateQuestions(): InterviewQuestion[] {
     "number": 200
   }
 ];
+  return orderAndEnrichIntermediate(raw);
 }

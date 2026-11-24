@@ -19,10 +19,13 @@ import {
   Trophy,
   Play,
   RotateCcw,
+  BookOpen,
 } from "lucide-react";
 import FeedbackLink from "@/components/FeedbackLink";
 import { CURRICULUM_TIERS } from "@/lib/content/curriculum-300";
 import { BADGES_DATA } from "@/lib/gamification/badges-data";
+import { INTERVIEW_QUESTIONS } from "@/lib/content/interview-questions";
+import { SKILL_TRACKS, getQuestionSkillTrack } from "@/lib/interview/sql-learning-helpers";
 
 interface UserProfile {
   id: string;
@@ -36,15 +39,27 @@ export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [solvedStats, setSolvedStats] = useState({
-    l1: 0,
-    l2: 0,
-    l3: 0,
-    totalSolved: 0,
-    totalXp: 0,
-    streakDays: 1,
-  });
+    const [solvedStats, setSolvedStats] = useState<{
+      l1: number;
+      l2: number;
+      l3: number;
+      totalSolved: number;
+      academySolved: number;
+      totalXp: number;
+      streakDays: number;
+      skillBreakdown: { track: string; total: number; solved: number; pct: number }[];
+    }>({
+      l1: 0,
+      l2: 0,
+      l3: 0,
+      totalSolved: 0,
+      academySolved: 0,
+      totalXp: 0,
+      streakDays: 1,
+      skillBreakdown: [],
+    });
 
-  useEffect(() => {
+    useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) {
@@ -71,25 +86,60 @@ export default function DashboardPage() {
     try {
       const statsKey = `sql_office_${userId}_user_stats`;
       const interviewSolvedKey = `sql_office_${userId}_interview_solved`;
+      const academySolvedKey = `sql_office_${userId}_academy_solved`;
       const stats = JSON.parse(localStorage.getItem(statsKey) || "{}");
       const interviewSolved = JSON.parse(localStorage.getItem(interviewSolvedKey) || "{}");
+      const academySolvedMap = JSON.parse(localStorage.getItem(academySolvedKey) || "{}");
 
       const interviewCount = Object.keys(interviewSolved).filter((k) => interviewSolved[k]).length;
       const count = Math.max(stats.solvedCount || 0, interviewCount);
+      const l1Real = INTERVIEW_QUESTIONS.filter(
+        (q) => q.difficulty === "Easy" && interviewSolved[q.id]
+      ).length;
+      const l2Real = INTERVIEW_QUESTIONS.filter(
+        (q) => q.difficulty === "Medium" && interviewSolved[q.id]
+      ).length;
+      const l3Real = INTERVIEW_QUESTIONS.filter(
+        (q) => q.difficulty === "Hard" && interviewSolved[q.id]
+      ).length;
+      const realTotal = l1Real + l2Real + l3Real;
 
       // Estimate tier breakdown
       const l1 = Math.min(100, count);
       const l2 = Math.min(100, Math.max(0, count - 100));
       const l3 = Math.min(100, Math.max(0, count - 200));
       const calculatedXp = stats.xp || (l1 * 25 + l2 * 45 + l3 * 80) || 50;
+      const count = realTotal > 0 ? realTotal : (stats.solvedCount || 0);
+      const l1 = realTotal > 0 ? l1Real : Math.min(100, count);
+      const l2 = realTotal > 0 ? l2Real : Math.min(100, Math.max(0, count - 100));
+      const l3 = realTotal > 0 ? l3Real : Math.min(100, Math.max(0, count - 200));
+
+      const academySolved = Object.keys(academySolvedMap).filter(
+        (k) => academySolvedMap[k]
+      ).length;
+
+      const skillBreakdown = SKILL_TRACKS.map((track) => {
+        const qs = INTERVIEW_QUESTIONS.filter((q) => getQuestionSkillTrack(q) === track);
+        const solved = qs.filter((q) => Boolean(interviewSolved[q.id])).length;
+        return {
+          track,
+          total: qs.length,
+          solved,
+          pct: qs.length > 0 ? Math.round((solved / qs.length) * 100) : 0,
+        };
+      });
+
+      const calculatedXp = stats.xp || (l1 * 25 + l2 * 45 + l3 * 80 + academySolved * 15) || 50;
 
       setSolvedStats({
         l1,
         l2,
         l3,
         totalSolved: count,
+        academySolved,
         totalXp: calculatedXp,
         streakDays: stats.streak || 1,
+        skillBreakdown,
       });
     } catch {
       // Ignore
@@ -140,30 +190,39 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/interview"
-              className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
-            >
-              <Zap className="w-4 h-4 text-black fill-black" />
-              <span>Practice 300 Qs</span>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/learn"
+                className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFF9D2] hover:bg-[#FFE600] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
+              >
+                <BookOpen className="w-4 h-4 text-amber-700" />
+                <span>SQL Academy (100 Qs)</span>
+              </Link>
 
-            <Link
-              href="/leaderboard"
-              className="px-3 py-1.5 rounded-lg border-2 border-black bg-[#00E599] hover:bg-[#00D084] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
-            >
-              <Trophy className="w-4 h-4 text-black" />
-              <span>Leaderboard</span>
-            </Link>
+              <Link
+                href="/interview"
+                className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
+              >
+                <Zap className="w-4 h-4 text-black fill-black" />
+                <span>Practice 300 Qs</span>
+              </Link>
 
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-100 text-xs font-black shadow-[2px_2px_0px_#000000]"
-            >
-              Sign Out
-            </button>
+              <Link
+                href="/leaderboard"
+                className="px-3 py-1.5 rounded-lg border-2 border-black bg-[#00E599] hover:bg-[#00D084] text-xs font-black shadow-[2px_2px_0px_#000000] flex items-center gap-1.5 transition-all"
+              >
+                <Trophy className="w-4 h-4 text-black" />
+                <span>Leaderboard</span>
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-100 text-xs font-black shadow-[2px_2px_0px_#000000]"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
-        </div>
       </header>
 
       {/* Main Content */}
@@ -191,6 +250,11 @@ export default function DashboardPage() {
             </div>
             <div className="h-8 w-[2px] bg-black/20" />
             <div className="text-center">
+              <div className="text-2xl font-black text-indigo-700">{solvedStats.academySolved} / 100</div>
+              <div className="text-[10px] font-black uppercase text-black/60">Academy Lessons</div>
+            </div>
+            <div className="h-8 w-[2px] bg-black/20" />
+            <div className="text-center">
               <div className="text-2xl font-black text-amber-600">{solvedStats.totalXp}</div>
               <div className="text-[10px] font-black uppercase text-black/60">Total XP</div>
             </div>
@@ -201,6 +265,72 @@ export default function DashboardPage() {
                 <span>{solvedStats.streakDays}d</span>
               </div>
               <div className="text-[10px] font-black uppercase text-black/60">Active Streak</div>
+            </div>
+          </div>
+        </div>
+
+        {/* SQL Academy + 8-Track Skill Mastery */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-[#FFF9D2] border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0px_#000000] flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase bg-white border border-black px-2 py-0.5 rounded">
+                  Structured Foundations
+                </span>
+                <span className="text-xs font-black">{solvedStats.academySolved}/100</span>
+              </div>
+              <h2 className="text-lg font-black uppercase flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-700" />
+                <span>SQL Academy (100 Qs)</span>
+              </h2>
+              <p className="text-xs text-black/80 font-medium leading-relaxed">
+                Step-by-step interactive SQL lessons from SELECT, JOINs &amp; Subqueries to CTEs, Window Functions, Frame Clauses, and JSONB/EXPLAIN with exact PostgreSQL row verification.
+              </p>
+              <div className="w-full h-2.5 bg-white border-2 border-black rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-600"
+                  style={{ width: `${Math.min(100, solvedStats.academySolved)}%` }}
+                />
+              </div>
+            </div>
+            <Link
+              href="/learn"
+              className="w-full py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000000] flex items-center justify-center gap-1.5"
+            >
+              <Play className="w-3.5 h-3.5 fill-black" />
+              <span>Continue SQL Academy</span>
+            </Link>
+          </div>
+
+          <div className="lg:col-span-2 bg-white border-3 border-black rounded-2xl p-5 shadow-[4px_4px_0px_#000000] space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-black uppercase tracking-tight">
+                Your 8-Track SQL Skill Mastery (Click a Skill to Practice)
+              </h2>
+              <Link href="/interview" className="text-xs font-black underline text-black/75 hover:text-black">
+                Full Catalog →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {solvedStats.skillBreakdown.map((sk) => (
+                <Link
+                  key={sk.track}
+                  href={`/interview?skill=${encodeURIComponent(sk.track)}`}
+                  className="p-2.5 rounded-xl border-2 border-black bg-[#FAF8F5] hover:bg-[#FFE600]/40 transition-colors space-y-1.5"
+                >
+                  <div className="text-[11px] font-black text-black truncate">{sk.track}</div>
+                  <div className="w-full h-2 bg-white border border-black rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#00E599]"
+                      style={{ width: `${sk.pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] font-mono font-bold text-black/70">
+                    <span>{sk.solved}/{sk.total}</span>
+                    <span>{sk.pct}%</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -226,8 +356,8 @@ export default function DashboardPage() {
                 tier.levelNumber === 1
                   ? solvedStats.l1
                   : tier.levelNumber === 2
-                  ? solvedStats.l2
-                  : solvedStats.l3;
+                    ? solvedStats.l2
+                    : solvedStats.l3;
               const tierPct = Math.round((solvedInTier / tier.questionsCount) * 100);
 
               return (

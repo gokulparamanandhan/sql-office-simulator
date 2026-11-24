@@ -1,8 +1,9 @@
 import { InterviewQuestion } from "../src/lib/content/interview-questions";
+import { orderAndEnrichAdvanced } from "./upgrades/inter-adv-upgrades";
 
-// Level 3: Advanced (100 High-Quality Unique Interview Questions)
+// Level 3: Advanced (100 Progressive Staff-Level Interview Questions)
 export function getAdvancedQuestions(): InterviewQuestion[] {
-  return [
+  const raw: InterviewQuestion[] = [
   {
     "id": "adv-201",
     "title": "201. Google: Search Query Sessionization with 30-Minute Inactivity Window",
@@ -3415,4 +3416,5 @@ export function getAdvancedQuestions(): InterviewQuestion[] {
     "number": 300
   }
 ];
+  return orderAndEnrichAdvanced(raw);
 }

@@ -45,6 +45,84 @@ async function ensureInterviewSchema(pg: PGlite, question: InterviewQuestion, is
   return schema;
 }
 
+export interface SchemaTablePreview {
+  tableName: string;
+  columns: Array<{ name: string; type: string }>;
+  sampleRows: Record<string, unknown>[];
+  totalRows: number;
+}
+
+export interface InterviewSchemaPreviewResult {
+  success: boolean;
+  tables: SchemaTablePreview[];
+  expectedColumns?: string[];
+  expectedSampleRows?: Record<string, unknown>[];
+  error?: string;
+}
+
+export async function getInterviewSchemaPreview(
+  questionId: string,
+  includeExpected: boolean = false
+): Promise<InterviewSchemaPreviewResult> {
+  const question = getInterviewQuestionById(questionId);
+  if (!question) {
+    return { success: false, tables: [], error: `Question '${questionId}' not found.` };
+  }
+
+  try {
+    const pg = await getInterviewPg();
+    const schema = await ensureInterviewSchema(pg, question, false);
+    await pg.exec(`SET search_path = "${schema}", public;`);
+
+    const tablesRes = await pg.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE' ORDER BY table_name ASC;`,
+      [schema]
+    );
+
+    const tables: SchemaTablePreview[] = [];
+    for (const row of tablesRes.rows) {
+      const tbl = row.table_name;
+      const safeTbl = `"${schema}"."${tbl.replace(/"/g, '""')}"`;
+      const colsRes = await pg.query<{ column_name: string; data_type: string }>(
+        `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC;`,
+        [schema, tbl]
+      );
+      const countRes = await pg.query<{ cnt: string | number }>(`SELECT COUNT(*) AS cnt FROM ${safeTbl};`);
+      const sampleRes = await pg.query<Record<string, unknown>>(`SELECT * FROM ${safeTbl} LIMIT 8;`);
+
+      tables.push({
+        tableName: tbl,
+        columns: colsRes.rows.map((c) => ({ name: c.column_name, type: c.data_type.toUpperCase() })),
+        sampleRows: sampleRes.rows,
+        totalRows: Number(countRes.rows[0]?.cnt ?? sampleRes.rows.length),
+      });
+    }
+
+    let expectedColumns: string[] | undefined;
+    let expectedSampleRows: Record<string, unknown>[] | undefined;
+
+    if (includeExpected) {
+      const refExec = await pg.exec(question.referenceSql);
+      const refRes = refExec[refExec.length - 1];
+      expectedColumns = refRes?.fields?.map((f: { name: string }) => f.name) || question.expectedColumns;
+      expectedSampleRows = ((refRes?.rows as Record<string, unknown>[]) || []).slice(0, 6);
+    }
+
+    return {
+      success: true,
+      tables,
+      expectedColumns,
+      expectedSampleRows,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      tables: [],
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 export interface RunInterviewQueryResult {
   success: boolean;
   columns: string[];
@@ -76,7 +154,6 @@ export async function runInterviewQuery(
 
   const transpiledSql = transpileDialectToPg(userSql, dialect);
 
-  // Ast Security check
   const security = validateSqlSecurity(transpiledSql);
   if (!security.allowed) {
     return {
@@ -141,6 +218,7 @@ export interface InterviewSubmissionResult {
     | "SYNTAX_ERROR"
     | "SECURITY_VIOLATION";
   message: string;
+  diagnosisHint?: string;
   durationMs: number;
   actualRows?: Record<string, unknown>[];
   expectedRows?: Record<string, unknown>[];
@@ -169,6 +247,74 @@ function normalizeVal(val: unknown, tolerance: number = 0.01): unknown {
   return String(val);
 }
 
+function rowsMatchAsMultiset(
+  actualRows: Record<string, unknown>[],
+  expectedRows: Record<string, unknown>[]
+): boolean {
+  if (actualRows.length !== expectedRows.length) return false;
+  const toKey = (r: Record<string, unknown>) =>
+    JSON.stringify(Object.values(r).map((v) => normalizeVal(v)));
+  const bag = new Map<string, number>();
+  for (const r of expectedRows) {
+    const k = toKey(r);
+    bag.set(k, (bag.get(k) || 0) + 1);
+  }
+  for (const r of actualRows) {
+    const k = toKey(r);
+    const c = bag.get(k) || 0;
+    if (c <= 0) return false;
+    bag.set(k, c - 1);
+  }
+  return true;
+}
+
+function diagnoseSqlMistake(
+  userSql: string,
+  refSql: string,
+  actualRows: Record<string, unknown>[],
+  expectedRows: Record<string, unknown>[],
+  diff?: { expected: unknown; actual: unknown }
+): string | undefined {
+  const u = userSql.toUpperCase();
+  const r = refSql.toUpperCase();
+
+  if (/\bLAST_VALUE\s*\(/i.test(u) && !/UNBOUNDED\s+FOLLOWING/i.test(u)) {
+    return "LAST_VALUE() trap detected: without ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING, PostgreSQL stops at CURRENT ROW.";
+  }
+  if (/\bDENSE_RANK\s*\(/i.test(r) && (/\bRANK\s*\(/i.test(u) || /\bROW_NUMBER\s*\(/i.test(u)) && !/\bDENSE_RANK\s*\(/i.test(u)) {
+    return "Ranking function mismatch: check tie behavior! DENSE_RANK() shares ranks on ties without skipping numbers.";
+  }
+  if (actualRows.length > expectedRows.length) {
+    if (/\bJOIN\b/.test(u) && /\bWITH\b/.test(r) && !/\bWITH\b/.test(u)) {
+      return "Possible join fanout: joining one-to-many tables directly can duplicate rows. Pre-aggregate child tables inside a CTE before joining.";
+    }
+    if (/\bGROUP\s+BY\b/.test(r) && !/\bGROUP\s+BY\b/.test(u)) {
+      return "Missing GROUP BY: your query returned ungrouped detail rows instead of one summary row per group.";
+    }
+    if (/\bDISTINCT\b/.test(r) && !/\bDISTINCT\b/.test(u) && !/\bUNION\b/.test(u)) {
+      return "Extra duplicate rows returned—check whether DISTINCT or UNION (instead of UNION ALL) is required.";
+    }
+    if (/\bLIMIT\b/.test(r) && !/\bLIMIT\b/.test(u)) {
+      return "Your query is missing a LIMIT clause to restrict top-N rows.";
+    }
+  }
+  if (actualRows.length < expectedRows.length) {
+    if (/\bNOT\s+IN\b/.test(u) && actualRows.length === 0) {
+      return "NOT IN returned 0 rows! If the inner column has even one NULL, NOT IN fails. Filter IS NOT NULL or switch to NOT EXISTS.";
+    }
+    if (/\bJOIN\b/.test(u) && !/\bLEFT\s+JOIN\b/.test(u) && /\bLEFT\s+JOIN\b/.test(r)) {
+      return "Missing unmatched rows: INNER JOIN drops zero-activity records. Use LEFT JOIN (and put right-table filters in ON, not WHERE).";
+    }
+  }
+  if (diff && ((diff.actual === null && diff.expected !== null) || (diff.actual !== null && diff.expected === null))) {
+    return "NULL mismatch detected: check COALESCE(..., 0) for arithmetic/defaults or NULLIF(..., 0) for denominators.";
+  }
+  if (/\bOVER\s*\(/i.test(r) && /(ROWS|RANGE)\s+BETWEEN/i.test(r) && !/(ROWS|RANGE)\s+BETWEEN/i.test(u)) {
+    return "Check your window frame clause (ROWS BETWEEN ... AND ...): default RANGE frames merge duplicate sort keys together.";
+  }
+  return undefined;
+}
+
 export async function submitInterviewQuery(
   questionId: string,
   userSql: string,
@@ -188,7 +334,6 @@ export async function submitInterviewQuery(
 
   const transpiledSql = transpileDialectToPg(userSql, dialect);
 
-  // 1. Security Check
   const security = validateSqlSecurity(transpiledSql);
   if (!security.allowed) {
     return {
@@ -203,8 +348,6 @@ export async function submitInterviewQuery(
 
   try {
     const pg = await getInterviewPg();
-
-    // 2. Primary Dataset Evaluation
     const primarySchema = await ensureInterviewSchema(pg, question, false);
     await pg.exec(`SET search_path = "${primarySchema}", public;`);
 
@@ -236,12 +379,12 @@ export async function submitInterviewQuery(
     const actualRows: Record<string, unknown>[] = (userPrimaryRes?.rows as Record<string, unknown>[]) || [];
     const expectedRows: Record<string, unknown>[] = (refPrimaryRes?.rows as Record<string, unknown>[]) || [];
 
-    // Check Columns count
     if (actualCols.length !== expectedCols.length) {
       return {
         isCorrect: false,
         code: "COLUMN_MISMATCH",
         message: `Column count mismatch. Expected ${expectedCols.length} columns (${expectedCols.join(", ")}), but your query returned ${actualCols.length} columns (${actualCols.join(", ")}).`,
+        diagnosisHint: "Ensure your final SELECT outputs the exact requested columns in order.",
         durationMs: Date.now() - startTime,
         actualColumns: actualCols,
         expectedColumns: expectedCols,
@@ -250,12 +393,12 @@ export async function submitInterviewQuery(
       };
     }
 
-    // Check Row Count
     if (actualRows.length !== expectedRows.length) {
       return {
         isCorrect: false,
         code: "ROW_COUNT_MISMATCH",
-        message: `Row count mismatch on sample data. Expected ${expectedRows.length} rows, but your query returned ${actualRows.length} rows. Check your WHERE filters or JOIN conditions.`,
+        message: `Row count mismatch on sample data. Expected ${expectedRows.length} rows, but your query returned ${actualRows.length} rows.`,
+        diagnosisHint: diagnoseSqlMistake(cleanUserSql, question.referenceSql, actualRows, expectedRows),
         durationMs: Date.now() - startTime,
         actualColumns: actualCols,
         expectedColumns: expectedCols,
@@ -264,11 +407,10 @@ export async function submitInterviewQuery(
       };
     }
 
-    // Check Values row by row
+    // Check values row by row
     for (let r = 0; r < expectedRows.length; r++) {
       const expRow = expectedRows[r];
       const actRow = actualRows[r];
-
       const expKeys = Object.keys(expRow);
       const actKeys = Object.keys(actRow);
 
@@ -276,12 +418,21 @@ export async function submitInterviewQuery(
         const expVal = normalizeVal(expRow[expKeys[c]]);
         const actVal = normalizeVal(actRow[actKeys[c]]);
 
-        if (typeof expVal === "number" && typeof actVal === "number") {
-          if (Math.abs(expVal - actVal) > 0.02) {
+        const mismatch =
+          typeof expVal === "number" && typeof actVal === "number"
+            ? Math.abs(expVal - actVal) > 0.02
+            : expVal !== actVal;
+
+        if (mismatch) {
+          if (rowsMatchAsMultiset(actualRows, expectedRows)) {
+            if (!question.orderSensitive) {
+              break;
+            }
             return {
               isCorrect: false,
-              code: "VALUE_MISMATCH",
-              message: `Value discrepancy at row ${r + 1}, column '${actKeys[c]}'. Expected '${expRow[expKeys[c]]}', but received '${actRow[actKeys[c]]}'.`,
+              code: "ORDER_MISMATCH",
+              message: `All ${expectedRows.length} row values match, but their ordering does not match the required sort order.`,
+              diagnosisHint: "Check your ORDER BY direction (ASC vs DESC) and tie-breaker columns.",
               durationMs: Date.now() - startTime,
               actualColumns: actualCols,
               expectedColumns: expectedCols,
@@ -295,11 +446,15 @@ export async function submitInterviewQuery(
               },
             };
           }
-        } else if (expVal !== actVal) {
+
           return {
             isCorrect: false,
             code: "VALUE_MISMATCH",
             message: `Value discrepancy at row ${r + 1}, column '${actKeys[c]}'. Expected '${expRow[expKeys[c]]}', but received '${actRow[actKeys[c]]}'.`,
+            diagnosisHint: diagnoseSqlMistake(cleanUserSql, question.referenceSql, actualRows, expectedRows, {
+              expected: expRow[expKeys[c]],
+              actual: actRow[actKeys[c]],
+            }),
             durationMs: Date.now() - startTime,
             actualColumns: actualCols,
             expectedColumns: expectedCols,
@@ -314,9 +469,11 @@ export async function submitInterviewQuery(
           };
         }
       }
+      if (!question.orderSensitive && rowsMatchAsMultiset(actualRows, expectedRows)) {
+        break;
+      }
     }
 
-    // 3. Hidden Edge-Case Dataset Evaluation (if defined)
     if (question.hiddenTestSql) {
       const valSchema = await ensureInterviewSchema(pg, question, true);
       await pg.exec(`SET search_path = "${valSchema}", public;`);
@@ -334,7 +491,8 @@ export async function submitInterviewQuery(
         return {
           isCorrect: false,
           code: "HIDDEN_TEST_FAILED",
-          message: `Passed sample data, but failed on hidden edge-case test case! Expected ${valExpRows.length} rows, but got ${valActRows.length}. Review ties, zero denominators, or NULL handling.`,
+          message: `Passed sample data, but failed on hidden edge-case test case! Expected ${valExpRows.length} rows, but got ${valActRows.length}.`,
+          diagnosisHint: "Review ties, zero denominators (NULLIF), or NULL handling.",
           durationMs: Date.now() - startTime,
         };
       }
@@ -360,4 +518,3 @@ export async function submitInterviewQuery(
     };
   }
 }
-
