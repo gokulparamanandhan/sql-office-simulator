@@ -31,19 +31,16 @@ import {
   Layers,
   Terminal,
   Lightbulb,
-  Wand2,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import FeedbackLink from "@/components/FeedbackLink";
 import { getInterviewQuestionById, INTERVIEW_QUESTIONS } from "@/lib/content/interview-questions";
 import ConceptPrimerPanel from "@/components/learning/ConceptPrimerPanel";
 import VisualSchemaExplorer from "@/components/learning/VisualSchemaExplorer";
-import PatternCheatSheetModal from "@/components/learning/PatternCheatSheetModal";
 import {
   extractCtesFromSql,
   buildCtePreviewSql,
   resolveConceptPrimer,
-  resolveBlueprintSql,
 } from "@/lib/interview/sql-learning-helpers";
 
 // Dynamically import Monaco Editor to avoid SSR hydration issues
@@ -105,7 +102,6 @@ export default function InterviewProblemWorkspacePage({
   const [showSolutionConfirm, setShowSolutionConfirm] = useState<boolean>(false);
   const [solutionRevealed, setSolutionRevealed] = useState<boolean>(false);
   const [unlockedHints, setUnlockedHints] = useState<number[]>([0]);
-  const [showPatternCheatSheet, setShowPatternCheatSheet] = useState<boolean>(false);
   const [activeCtePreview, setActiveCtePreview] = useState<string | null>(null);
 
   // Auth gate: redirect unauthenticated users to signup
@@ -321,12 +317,6 @@ export default function InterviewProblemWorkspacePage({
     } finally {
       setIsRunning(false);
     }
-  };
-
-  const handleInsertBlueprint = () => {
-    if (!question) return;
-    setUserSql(resolveBlueprintSql(question));
-    setActiveCtePreview(null);
   };
 
   const handleSubmitQuery = async () => {
@@ -618,8 +608,8 @@ export default function InterviewProblemWorkspacePage({
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
             {activeTab === "problem" && (
               <div className="space-y-5">
-                {/* Stage / Concept / Pattern Badges */}
-                {(question.stage || question.rampStep || question.patternTag) && (
+                {/* Stage / Concept Badges */}
+                {(question.stage || question.rampStep) && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     {question.stage && (
                       <span className="text-[10px] font-black uppercase bg-[#E3F2FD] text-black border border-black px-2 py-0.5 rounded shadow-[1px_1px_0px_#000]">
@@ -629,11 +619,6 @@ export default function InterviewProblemWorkspacePage({
                     {question.rampStep && (
                       <span className="text-[10px] font-black uppercase bg-[#FFF3C4] text-black border border-black px-2 py-0.5 rounded">
                         {question.rampStep}
-                      </span>
-                    )}
-                    {question.patternTag && (
-                      <span className="text-[10px] font-bold bg-[#F3E8FF] text-purple-900 border border-purple-400 px-2 py-0.5 rounded">
-                        Pattern: {question.patternTag}
                       </span>
                     )}
                   </div>
@@ -653,7 +638,7 @@ export default function InterviewProblemWorkspacePage({
                           Need a quick refresher? {conceptPrimer.title}
                         </span>
                         <span className="text-[11px] font-medium text-black/75 block truncate">
-                          Open Syntax Blueprint &amp; Visual Window/Frame Simulator
+                          Open Concept Refresher &amp; Visual Window/Frame Simulator
                         </span>
                       </div>
                     </div>
@@ -688,14 +673,23 @@ export default function InterviewProblemWorkspacePage({
                 </div>
 
                 {/* Markdown Description */}
-                <div className="prose prose-sm max-w-none text-[var(--ink)] space-y-4 text-xs sm:text-sm leading-relaxed">
+                <div className="max-w-none text-[var(--ink)] text-xs sm:text-sm leading-7 break-words">
                   <div
                     dangerouslySetInnerHTML={{
                       __html: question.description
-                        .replace(/### (.*?)\n/g, '<h3 class="font-black text-sm text-[var(--ink)] mt-4 mb-2 pb-1 border-b border-[var(--sky)]">$1</h3>')
+                        .replace(/### (.*?)\n/g, '<h3 class="font-black text-sm text-[var(--ink)] mt-5 mb-2.5 pb-1 border-b border-[var(--sky)]">$1</h3>')
                         .replace(/\*\*(.*?)\*\*/g, '<strong class="font-black text-[var(--ink)]">$1</strong>')
-                        .replace(/`([^`]+)`/g, '<code class="bg-[#F5EFEB] border border-black text-black font-mono font-bold text-[11px] px-1.5 py-0.5 rounded shadow-[1px_1px_0px_#000]">$1</code>')
-                        .replace(/- (.*?)\n/g, '<li class="ml-4 list-disc text-xs">$1</li>')
+                        .replace(/`([^`]+)`/g, (_m, code) => `<code class="bg-[var(--paper-beige)] border border-[var(--ink)]/25 text-[var(--ink)] font-mono font-semibold text-[11px] px-1.5 py-0.5 rounded mx-0.5">${String(code).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`)
+                        .replace(/(?:^- .*(?:\n|$))+/gm, (block) => {
+                          const items = block
+                            .trim()
+                            .split("\n")
+                            .map((line) => `<li class="ml-5 list-disc text-xs sm:text-[13px] leading-7 my-1">${line.replace(/^- /, "")}</li>`)
+                            .join("");
+                          return `<ul class="my-2 space-y-1">${items}</ul>`;
+                        })
+                        .replace(/\n\n+/g, '</p><p class="my-2.5 leading-7">')
+                        .replace(/\n/g, "<br />")
                     }}
                   />
                 </div>
@@ -918,24 +912,6 @@ export default function InterviewProblemWorkspacePage({
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
-                  type="button"
-                  onClick={handleInsertBlueprint}
-                  className="flex items-center gap-1 text-[11px] font-black text-black bg-[#E3F2FD] hover:bg-[#BBDEFB] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] transition-colors"
-                  title="Insert a guided SQL skeleton with blank TODO slots"
-                >
-                  <Wand2 className="w-3 h-3 text-blue-700" />
-                  <span className="hidden sm:inline">Blueprint</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPatternCheatSheet(true)}
-                  className="flex items-center gap-1 text-[11px] font-black text-black bg-[#FFF9D2] hover:bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] transition-colors"
-                  title="Open 8 Reusable SQL Patterns Cheat-Sheet"
-                >
-                  <BookOpen className="w-3 h-3 text-amber-700" />
-                  <span className="hidden md:inline">Patterns</span>
-                </button>
-                <button
                   onClick={() => {
                     setUserSql(question.starterSql);
                     setActiveCtePreview(null);
@@ -950,286 +926,286 @@ export default function InterviewProblemWorkspacePage({
             </div>
           </div>
 
-            {/* CTE X-Ray Step-by-Step Inspector Bar */}
-            {parsedUserCtes.ctes.length > 0 && (
-              <div className="bg-[#EEF2FF] border-b border-indigo-200 px-3 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0">
-                <span className="text-[10px] font-black uppercase text-indigo-900 flex items-center gap-1 shrink-0">
-                  <Layers className="w-3 h-3 text-indigo-600" />
-                  CTE X-Ray:
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {parsedUserCtes.ctes.map((cte, idx) => {
-                    const isActive = activeCtePreview === cte.name;
-                    return (
-                      <button
-                        key={cte.name}
-                        type="button"
-                        disabled={isRunning || isSubmitting}
-                        onClick={() => handleRunCtePreview(userSql, cte.name)}
-                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all flex items-center gap-1 ${isActive
-                          ? "bg-indigo-600 text-white border-black shadow-[1px_1px_0px_#000]"
-                          : "bg-white hover:bg-indigo-100 text-indigo-900 border-indigo-400"
-                          }`}
-                        title={`Run only up to CTE "${cte.name}" (max 50 rows)`}
-                      >
-                        <span>{idx + 1}. {cte.name}</span>
-                      </button>
-                    );
-                  })}
-                  <span className="text-indigo-400 text-xs font-black">→</span>
-                  <button
-                    type="button"
-                    disabled={isRunning || isSubmitting}
-                    onClick={handleRunQuery}
-                    className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all ${activeCtePreview === null && runResult
-                      ? "bg-emerald-600 text-white border-black"
-                      : "bg-white hover:bg-emerald-50 text-emerald-900 border-emerald-400"
-                      }`}
-                  >
-                    Final SELECT
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Dialect Info Banner */}
-            {selectedDialect !== "PostgreSQL" && (
-              <div className="bg-[#FFE600]/20 border-b border-black/10 px-3 py-1 flex items-center justify-between text-[11px] font-mono text-black shrink-0">
-                <span className="flex items-center gap-1.5 truncate">
-                  <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
-                  <span className="truncate">
-                    {selectedDialect === "MySQL" && "MySQL syntax active: `backticks`, LIMIT offset,count, IF(), IFNULL(), GROUP_CONCAT(), DATE_ADD(), DATEDIFF(), REGEXP."}
-                    {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: SELECT TOP N, [brackets], ISNULL(), LEN(), IIF(), DATEADD(), DATEDIFF(), CHARINDEX()."}
-                    {selectedDialect === "Oracle" && "Oracle SQL active: FROM DUAL, ROWNUM, NVL(), NVL2(), DECODE(), ADD_MONTHS(), TRUNC(), SYSDATE."}
-                  </span>
-                </span>
-                <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>
-              </div>
-            )}
-
-            {/* Monaco Editor Container (Takes full space on mobile if mobileView === 'editor') */}
-            <div
-              className={`flex-1 min-h-[160px] relative ${mobileView === "results" ? "hidden md:block" : "block"
-                }`}
-            >
-              <MonacoEditor
-                height="100%"
-                language={monacoLanguage}
-                theme="vs-dark"
-                value={userSql}
-                onChange={(val) => setUserSql(val || "")}
-                onMount={(editor, monaco) => {
-                  editor.addCommand(
-                    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-                    () => {
-                      runQueryRef.current();
-                    }
-                  );
-                  editor.addCommand(
-                    monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-                    () => {
-                      submitQueryRef.current();
-                    }
-                  );
-                }}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  lineNumbers: "on",
-                  roundedSelection: true,
-                  scrollBeyondLastLine: false,
-                  wordWrap: "on",
-                  padding: { top: 12, bottom: 12 },
-                  automaticLayout: true,
-                }}
-              />
-            </div>
-
-            {/* Actions Bar (Run & Submit) */}
-            <div
-              className={`bg-[var(--surface)] border-t border-[var(--sky)] px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 gap-2 ${mobileView === "results" ? "hidden md:flex" : "flex"
-                }`}
-            >
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setMobileView("results")}
-                  className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs font-bold text-[var(--ink)] shadow-sm"
-                >
-                  <Table2 className="w-3.5 h-3.5" />
-                  <span>Results</span>
-                  {runResult && (
-                    <span className="text-[10px] bg-black text-white px-1.5 rounded-full font-bold">
-                      {runResult.rowCount}
-                    </span>
-                  )}
-                </button>
-                <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
-                  Ctrl+Enter to Run
-                  Ctrl+Enter Run • Ctrl+Shift+Enter Submit
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  onClick={handleRunQuery}
-                  disabled={isRunning || isSubmitting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] transition-all disabled:opacity-50"
-                >
-                  <Play className="w-3.5 h-3.5 text-blue-600 fill-current" />
-                  <span>{isRunning ? "Running..." : "Run Query"}</span>
-                </button>
-
-                <button
-                  onClick={handleSubmitQuery}
-                  disabled={isRunning || isSubmitting}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
-                >
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
-                </button>
-
-                {submitResult?.isCorrect && nextQuestion && (
-                  <Link
-                    href={`/interview/${nextQuestion.id}`}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black text-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0"
-                  >
-                    <span>Next Question</span>
-                    <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Results & Console Drawer (Full-height on mobile if mobileView === 'results') */}
-            <div
-              className={`bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden ${mobileView === "results"
-                ? "flex-1 h-full"
-                : "h-56 shrink-0 hidden md:flex"
-                }`}
-            >
-              {/* Console Tab Bar */}
-              <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 justify-between">
-                <div className="flex items-center">
-                  <button
-                    onClick={() => setActiveResultTab("results")}
-                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "results"
-                      ? "border-[var(--ink)] text-[var(--ink)]"
-                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                      }`}
-                  >
-                    Test Results
-                  </button>
-                  <button
-                    onClick={() => setActiveResultTab("output")}
-                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "output"
-                      ? "border-[var(--ink)] text-[var(--ink)]"
-                      : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
-                      }`}
-                  >
-                    Query Output ({runResult?.rowCount ?? 0})
-                  </button>
-                  {submitResult && !submitResult.isCorrect && (
+          {/* CTE X-Ray Step-by-Step Inspector Bar */}
+          {parsedUserCtes.ctes.length > 0 && (
+            <div className="bg-[#EEF2FF] border-b border-indigo-200 px-3 py-1.5 flex items-center gap-2 overflow-x-auto scrollbar-none shrink-0">
+              <span className="text-[10px] font-black uppercase text-indigo-900 flex items-center gap-1 shrink-0">
+                <Layers className="w-3 h-3 text-indigo-600" />
+                CTE X-Ray:
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {parsedUserCtes.ctes.map((cte, idx) => {
+                  const isActive = activeCtePreview === cte.name;
+                  return (
                     <button
-                      onClick={() => setActiveResultTab("diff")}
-                      className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${activeResultTab === "diff"
-                        ? "border-red-600"
-                        : "border-transparent opacity-70 hover:opacity-100"
+                      key={cte.name}
+                      type="button"
+                      disabled={isRunning || isSubmitting}
+                      onClick={() => handleRunCtePreview(userSql, cte.name)}
+                      className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all flex items-center gap-1 ${isActive
+                        ? "bg-indigo-600 text-white border-black shadow-[1px_1px_0px_#000]"
+                        : "bg-white hover:bg-indigo-100 text-indigo-900 border-indigo-400"
                         }`}
+                      title={`Run only up to CTE "${cte.name}" (max 50 rows)`}
                     >
-                      Expected Diff View
+                      <span>{idx + 1}. {cte.name}</span>
                     </button>
-                  )}
-                </div>
-
-                {/* On mobile: quick button back to editor */}
+                  );
+                })}
+                <span className="text-indigo-400 text-xs font-black">→</span>
                 <button
-                  onClick={() => setMobileView("editor")}
-                  className="md:hidden flex items-center gap-1 text-[11px] font-bold text-black bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] mr-1"
+                  type="button"
+                  disabled={isRunning || isSubmitting}
+                  onClick={handleRunQuery}
+                  className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition-all ${activeCtePreview === null && runResult
+                    ? "bg-emerald-600 text-white border-black"
+                    : "bg-white hover:bg-emerald-50 text-emerald-900 border-emerald-400"
+                    }`}
                 >
-                  <Code2 className="w-3 h-3" />
-                  <span>Editor</span>
+                  Final SELECT
                 </button>
               </div>
+            </div>
+          )}
 
-              {/* Console Body */}
-              <div className="flex-1 overflow-auto p-3 text-xs font-mono">
-                {activeResultTab === "results" && (
-                  <div>
-                    {!submitResult && !runResult ? (
-                      <div className="h-full flex items-center justify-center text-[var(--ink)] opacity-50 py-10">
-                        Write your SQL query and click "Run Query" or "Submit Code".
-                      </div>
-                    ) : submitResult ? (
-                      <div className="space-y-3">
-                        {submitResult.isCorrect ? (
-                          <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_rgba(16,185,129,0.3)]">
-                            <div className="flex items-center gap-3">
-                              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
-                              <div>
-                                <span className="font-black text-sm text-emerald-900 block">
-                                  Accepted! All Test Cases Passed
-                                </span>
-                                <span className="text-xs text-emerald-700">
-                                  Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
-                                </span>
-                              </div>
-                            </div>
+          {/* Dialect Info Banner */}
+          {selectedDialect !== "PostgreSQL" && (
+            <div className="bg-[#FFE600]/20 border-b border-black/10 px-3 py-1 flex items-center justify-between text-[11px] font-mono text-black shrink-0">
+              <span className="flex items-center gap-1.5 truncate">
+                <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                <span className="truncate">
+                  {selectedDialect === "MySQL" && "MySQL syntax active: `backticks`, LIMIT offset,count, IF(), IFNULL(), GROUP_CONCAT(), DATE_ADD(), DATEDIFF(), REGEXP."}
+                  {selectedDialect === "MSSQL" && "MSSQL (T-SQL) active: SELECT TOP N, [brackets], ISNULL(), LEN(), IIF(), DATEADD(), DATEDIFF(), CHARINDEX()."}
+                  {selectedDialect === "Oracle" && "Oracle SQL active: FROM DUAL, ROWNUM, NVL(), NVL2(), DECODE(), ADD_MONTHS(), TRUNC(), SYSDATE."}
+                </span>
+              </span>
+              <span className="text-[10px] font-bold opacity-60 shrink-0 ml-2">Engine: PG 16</span>
+            </div>
+          )}
 
-                            {nextQuestion ? (
-                              <Link
-                                href={`/interview/${nextQuestion.id}`}
-                                className="px-4 py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0"
-                              >
-                                <span>Next Question</span>
-                                <ChevronRight className="w-4 h-4 stroke-[3]" />
-                              </Link>
-                            ) : (
-                              <Link
-                                href="/interview"
-                                className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 shrink-0"
-                              >
-                                <Trophy className="w-4 h-4" />
-                                <span>All 300 Solved! Back to Hub</span>
-                              </Link>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2.5">
-                            <div className="flex items-center gap-2 text-red-800 font-black">
-                              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                              <span>{submitResult.code}: {submitResult.message}</span>
-                            </div>
-                            {submitResult.diagnosisHint && (
-                              <div className="bg-[#FFF9D2] border-2 border-amber-500 rounded-lg p-3 text-xs text-black font-sans flex items-start gap-2">
-                                <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                <div>
-                                  <span className="font-black uppercase text-[10px] tracking-wider text-amber-900 block mb-0.5">
-                                    Smart SQL Coach Diagnosis
-                                  </span>
-                                  <p className="font-medium leading-relaxed">{submitResult.diagnosisHint}</p>
-                                </div>
-                              </div>
-                            )}
-                            {submitResult.diff && (
-                              <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
-                                Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
-                                <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
-                                <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-[var(--ink)]">
-                        Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
-                      </div>
-                    )}
-                  </div>
+          {/* Monaco Editor Container (Takes full space on mobile if mobileView === 'editor') */}
+          <div
+            className={`flex-1 min-h-[160px] relative ${mobileView === "results" ? "hidden md:block" : "block"
+              }`}
+          >
+            <MonacoEditor
+              height="100%"
+              language={monacoLanguage}
+              theme="vs-dark"
+              value={userSql}
+              onChange={(val) => setUserSql(val || "")}
+              onMount={(editor, monaco) => {
+                editor.addCommand(
+                  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                  () => {
+                    runQueryRef.current();
+                  }
+                );
+                editor.addCommand(
+                  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+                  () => {
+                    submitQueryRef.current();
+                  }
+                );
+              }}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                lineNumbers: "on",
+                roundedSelection: true,
+                scrollBeyondLastLine: false,
+                wordWrap: "on",
+                padding: { top: 12, bottom: 12 },
+                automaticLayout: true,
+              }}
+            />
+          </div>
+
+          {/* Actions Bar (Run & Submit) */}
+          <div
+            className={`bg-[var(--surface)] border-t border-[var(--sky)] px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 gap-2 ${mobileView === "results" ? "hidden md:flex" : "flex"
+              }`}
+          >
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMobileView("results")}
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[var(--sky)] bg-[var(--white)] text-xs font-bold text-[var(--ink)] shadow-sm"
+              >
+                <Table2 className="w-3.5 h-3.5" />
+                <span>Results</span>
+                {runResult && (
+                  <span className="text-[10px] bg-black text-white px-1.5 rounded-full font-bold">
+                    {runResult.rowCount}
+                  </span>
                 )}
+              </button>
+              <span className="text-[11px] text-[var(--ink)] opacity-60 font-mono hidden sm:inline">
+                Ctrl+Enter to Run
+                Ctrl+Enter Run • Ctrl+Shift+Enter Submit
+              </span>
+            </div>
 
-                    {activeResultTab === "output" && (
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={handleRunQuery}
+                disabled={isRunning || isSubmitting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--mist)] text-xs font-bold text-[var(--ink)] shadow-[2px_2px_0px_var(--ink)] transition-all disabled:opacity-50"
+              >
+                <Play className="w-3.5 h-3.5 text-blue-600 fill-current" />
+                <span>{isRunning ? "Running..." : "Run Query"}</span>
+              </button>
+
+              <button
+                onClick={handleSubmitQuery}
+                disabled={isRunning || isSubmitting}
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-xs font-black text-white shadow-[2px_2px_0px_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>{isSubmitting ? "Grading..." : "Submit Code"}</span>
+              </button>
+
+              {submitResult?.isCorrect && nextQuestion && (
+                <Link
+                  href={`/interview/${nextQuestion.id}`}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border-2 border-black bg-[#FFE600] hover:bg-[#FDD835] text-xs font-black text-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all shrink-0"
+                >
+                  <span>Next Question</span>
+                  <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Results & Console Drawer (Full-height on mobile if mobileView === 'results') */}
+          <div
+            className={`bg-[var(--white)] border-t-2 border-[var(--sky)] flex flex-col overflow-hidden ${mobileView === "results"
+              ? "flex-1 h-full"
+              : "h-56 shrink-0 hidden md:flex"
+              }`}
+          >
+            {/* Console Tab Bar */}
+            <div className="flex items-center border-b border-[var(--sky)] bg-[var(--surface)] px-2 shrink-0 justify-between">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setActiveResultTab("results")}
+                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "results"
+                    ? "border-[var(--ink)] text-[var(--ink)]"
+                    : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                    }`}
+                >
+                  Test Results
+                </button>
+                <button
+                  onClick={() => setActiveResultTab("output")}
+                  className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors ${activeResultTab === "output"
+                    ? "border-[var(--ink)] text-[var(--ink)]"
+                    : "border-transparent text-[var(--ink)] opacity-60 hover:opacity-100"
+                    }`}
+                >
+                  Query Output ({runResult?.rowCount ?? 0})
+                </button>
+                {submitResult && !submitResult.isCorrect && (
+                  <button
+                    onClick={() => setActiveResultTab("diff")}
+                    className={`py-2 px-3 text-xs font-bold border-b-2 transition-colors text-red-600 ${activeResultTab === "diff"
+                      ? "border-red-600"
+                      : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                  >
+                    Expected Diff View
+                  </button>
+                )}
+              </div>
+
+              {/* On mobile: quick button back to editor */}
+              <button
+                onClick={() => setMobileView("editor")}
+                className="md:hidden flex items-center gap-1 text-[11px] font-bold text-black bg-[#FFE600] px-2 py-1 rounded border border-black shadow-[1px_1px_0px_#000] mr-1"
+              >
+                <Code2 className="w-3 h-3" />
+                <span>Editor</span>
+              </button>
+            </div>
+
+            {/* Console Body */}
+            <div className="flex-1 overflow-auto p-3 text-xs font-mono">
+              {activeResultTab === "results" && (
+                <div>
+                  {!submitResult && !runResult ? (
+                    <div className="h-full flex items-center justify-center text-[var(--ink)] opacity-50 py-10">
+                      Write your SQL query and click "Run Query" or "Submit Code".
+                    </div>
+                  ) : submitResult ? (
+                    <div className="space-y-3">
+                      {submitResult.isCorrect ? (
+                        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_rgba(16,185,129,0.3)]">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                            <div>
+                              <span className="font-black text-sm text-emerald-900 block">
+                                Accepted! All Test Cases Passed
+                              </span>
+                              <span className="text-xs text-emerald-700">
+                                Runtime: {submitResult.durationMs}ms • Both sample data and hidden edge cases verified.
+                              </span>
+                            </div>
+                          </div>
+
+                          {nextQuestion ? (
+                            <Link
+                              href={`/interview/${nextQuestion.id}`}
+                              className="px-4 py-2 bg-[#FFE600] hover:bg-[#FDD835] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0"
+                            >
+                              <span>Next Question</span>
+                              <ChevronRight className="w-4 h-4 stroke-[3]" />
+                            </Link>
+                          ) : (
+                            <Link
+                              href="/interview"
+                              className="px-4 py-2 bg-[#00E599] text-black border-2 border-black rounded-lg font-black text-xs shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 shrink-0"
+                            >
+                              <Trophy className="w-4 h-4" />
+                              <span>All 300 Solved! Back to Hub</span>
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 space-y-2.5">
+                          <div className="flex items-center gap-2 text-red-800 font-black">
+                            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                            <span>{submitResult.code}: {submitResult.message}</span>
+                          </div>
+                          {submitResult.diagnosisHint && (
+                            <div className="bg-[#FFF9D2] border-2 border-amber-500 rounded-lg p-3 text-xs text-black font-sans flex items-start gap-2">
+                              <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <div>
+                                <span className="font-black uppercase text-[10px] tracking-wider text-amber-900 block mb-0.5">
+                                  Smart SQL Coach Diagnosis
+                                </span>
+                                <p className="font-medium leading-relaxed">{submitResult.diagnosisHint}</p>
+                              </div>
+                            </div>
+                          )}
+                          {submitResult.diff && (
+                            <div className="text-[11px] bg-red-100 border border-red-300 rounded p-2 text-red-900 font-mono">
+                              Discrepancy at Row {submitResult.diff.rowIndex + 1}, column '{submitResult.diff.column}':
+                              <div className="mt-1">Expected: <span className="font-bold text-emerald-700">{String(submitResult.diff.expected)}</span></div>
+                              <div>Actual: <span className="font-bold text-red-700">{String(submitResult.diff.actual)}</span></div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-[var(--ink)]">
+                      Ran query in {runResult?.durationMs}ms. Switched to Query Output tab.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeResultTab === "output" && (
                 <div className="space-y-2">
                   {activeCtePreview && (
                     <div className="bg-[#EEF2FF] border border-indigo-400 rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-[11px] font-sans">
@@ -1334,13 +1310,12 @@ export default function InterviewProblemWorkspacePage({
                                     const differs =
                                       !expRow ||
                                       String(row[c] ?? "NULL") !==
-                                        String(expRow[c] ?? "NULL");
+                                      String(expRow[c] ?? "NULL");
                                     return (
                                       <td
                                         key={c}
-                                        className={`p-1.5 border-r border-red-100 last:border-r-0 whitespace-nowrap ${
-                                          differs ? "bg-red-200/70 font-bold text-red-950" : ""
-                                        }`}
+                                        className={`p-1.5 border-r border-red-100 last:border-r-0 whitespace-nowrap ${differs ? "bg-red-200/70 font-bold text-red-950" : ""
+                                          }`}
                                       >
                                         {row[c] === null || row[c] === undefined ? (
                                           <span className="italic opacity-60">NULL</span>
@@ -1394,15 +1369,14 @@ export default function InterviewProblemWorkspacePage({
                                     const differs =
                                       !actRow ||
                                       String(row[c] ?? "NULL") !==
-                                        String(actRow[c] ?? "NULL");
+                                      String(actRow[c] ?? "NULL");
                                     return (
                                       <td
                                         key={c}
-                                        className={`p-1.5 border-r border-emerald-100 last:border-r-0 whitespace-nowrap ${
-                                          differs
-                                            ? "bg-emerald-200/80 font-bold text-emerald-950"
-                                            : ""
-                                        }`}
+                                        className={`p-1.5 border-r border-emerald-100 last:border-r-0 whitespace-nowrap ${differs
+                                          ? "bg-emerald-200/80 font-bold text-emerald-950"
+                                          : ""
+                                          }`}
                                       >
                                         {row[c] === null || row[c] === undefined ? (
                                           <span className="italic opacity-60">NULL</span>
@@ -1457,11 +1431,6 @@ export default function InterviewProblemWorkspacePage({
           </div>
         </div>
       </div>
-
-      <PatternCheatSheetModal
-        isOpen={showPatternCheatSheet}
-        onClose={() => setShowPatternCheatSheet(false)}
-      />
     </div>
-                );
+  );
 }

@@ -79,37 +79,23 @@ export default function LearnAcademyPage() {
   const submitRef = useRef<(mode: "run" | "submit", overrideSql?: string, cteLabel?: string | null) => void>(() => {});
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (cancelled) return;
-      try {
-        const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
-        const stored = localStorage.getItem(`sql_office_${currentUserId}_academy_solved`);
-        if (stored) {
-          setSolvedMap(JSON.parse(stored));
-        }
-      } catch {
-        // Ignore
+    try {
+      const currentUserId = localStorage.getItem("sql_office_last_user_id") || "guest";
+      const stored = localStorage.getItem(`sql_office_${currentUserId}_academy_solved`);
+      if (stored) {
+        setSolvedMap(JSON.parse(stored));
       }
-    });
-    return () => {
-      cancelled = true;
-    };
+    } catch {
+      // Ignore
+    }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (cancelled) return;
-      setUserSql(currentQuestion.starterSql);
-      setRunResult(null);
-      setShowHint(false);
-      setShowSolution(false);
-      setActiveCteLabel(null);
-    });
-    return () => {
-      cancelled = true;
-    };
+    setUserSql(currentQuestion.starterSql);
+    setRunResult(null);
+    setShowHint(false);
+    setShowSolution(false);
+    setActiveCteLabel(null);
   }, [currentQuestion]);
 
   const solvedCount = Object.keys(solvedMap).filter((k) => solvedMap[Number(k)]).length;
@@ -172,6 +158,7 @@ export default function LearnAcademyPage() {
             stats.longestStreak = streakResult.longestStreak;
             stats.lastActiveDate = streakResult.lastActiveDate;
             stats.activeDates = streakResult.activeDates;
+
             localStorage.setItem(statsKey, JSON.stringify(stats));
           } catch {
             // Ignore
@@ -201,9 +188,7 @@ export default function LearnAcademyPage() {
     }
   };
 
-  useEffect(() => {
-    submitRef.current = executeQuery;
-  });
+  submitRef.current = executeQuery;
 
   const handlePreviewCte = (cteName: string) => {
     const previewSql = buildCtePreviewSql(userSql, cteName);
@@ -221,6 +206,7 @@ export default function LearnAcademyPage() {
 
   return (
     <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col font-sans">
+      {/* Top Header */}
       <header className="sticky top-0 z-50 bg-[var(--white)] border-b-2 border-[var(--ink)] px-4 sm:px-8 py-3.5 shadow-[0px_4px_0px_var(--ink)]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -234,7 +220,7 @@ export default function LearnAcademyPage() {
             <div className="h-6 w-[2px] bg-[var(--ink)]" />
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-lg bg-[var(--accent-teal)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
-                <BookOpen className="w-5 h-5 text-[var(--ink)]" />
+                <BookOpen className="w-5 h-5 text-black" />
               </div>
               <div>
                 <h1 className="font-black text-base tracking-tight text-[var(--ink)]">
@@ -255,19 +241,20 @@ export default function LearnAcademyPage() {
             >
               <Layers className="w-3.5 h-3.5" />
               <span>300 Interview Qs</span>
-              <ChevronRight className="w-4 h-4 text-[var(--ink)]" />
+              <ChevronRight className="w-4 h-4 text-black" />
             </Link>
           </div>
         </div>
       </header>
 
+      {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full flex-1 p-4 sm:p-8 space-y-6">
         {/* Progress Bar */}
         <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-5 shadow-[6px_6px_0px_var(--ink)] space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[var(--sun)] border-2 border-[var(--ink)] flex items-center justify-center shadow-[2px_2px_0px_var(--ink)]">
-                <Award className="w-5 h-5 text-[var(--ink)]" />
+                <Award className="w-5 h-5 text-black" />
               </div>
               <div>
                 <div className="text-xs font-black uppercase text-[var(--ink)] opacity-70">
@@ -282,12 +269,12 @@ export default function LearnAcademyPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowSchema((s) => !s)}
-                className="px-3 py-1.5 bg-[var(--white)] hover:bg-[var(--paper-beige)] border-2 border-[var(--ink)] text-xs font-black rounded-lg shadow-[2px_2px_0px_var(--ink)] flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-[var(--white)] hover:bg-[var(--paper-beige)] text-[var(--ink)] border-2 border-[var(--ink)] text-xs font-black rounded-lg shadow-[2px_2px_0px_var(--ink)] flex items-center gap-1.5"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span>{showSchema ? "Hide Tables" : "E-Commerce Tables"}</span>
               </button>
-              <span className="px-3 py-1.5 bg-[var(--accent-teal)] border-2 border-[var(--ink)] text-xs font-black rounded-lg shadow-[2px_2px_0px_var(--ink)]">
+              <span className="px-3 py-1.5 bg-[var(--accent-teal)] text-black border-2 border-[var(--ink)] text-xs font-black rounded-lg shadow-[2px_2px_0px_var(--ink)]">
                 {progressPct}% COMPLETE
               </span>
             </div>
@@ -303,7 +290,10 @@ export default function LearnAcademyPage() {
           {showSchema && (
             <div className="pt-3 border-t-2 border-[var(--ink)]/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {ACADEMY_TABLES.map((t) => (
-                <div key={t.name} className="p-2.5 rounded-lg border border-[var(--ink)] bg-[var(--paper-beige)] text-[11px] font-mono">
+                <div
+                  key={t.name}
+                  className="p-2.5 rounded-lg border border-[var(--ink)] bg-[var(--paper-beige)] text-[11px] font-mono text-[var(--ink)]"
+                >
                   <div className="font-black text-[var(--ink)]">{t.name}</div>
                   <div className="text-[10px] opacity-80 mt-0.5">{t.cols}</div>
                 </div>
@@ -327,22 +317,31 @@ export default function LearnAcademyPage() {
                 }}
                 className={`p-3 rounded-xl border-2 text-left transition-all ${
                   isSelected
-                    ? "bg-[var(--sun)] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)] font-black"
-                    : "bg-[var(--white)] border-[var(--ink)] hover:bg-[var(--paper-beige)] shadow-[2px_2px_0px_var(--ink)] font-bold"
+                    ? "bg-[var(--sun)] text-black border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)] font-black"
+                    : "bg-[var(--white)] text-[var(--ink)] border-[var(--ink)] hover:bg-[var(--paper-beige)] shadow-[2px_2px_0px_var(--ink)] font-bold"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-[var(--ink)] uppercase">Level {lvl.level}</span>
-                  <span className="text-[10px] font-mono bg-white/80 px-1.5 rounded border border-black/30">
+                  <span className={`text-xs font-black uppercase ${isSelected ? "text-black" : "text-[var(--ink)]"}`}>
+                    Level {lvl.level}
+                  </span>
+                  <span className="text-[10px] font-mono bg-white/90 text-black px-1.5 rounded border border-black/30">
                     {lvlSolved}/20
                   </span>
                 </div>
-                <div className="text-[11px] text-[var(--ink)] opacity-80 mt-0.5 truncate">{lvl.name.replace(/^Level \d+:\s*/, "")}</div>
+                <div
+                  className={`text-[11px] opacity-85 mt-0.5 truncate ${
+                    isSelected ? "text-black" : "text-[var(--ink)]"
+                  }`}
+                >
+                  {lvl.name.replace(/^Level \d+:\s*/, "")}
+                </div>
               </button>
             );
           })}
         </div>
 
+        {/* Workspace Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-4 bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-4 shadow-[6px_6px_0px_var(--ink)] space-y-3 max-h-[800px] flex flex-col">
@@ -351,7 +350,7 @@ export default function LearnAcademyPage() {
                 <Code2 className="w-4 h-4 text-[var(--accent-teal)]" />
                 <span>Level {activeLevel} Lessons</span>
               </span>
-              <span className="text-[10px] font-black bg-[var(--paper-beige)] border border-[var(--ink)] px-2 py-0.5 rounded">
+              <span className="text-[10px] font-black bg-[var(--paper-beige)] text-[var(--ink)] border border-[var(--ink)] px-2 py-0.5 rounded">
                 {levelQuestions.length} Lessons
               </span>
             </div>
@@ -366,12 +365,12 @@ export default function LearnAcademyPage() {
                     onClick={() => setSelectedQuestionId(q.id)}
                     className={`w-full text-left p-2.5 rounded-xl border-2 transition-all flex items-center justify-between gap-2 ${
                       isSelected
-                        ? "bg-[var(--accent-teal)] border-[var(--ink)] shadow-[3px_3px_0px_var(--ink)] text-[var(--ink)] font-black"
+                        ? "bg-[var(--accent-teal)] border-[var(--ink)] shadow-[3px_3px_0px_var(--ink)] text-black font-black"
                         : "bg-[var(--white)] border-[var(--ink)] hover:bg-[var(--paper-beige)] text-[var(--ink)] font-bold shadow-[2px_2px_0px_var(--ink)]"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <span className="w-6 h-6 rounded bg-[var(--white)] border border-[var(--ink)] flex items-center justify-center text-[10px] font-mono shrink-0">
+                      <span className="w-6 h-6 rounded bg-[var(--white)] text-[var(--ink)] border border-[var(--ink)] flex items-center justify-center text-[10px] font-mono shrink-0">
                         {q.id}
                       </span>
                       <span className="text-xs truncate">{q.title.replace(/^\d+\.\s*/, "")}</span>
@@ -380,7 +379,7 @@ export default function LearnAcademyPage() {
                     {isSolved ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                     ) : (
-                      <span className="text-[9px] px-1.5 py-0.5 bg-[var(--white)] border border-[var(--ink)] rounded shrink-0 font-mono">
+                      <span className="text-[9px] px-1.5 py-0.5 bg-[var(--white)] text-[var(--ink)] border border-[var(--ink)] rounded shrink-0 font-mono">
                         {q.badge}
                       </span>
                     )}
@@ -392,10 +391,11 @@ export default function LearnAcademyPage() {
 
           {/* Right Panel */}
           <div className="lg:col-span-8 space-y-6">
+            {/* Concept Explanation Card */}
             <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl p-6 shadow-[6px_6px_0px_var(--ink)] space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[var(--ink)] pb-3">
                 <div>
-                  <span className="px-2.5 py-0.5 bg-[var(--sun)] border border-[var(--ink)] text-[11px] font-black rounded-full">
+                  <span className="px-2.5 py-0.5 bg-[var(--sun)] text-black border border-[var(--ink)] text-[11px] font-black rounded-full">
                     {currentQuestion.topic}
                   </span>
                   <h2 className="text-xl font-black text-[var(--ink)] mt-1.5">{currentQuestion.title}</h2>
@@ -409,44 +409,37 @@ export default function LearnAcademyPage() {
                   <button
                     onClick={() => goToLesson(currentQuestion.id - 1)}
                     disabled={currentQuestion.id <= 1}
-                    className="p-1.5 rounded-lg border-2 border-[var(--ink)] bg-white disabled:opacity-40"
+                    className="p-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--paper-beige)] text-[var(--ink)] disabled:opacity-40"
                     title="Previous Lesson"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 text-[var(--ink)]" />
                   </button>
                   <button
                     onClick={() => goToLesson(currentQuestion.id + 1)}
                     disabled={currentQuestion.id >= LEARNING_QUESTIONS.length}
-                    className="p-1.5 rounded-lg border-2 border-[var(--ink)] bg-white disabled:opacity-40"
+                    className="p-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--paper-beige)] text-[var(--ink)] disabled:opacity-40"
                     title="Next Lesson"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 text-[var(--ink)]" />
                   </button>
                 </div>
               </div>
 
+              {/* Concept Text */}
               <div className="bg-[var(--paper-beige)] border-2 border-[var(--ink)] p-3.5 rounded-xl text-xs font-bold text-[var(--ink)] leading-relaxed shadow-[2px_2px_0px_var(--ink)]">
                 {currentQuestion.conceptSummary}
               </div>
 
-              <div className="space-y-1.5">
-                <span className="text-xs font-black uppercase text-[var(--ink)] opacity-75">
-                  Syntax Pattern Example:
-                </span>
-                <pre className="font-mono text-xs bg-[#1E293B] text-slate-100 p-3 rounded-xl border-2 border-[var(--ink)] shadow-[3px_3px_0px_var(--ink)] overflow-x-auto whitespace-pre-wrap">
-                  {currentQuestion.conceptExample}
-                </pre>
-              </div>
-
-              <div className="bg-[#FFF4D2] border-2 border-[var(--ink)] p-4 rounded-xl shadow-[3px_3px_0px_var(--ink)] space-y-2.5">
-                <div className="text-xs font-black uppercase text-[var(--ink)] flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-[var(--ink)]" />
+              {/* Practice Task Instruction */}
+              <div className="bg-[#FFF4D2] text-black border-2 border-[var(--ink)] p-4 rounded-xl shadow-[3px_3px_0px_var(--ink)] space-y-2.5">
+                <div className="text-xs font-black uppercase text-black flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-black" />
                   <span>Your Practice Challenge:</span>
                 </div>
-                <p className="text-xs font-extrabold text-[var(--ink)] leading-snug">{currentQuestion.task}</p>
+                <p className="text-xs font-extrabold text-black leading-snug">{currentQuestion.task}</p>
                 {currentQuestion.expectedColumns?.length > 0 && (
-                  <div className="pt-2 border-t border-[var(--ink)]/20 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-black uppercase text-[var(--ink)] opacity-75">
+                  <div className="pt-2 border-t border-black/20 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-black uppercase text-black opacity-75">
                       Required Columns ({currentQuestion.expectedColumns.length}):
                     </span>
                     {currentQuestion.expectedColumns.map((col) => (
@@ -464,7 +457,7 @@ export default function LearnAcademyPage() {
                   {currentQuestion.hint && (
                     <button
                       onClick={() => setShowHint((h) => !h)}
-                      className="px-2.5 py-1 rounded-lg border border-black bg-white text-[11px] font-black flex items-center gap-1 hover:bg-slate-50"
+                      className="px-2.5 py-1 rounded-lg border border-black bg-white text-black text-[11px] font-black flex items-center gap-1 hover:bg-slate-50"
                     >
                       <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
                       <span>{showHint ? "Hide Hint" : "Show Hint"}</span>
@@ -472,7 +465,7 @@ export default function LearnAcademyPage() {
                   )}
                   <button
                     onClick={() => setShowSolution((s) => !s)}
-                    className="px-2.5 py-1 rounded-lg border border-black bg-white text-[11px] font-black flex items-center gap-1 hover:bg-slate-50"
+                    className="px-2.5 py-1 rounded-lg border border-black bg-white text-black text-[11px] font-black flex items-center gap-1 hover:bg-slate-50"
                   >
                     <Eye className="w-3.5 h-3.5 text-purple-600" />
                     <span>{showSolution ? "Hide Solution" : "Reveal Solution"}</span>
@@ -480,7 +473,7 @@ export default function LearnAcademyPage() {
                 </div>
 
                 {showHint && currentQuestion.hint && (
-                  <div className="p-2.5 bg-white border border-black rounded-lg text-xs font-bold">
+                  <div className="p-2.5 bg-white text-black border border-black rounded-lg text-xs font-bold">
                     💡 {currentQuestion.hint}
                   </div>
                 )}
@@ -492,7 +485,7 @@ export default function LearnAcademyPage() {
                     </pre>
                     <button
                       onClick={() => setUserSql(currentQuestion.referenceSql)}
-                      className="text-[11px] font-black underline text-purple-800"
+                      className="text-[11px] font-black underline text-purple-900"
                     >
                       Copy Solution to Editor
                     </button>
@@ -503,12 +496,12 @@ export default function LearnAcademyPage() {
 
             {/* Editor & Test Console */}
             <div className="bg-[var(--white)] border-2 border-[var(--ink)] rounded-2xl overflow-hidden shadow-[6px_6px_0px_var(--ink)]">
-              <div className="bg-[var(--sun)] border-b-2 border-[var(--ink)] px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="bg-[var(--sun)] text-black border-b-2 border-[var(--ink)] px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <span className="text-xs font-black uppercase text-[var(--ink)]">
+                  <span className="text-xs font-black uppercase text-black">
                     PostgreSQL Practice Editor
                   </span>
-                  <span className="ml-2 text-[10px] font-mono opacity-75 hidden sm:inline">
+                  <span className="ml-2 text-[10px] font-mono text-black opacity-75 hidden sm:inline">
                     Ctrl+Enter Run • Ctrl+Shift+Enter Verify
                   </span>
                 </div>
@@ -518,7 +511,7 @@ export default function LearnAcademyPage() {
                       setUserSql(currentQuestion.starterSql);
                       setRunResult(null);
                     }}
-                    className="p-1.5 rounded-lg border border-[var(--ink)] bg-[var(--white)] hover:bg-[var(--paper-beige)] text-xs font-bold text-[var(--ink)]"
+                    className="p-1.5 rounded-lg border border-black bg-white hover:bg-slate-100 text-xs font-bold text-black"
                     title="Reset SQL"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -526,7 +519,7 @@ export default function LearnAcademyPage() {
                   <button
                     onClick={() => executeQuery("run")}
                     disabled={isRunning}
-                    className="px-3 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-white hover:bg-slate-50 text-xs font-black flex items-center gap-1 shadow-[2px_2px_0px_var(--ink)]"
+                    className="px-3 py-1.5 rounded-lg border-2 border-black bg-white hover:bg-slate-50 text-black text-xs font-black flex items-center gap-1 shadow-[2px_2px_0px_#000]"
                   >
                     <Play className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
                     <span>Preview Output</span>
@@ -534,7 +527,7 @@ export default function LearnAcademyPage() {
                   <button
                     onClick={() => executeQuery("submit")}
                     disabled={isRunning}
-                    className="px-3.5 py-1.5 rounded-lg border-2 border-[var(--ink)] bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1 shadow-[2px_2px_0px_var(--ink)]"
+                    className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1 shadow-[2px_2px_0px_#000]"
                   >
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                     <span>{isRunning ? "Checking..." : "Check Answer"}</span>
@@ -550,7 +543,7 @@ export default function LearnAcademyPage() {
                     <button
                       key={cte.name}
                       onClick={() => handlePreviewCte(cte.name)}
-                      className={`px-2 py-0.5 rounded border border-black font-mono font-bold transition-all ${
+                      className={`px-2 py-0.5 rounded border border-black font-mono font-bold text-black transition-all ${
                         activeCteLabel === cte.name ? "bg-[#FFE600]" : "bg-white hover:bg-blue-50"
                       }`}
                     >
@@ -590,6 +583,7 @@ export default function LearnAcademyPage() {
                 />
               </div>
 
+              {/* Execution Feedback & Results Table */}
               {runResult && (
                 <div className="border-t-2 border-[var(--ink)] p-4 space-y-3 bg-[var(--paper-beige)]">
                   <div
@@ -625,12 +619,12 @@ export default function LearnAcademyPage() {
 
                   {runResult.rows && runResult.rows.length > 0 && (
                     <div className="border-2 border-[var(--ink)] rounded-xl overflow-hidden bg-[var(--white)] shadow-[2px_2px_0px_var(--ink)]">
-                      <div className="bg-[var(--white)] px-3 py-1.5 border-b-2 border-[var(--ink)] flex items-center justify-between text-[11px] font-black">
+                      <div className="bg-[var(--white)] px-3 py-1.5 border-b-2 border-[var(--ink)] flex items-center justify-between text-[11px] font-black text-[var(--ink)]">
                         <span>Output Preview ({runResult.rows.length} rows)</span>
                         <span className="font-mono">{runResult.durationMs}ms</span>
                       </div>
                       <div className="overflow-x-auto max-h-52">
-                        <table className="w-full text-left text-xs font-mono">
+                        <table className="w-full text-left text-xs font-mono text-[var(--ink)]">
                           <thead className="bg-[var(--paper-beige)] border-b-2 border-[var(--ink)]">
                             <tr>
                               {runResult.columns.map((col) => (
@@ -642,9 +636,9 @@ export default function LearnAcademyPage() {
                           </thead>
                           <tbody>
                             {runResult.rows.slice(0, 12).map((row, idx) => (
-                              <tr key={idx} className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50">
+                              <tr key={idx} className="border-b border-[var(--ink)]/15 last:border-b-0">
                                 {runResult.columns.map((col) => (
-                                  <td key={col} className="p-2 border-r border-slate-200 last:border-r-0">
+                                  <td key={col} className="p-2 border-r border-[var(--ink)]/15 last:border-r-0">
                                     {String(row[col] ?? "NULL")}
                                   </td>
                                 ))}
@@ -657,12 +651,12 @@ export default function LearnAcademyPage() {
                   )}
 
                   {runResult.expectedPreview && runResult.expectedPreview.length > 0 && !runResult.isCorrect && (
-                    <div className="border-2 border-emerald-700 rounded-xl overflow-hidden bg-emerald-50">
+                    <div className="border-2 border-emerald-700 rounded-xl overflow-hidden bg-emerald-50 text-emerald-950">
                       <div className="px-3 py-1.5 border-b border-emerald-700 text-[11px] font-black text-emerald-900">
                         Expected Target Output (First {runResult.expectedPreview.length} rows)
                       </div>
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left text-[11px] font-mono">
+                        <table className="w-full text-left text-[11px] font-mono text-emerald-950">
                           <thead className="bg-emerald-100 border-b border-emerald-300">
                             <tr>
                               {Object.keys(runResult.expectedPreview[0]).map((col) => (
